@@ -1,4 +1,4 @@
-function ev_idx = pd_event_display(pd, min_ev_interval_secs, th_event, srate)
+function ev_secs = pd_event_display(pd, min_ev_interval_secs, th_event, srate)
 
 if nargin < 4
     srate = 10000;
@@ -28,6 +28,8 @@ xlabel(ax2, '[secs]');
 
 % event
 ev_idx = th_crossing(pd, th_event, min_ev_interval_secs*srate);
+ev_secs = ev_idx/srate;
+%
 plot(ax1, pdts(ev_idx), pd(ev_idx), 'bo');
 plot(ax2, pdts(ev_idx), pd(ev_idx), 'bo');
 

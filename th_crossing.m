@@ -1,4 +1,4 @@
-function index = th_crossing(data, threshold, min_interval)
+function idx_ev = th_crossing(data, threshold, min_interval)
 %%
 % returns the "indexes" of the data whenever it crosses the threshold
 % 2 conditions:
@@ -13,11 +13,11 @@ if nargin < 3
 end
 
 %% All points which crossed the threshold.
-idx = find(data>threshold); % index array. timestamps
+idx = find(data>threshold); % index array. timestamps.
 idx = idx(idx>3);           % excludes the first two elements.
 
 if isempty(idx)
-    index = idx;
+    idx_ev = idx;
     return;
 end
 
@@ -28,22 +28,23 @@ rise1 = data(idx-1) < threshold; % rise1 is index array. length(rise1) = length(
 rise2 = data(idx-2) < threshold; 
 rise = rise1 & rise2;
 
-%%
+%% pick ids of events every after min_interval
+% index (timestamps) of the events which go across the threshold
 idx = idx(rise);
-lastevent = idx(1);
-for i = 2:length(idx)
+
+% Goal: make a final logical array. idx_ev = find(id_final);
+    ev_logical = zeros(1, length(data)); % initialize the logical array [ 0 0 .. 0 ]
+after_interval = idx;
     
-
-
-%% 2. is it sufficiently away from the previous th-crossing event?
-% interspacing of events
-interevents = zeros(size(idx));
-interevents(1) = length(data); % maximum interspacing. The 1st peak has the previous peak infinitely long ago.
-
-
-interevents(2:end) = idx(2:end) - idx(1:end-1);
-isitaway = interevents > min_interval;
-
-index = idx(rise & isitaway);               % collect the index only
+        while ~isempty(after_interval)
+ 
+            lastevent = after_interval(1); % 1st data id (or ts) after interval
+            ev_logical(lastevent) = 1;
+            % index (or timestamps) after min_interval 
+            after_interval = idx( (idx - lastevent) > min_interval );
+        end
+ 
+% Find non-zero index (location) of the data timestamp (or id) array
+idx_ev = find(ev_logical); 
 
 end

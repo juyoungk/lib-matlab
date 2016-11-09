@@ -1,10 +1,18 @@
-function myraster(spikes, H_lineevery)
+function myraster(spikes, H_line_every, V_lines)
     
+    if nargin <3
+        n_session = 16;
+        numframes = 120;
+        ifi = 0.03529477/3;
+        s_duration = numframes * ifi;
+        V_lines = (0:n_session) * s_duration;
+    end
+
     if nargin < 2 
         n_seq = 4;
         n_repeat = 4;
         n_speed = 10;
-        H_lineevery = n_seq * n_repeat* n_speed;
+        H_line_every = n_seq * n_repeat* n_speed;
     end
  
     numLines = numel(spikes);
@@ -31,26 +39,16 @@ function myraster(spikes, H_lineevery)
     ax.XMinorGrid = 'on';
     set(gcf, 'position', [100, 550, 1510, 720]);
 
-    % vertical lines for sessions
-    num_frames = 75;
-    ifi = 0.03529477/3;
-    num_sessions = 8;
-    t_session = 0:num_sessions;
-    t_session = t_session * num_frames * ifi;
-    transition = [1 3 5 7];
-    transition = transition * num_frames * ifi;
-
     hold on;
-    for i = 1:length(t_session)
-    plot([t_session(i) t_session(i)], [0, numLines], 'r');
+    % Vertical lines
+    for i = 1:length(V_lines)
+        plot([V_lines(i), V_lines(i)], [0, numLines], 'r');
     end
-    for i = 1:length(transition)
-    plot([transition(i) transition(i)], [0, numLines], 'b');
-    end
+    
     % Horizontal lines
-    h_lines = 1:H_lineevery:numLines;
+    h_lines = 1:H_line_every:numLines;
     for i = h_lines
-      plot([0 t_session(end)], [i i], 'g');
+      plot([0 V_lines(end)], [i i], 'g');
     end
     %
     hold(ax, 'off');
@@ -60,7 +58,7 @@ function myraster(spikes, H_lineevery)
     spikes_nonempty = spikes(nonempty_id);
     max_array = cellfun(@max, spikes_nonempty);
     max_ts = max(max_array);
-    x_end = min(max_ts, t_session(end));
+    x_end = min(max_ts, V_lines(end));
     xlim([0 x_end]);
 
 end
