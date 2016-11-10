@@ -37,7 +37,7 @@ function myraster(spikes, H_line_every, V_lines)
     ax = gca;
     %ax.XGrid = 'on';  
     ax.XMinorGrid = 'on';
-    set(gcf, 'position', [100, 550, 1510, 720]);
+    set(gcf, 'position', [300, 250, 1200, 520]);
 
     hold on;
     % Vertical lines

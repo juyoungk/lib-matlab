@@ -1,8 +1,8 @@
 function rf = STA(spikes_t_stamps, STA_duration, stim, upsampling, fperiod)
 % Spike-triggered average from time stampes
 % Time stamps are given by spike sorting of MEA recording data.
-% stim: 
-% fperiod: stim frame rate. (e.g. 0.03322955)
+% stim: 3-D array 
+% fperiod: stim frame rate.
 % 2016 SEP, Juyoung Kim
 
 if nargin < 5
