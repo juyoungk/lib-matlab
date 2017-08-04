@@ -45,7 +45,7 @@ RB = imref2d(size(B));
 RB.XWorldLimits = RA.XWorldLimits;
 RB.YWorldLimits = RA.YWorldLimits;
 
-[C,RC] = imfuse(AJ,RA,BJ,RB,'ColorChannels',[2 1 0]);
+[C, ~] = imfuse(AJ,RA,BJ,RB,'ColorChannels',[2 1 0]);
 
 %imshow(C); 
 %title([inputname(1), ' + ', inputname(2)]);

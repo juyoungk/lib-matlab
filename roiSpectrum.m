@@ -66,7 +66,7 @@ while (reply == 'Y') || (reply == 'y')
     % returns the true/false value for each pixel.
     %
     axes(ax_roi);
-    roi = ellipseMask(mean_img); % in is logical 2-D array like image
+    roi = ellipseMask(mean_img); % roi is logical 2-D array like image
     totRoi = roi | totRoi;
     C = merge(mean_img, totRoi); imshow(C); % NOT myshow
     N_roi = N_roi +1;

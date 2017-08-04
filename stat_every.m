@@ -20,6 +20,7 @@ function [mean_r, std_r] = stat_every(r, num, dim)
     if n_exp < num
         error('n_exp is less than n_avg.');
     end
+    
     if mod(n_exp, num) ~= 0
         n_exp = floor(n_exp/num)*num;
         r = r(:, n_exp);

@@ -12,24 +12,26 @@ Dim = ndims(imgstack);
 nVarargs = numel(varargin);
 
 [ynum, xnum, d3, d4] = size(imgstack);
-text = sprintf('Image [row  col  d3  d4*d5*..] = [%d  %d  %d  %d]  ',ynum,xnum,d3,d4);
-disp(text);
+text = sprintf('[row  col  d3  d4*d5*..] = [%d  %d  %d  %d]  ',ynum,xnum,d3,d4);
+fprintf('%s', text);
+%disp(text);
 
 if ismatrix(imgstack)
-    disp('2-D image was given.');
+    %disp('2-D image was given.');
     I = scaled(imgstack);
 elseif Dim == 3 || Dim == 4
     if nVarargs < 1
         disp('fn: myshow: Many Channels. Channel # should be provided.');
         % Multi-CH imaging
-        
+        % 
         return
     end
-    disp('A image stack is given. (3-D or 4-D)');
-    % single ch imaging
+    % Single ch imaging
     ch = varargin{1};
     img = comp(imgstack,ch);
-    disp(['Channel# = ',num2str(ch),' is selected.']);
+    %disp('A image stack is given. (3-D or 4-D)');
+    %disp(['Channel # = ',num2str(ch)]);
+    fprintf('Ch# = %d  ', ch);
     if ~ismatrix(img) % final check
         disp('Incorrect image or image stack.');
     end
@@ -48,14 +50,17 @@ else
     fraction = 0.5; % percentage for saturation level for top and low pixels.
 end
 Tol = [fraction*0.01 1-fraction*0.01];
-disp('Tol = '); disp(Tol);
+
+if fraction ~= 0.5    
+    %disp(['Tol  =  ', num2str(Tol)]);
+    fprintf(' Tol = [%.3f  %.3f]\n', Tol(1), Tol(2));
+else
+    fprintf('\n');
+end
 
 MinMax = stretchlim(I,Tol);
-disp('[Min Max] = '); disp(MinMax);
 J = imadjust(I,MinMax);
-%J = imadjust(I); % 0.5 % of top and low pixels are saturated.
 
-%figure; %imshow(I);
 imshow(J);
 %set(gca, 'Color', 'none');
 
