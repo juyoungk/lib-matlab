@@ -1,12 +1,13 @@
 function bc(varargin)
 %
-% Copy Figure to clipboard for balck background
-% setting values
+% Copy Figure to clipboard for black background
+% See also the function 'cc' for just copying the figure to the clipboard
+% 
 %
 Fontsize = 18;
 color = [0.9 0.9 0.1];
-color = [0.1 0.1 0.1];
-axis_Linewidth = 2.0;
+%color = [0.1 0.1 0.1];
+axis_Linewidth = 2.4;
 %
 
 % figure handle for current figure
@@ -32,6 +33,7 @@ for i = 1:numel(hd)
     ax.YAxis.Color = color;
     ax.XLabel.Color = color;
     ax.YLabel.Color = color;
+    ax.GridColor = [0.1, 0.1, 0.1];
 
     text = ax.Title.String;
     % text can be cell array. text{1} might be needed.
@@ -40,6 +42,16 @@ for i = 1:numel(hd)
 
     ax.XAxis.LineWidth = axis_Linewidth;
     ax.YAxis.LineWidth = axis_Linewidth;
+end
+% colorbar
+hd = findall(hfig, 'type', 'colorbar');
+for i = 1:numel(hd)
+    ax = hd(i);
+    %
+    ax.FontSize = Fontsize*0.8;
+    ax.Color = color;
+    ax.LineWidth = axis_Linewidth;
+    ax.Box = 'off';
 end
 
 editmenufcn(hfig, 'EditCopyFigure');

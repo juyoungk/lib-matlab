@@ -1,6 +1,7 @@
-function MinMax = myshow(imgstack, varargin)
+function [J, handle] = myshow(imgstack, varargin)
 %
-% imshow for image [ynum xnum] or imgage stack [ynum xnum channel]
+% imshow for imgage stack [ynum xnum channel]. It also works for 2-D image [ynum xnum].
+% scaled, and imshow for given channel #.
 % myshow(image)
 % myshow(image, ch)
 % myshow(image, ch, fraction) % fraction (%) of ourliers for contrast adjust.
@@ -61,7 +62,7 @@ end
 MinMax = stretchlim(I,Tol);
 J = imadjust(I,MinMax);
 
-imshow(J);
+handle = imshow(J);
 %set(gca, 'Color', 'none');
 
 end

@@ -1,6 +1,7 @@
-function in = ellipseMask(img, varargin)
+function [in, h] = ellipseRoi(img, varargin)
 %
-% ellipseMask(img)
+% Select elliptical ROI from an image
+% No image, No confirmation.
 %
 % output in : 2-D logical array
 % Let's make logical matrix which indicates whether each pixel is inside or
@@ -14,7 +15,10 @@ function in = ellipseMask(img, varargin)
 
 %myshow(img);
 %
-h = imellipse; 
+h = imellipse;
+if isempty(h)
+   error('ellipseRoi: ROI is not selected'); 
+end
 pos = getPosition(h); pos = double(pos);
 %
 xmin = pos(1);

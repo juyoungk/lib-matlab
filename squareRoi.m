@@ -1,6 +1,9 @@
-function in = squareRoi(img, varargin)
+function [in, h, pos] = squareRoi(img, varargin)
 %
-% ellipseMask(img)
+% sqaureRoi(img, varargin)
+%
+% input: 
+%       img - image data (2-D)
 %
 % output in : 2-D logical array
 % Let's make logical matrix which indicates whether each pixel is inside or
@@ -12,15 +15,24 @@ function in = squareRoi(img, varargin)
     %img = varargin{1};  
 %end
 
-myshow(img, 2); % 2% outliers.
+%myshow(img, 2); % 2% outliers.
 %
 h = imrect; 
+
+if isempty(h)
+   error('squareRoi: ROI is not selected'); 
+end
+
 pos = getPosition(h); pos = double(pos);
 %
 xmin = pos(1);
 ymin = pos(2);
 width = pos(3);
 height = pos(4);
+    % redefine pos
+    % for roi labeling in multiRoi function
+    %pos = [xmin+width, ymin+height]; 
+%
 a = width/2;
 b = height/2;
 x0 = xmin + a;
@@ -34,7 +46,7 @@ in_y = 1:row>=ymin & 1:row<=(ymin+height);% For y, row number should be used.
 in = x & y;
 
 % confirm the area of logical area (in) 
-C = merge(img, in); imshow(C);
+%C = merge(img, in); imshow(C);
 
 end
 
