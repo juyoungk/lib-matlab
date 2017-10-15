@@ -17,8 +17,17 @@ h.n_channelSave = numel(h.channelSave);
 
 % stack parameters
 h = get_float_number_to_new_field(h, t, 'framesPerSlice');
-h = get_float_number_to_new_field(h, t, 'numSlices');
-h = get_digit_numbers_to_new_field(h, t, 'zs');
+
+
+str_info = 'SI.hStackManager.framesPerSlice = ';
+str_line = get_line(t, str_info);
+% get number
+h.framesPerSlice = sscanf(str_line, [str_info, '%f']);
+
+
+%
+h.numSlices = get_float_number_after_str(t, 'SI.hStackManager.numSlices = ');
+h.zs = get_numbers_after_str(t, 'SI.hStackManager.zs = ');
 
 end
 
@@ -64,6 +73,19 @@ str_line = str_lines{1};
 
 a = sscanf(str_line, [str, '%f']);
 
+end
+
+function a = get_numbers_after_str(text, str)
+% get the line from the text
+% inputs:
+%   text
+%   str
+
+loc = strfind(text, str);
+str_lines = splitlines(text(loc:end));
+str_line = str_lines{1};
+
+a = extract_numbers(str_line);
 end
 
 function B = extract_numbers(A)
