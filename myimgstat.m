@@ -66,7 +66,8 @@ elseif avgdim == 4
 end
 
 % Mean % Std images
-figure('position', [300, 500, 600, 600]);
+%figure('position', [300, 500, 600, 600]);
+figure;
 for i = 1:n
     subplot(2,n,i); if i == 1; ylabel('Mean over frames'); end; 
     myshow(mean_img, i, 1.0); % adjuster level
@@ -86,7 +87,8 @@ if Dim == 4 % Regardless of the avgdim (3 or 4), 'comp' function will extract sp
     %merged_mean = cat(3, scaled(meantif(:,:,2)), scaled(meantif(:,:,1)), scaled(meantif(:,:,3)));
     %merged_std = cat(3, scaled(stdtif(:,:,2)), scaled(stdtif(:,:,1)), scaled(stdtif(:,:,3)));
     
-    figure('position', [0, 60, 900, 400], 'Name','Merged Ch Images (Mean and STD)');
+    %figure('position', [0, 60, 900, 400], 'Name','Merged Ch Images (Mean and STD)');
+    figure('Name','Merged Ch Images (Mean and STD)');
     subplot(1, 2, 1); 
     %imshow(merged_mean);
     C = merge2ch(mean_img, 1, 2, 1.5, 1); imshow(C); axis equal; axis off;

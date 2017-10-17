@@ -3,21 +3,23 @@ function h = interpret_SI_header_from_TiffReader(t)
 %
 h = [];
 
+% channel parameters
+h = get_digit_numbers_to_new_field(h, t, 'channelSave');
+h.n_channelSave = numel(h.channelSave);
+
+
 % scan parameters
 h = get_float_number_to_new_field(h, t, 'scanFramePeriod');
 h = get_float_number_to_new_field(h, t, 'scanFrameRate');
 h = get_float_number_to_new_field(h, t, 'linesPerFrame');
 h = get_float_number_to_new_field(h, t, 'pixelsPerLine');
 h = get_float_number_to_new_field(h, t, 'logFramesPerFile');
-
-
-% channel parameters
-h = get_digit_numbers_to_new_field(h, t, 'channelSave');
-h.n_channelSave = numel(h.channelSave);
+h = get_float_number_to_new_field(h, t, 'logAverageFactor');
 
 % stack parameters
 h = get_float_number_to_new_field(h, t, 'framesPerSlice');
 h = get_float_number_to_new_field(h, t, 'numSlices');
+h = get_float_number_to_new_field(h, t, 'stackZStepSize');
 h = get_digit_numbers_to_new_field(h, t, 'zs');
 
 end
