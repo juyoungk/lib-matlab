@@ -18,8 +18,8 @@ field_names = fieldnames(h5_data);
 
 % hedaer 
 header = h5_data.header; 
-        fprintf("           header.SweepDuration: %.2f (s)\n", header.SweepDuration);
-        fprintf("    header.Acquisition.Duration: %.2f (s)\n", header.Acquisition.Duration);
+        %fprintf("           header.SweepDuration: %.2f (s)\n", header.SweepDuration);
+        %fprintf("    header.Acquisition.Duration: %.2f (s)\n", header.Acquisition.Duration);
 
 % struct field names for sweeps only
 is_sweep = contains(field_names, 'sweep');
