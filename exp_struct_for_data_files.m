@@ -31,7 +31,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         g.(str)(i).AI_mean = cell(n_channels, 1);
         
         for j=1:n
-            ch = vol(:,:,id_ch==j); % Analog input
+            ch = vol(:,:,id_ch==j); % de-interleave frames
             ch_mean = mean(ch, 3);
             g.(str)(i).AI{h.channelSave(j)} = ch;
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
