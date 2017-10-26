@@ -13,7 +13,7 @@ function p =  ParseInput(varargin)
     
     p  = inputParser;   % Create an instance of the inputParser class.
     
-    addParamValue(p,'comment', 'my Macbook pro');
+    addParamValue(p,'comment', 'my_Macbook_pro');
     
 %     addParamValue(p,'barWidth', 100, @(x)x>=0);
 %     addParamValue(p,'barSpeed', 1.4, @(x)x>=0);
