@@ -6,6 +6,11 @@ function scim_myopen(varargin)
 % scim_myopen('data name');
 % data = [row, col, ch (RGB), frame] 
 %
+
+%addpath('/Users/peterfish/Documents/1__Retina_Study/Softwares/SCANIMAGE_r3.8_down2015Jan/scim');
+%addpath('/Users/peterfish/Documents/1__Retina_Study/Softwares/SCANIMAGE_r3.8_down2015Jan/scim/scim_private');
+
+
 [header, Aout, cmap] = scim_openTif;
 % Print acq properties
 printScimHeader(header);
