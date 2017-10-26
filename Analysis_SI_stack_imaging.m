@@ -11,7 +11,7 @@
     dirpath = pwd;    
     % loc 1? ND2 filter. Noisy
     % loc 2
-    ex_str = 'Loc6_stack_pulse';
+    ex_str = '';
     g =  exp_struct_for_SI_tif(dirpath, ex_str);
     
 %% implay for non-empty channel.

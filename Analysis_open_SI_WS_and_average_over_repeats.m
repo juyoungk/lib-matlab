@@ -1,39 +1,42 @@
 %% Routine for SI Tif (imaging) and WS H5 (pd) data
 %
 % Run section by section!
-%
-    dirpath = pwd
+    dirpath = pwd;
     tif_filenames = getfilenames(dirpath, '/*.tif');
      h5_filenames = getfilenames(dirpath, '/*.h5');
     % list of files    
     tif_filenames{:}
     h5_filenames{:}
-
+%% setting
+    iptsetpref('ImshowInitialMagnification','fit');
+    pos     = get(0, 'DefaultFigurePosition');
+    pos_new = [0 950 800 800];
+    set(0, 'DefaultFigurePosition', pos_new); 
 %% Load recording files 
     dirpath = pwd;    
     % loc 1? ND2 filter. Noisy
     % loc 2
-    ex_str = 'Loc9_1070_flash';
-    g = exp_struct_for_data_files(dirpath, ex_str);
+    ex_str = 'Loc5_1070'; % must start with numbers
+    g = exp_struct_for_data_files(dirpath, ex_str, 'Exp', g);
 
 %% (Optional) Stimulus trigger is correct?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;
     ev = g.(ex_str)(i_experiment).stimulus.events;
-    %
-    numStimulus = 1;
-    s1_triggers = ev(1:9);
-    %s2_triggers = ev(16:29);
+    
+    % How many stimulus did you have in the given file (i)?
+    numStimulus = 2;
+    s1_triggers = ev(1:10);
+    s2_triggers = ev(11:14);
     %
         g.(ex_str)(i_experiment).stimulus.numStimulus = numStimulus;
         g.(ex_str)(i_experiment).stimulus.stim_triggers = cell(1, numStimulus);
         g.(ex_str)(i_experiment).stimulus.stim_triggers{1} = s1_triggers;
-        %g.(ex_str)(i_experiment).stimulus.stim_triggers{2} = s2_triggers;       
-
+        g.(ex_str)(i_experiment).stimulus.stim_triggers{2} = s2_triggers;       
 %% ROI selection
     i_file_for_ROI = 1;
-    ch_save = 1;
-
+    ch_save = 3;
+    
     img_for_ROI = g.(ex_str)(i_file_for_ROI).AI_mean{ch_save};
     h = g.(ex_str)(i_file_for_ROI).header;
            n_ch = h.n_channelSave;
@@ -45,15 +48,19 @@
     save([ex_str,'_',num2str(1),'_roi'], 'roi_array');
 
 %% Given the ROIs, intensity over time for all sessions
-     % CH selection for ROI trace plot
-    ch_save =1;
+    % CH selection for ROI trace plot
+    % ch_save =1;
      smoothing_size = 6;
-    n_experiments = numel(g.(ex_str));
-    
+    % default position for figures
+    pos_new = pos_new + [100 -pos_new(4) 0 0];
+    set(0, 'DefaultFigurePosition', pos_new); 
+     
     % Select a fraction of ROI ?
     roi_selected = roi_array(:,:,1:end);
     [~, ~, n_roi] = size(roi_selected);
-  
+    
+    n_experiments = numel(g.(ex_str));
+    
     for i_ex = 1:n_experiments
         % Experiment (or recording) parameters
             h = g.(ex_str)(i_ex).header;
