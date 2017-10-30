@@ -4,7 +4,7 @@ p = ParseInput(varargin{:});
 commit_msg = p.Results.comment;
 
 eval('!git add -A')
-eval(['!git commit -am ''', commit_msg,''''])
+eval(['!git commit -am "', commit_msg, '"'])
 eval('!git push')
 
 end
