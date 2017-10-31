@@ -7,8 +7,11 @@ h = [];
 h = get_digit_numbers_to_new_field(h, t, 'channelSave');
 h.n_channelSave = numel(h.channelSave);
 
+% beam parameters
+h = get_float_number_to_new_field(h, t, 'hBeams.powers');
 
 % scan parameters
+h = get_float_number_to_new_field(h, t, 'scanZoomFactor');
 h = get_float_number_to_new_field(h, t, 'scanFramePeriod');
 h = get_float_number_to_new_field(h, t, 'scanFrameRate');
 h = get_float_number_to_new_field(h, t, 'linesPerFrame');
@@ -22,12 +25,22 @@ h = get_float_number_to_new_field(h, t, 'numSlices');
 h = get_float_number_to_new_field(h, t, 'stackZStepSize');
 h = get_digit_numbers_to_new_field(h, t, 'zs');
 
+% Motor parameters
+% SI.hMotors.motorPosition = [-706.04 -3209.32 4519.2]
+h = get_digit_numbers_to_new_field(h, t, 'motorPosition');
+
 end
 
 function h = get_float_number_to_new_field(h, text, str)
 % search 'str' in 'text' file and add the float number as a new field of the struct 'h' 
 
 num = get_float_number_after_str(text, [str,' = ']);
+
+% exclude any other characters.
+%str = str(isletter(str));
+
+str = strrep(str,'.','_');
+
 h.(str) = num; 
 
 end

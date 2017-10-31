@@ -28,7 +28,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         h = interpret_SI_header_from_TiffReader(h);
         vol = SI_data.data;      
         
-        % de-interleave into channels
+        % channel info
         [rows, cols, n_frames] = size(vol);
         n = h.n_channelSave;
         h.n_frames = n_frames;
@@ -38,19 +38,21 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         g.(str)(i).header = h;
         % analog inputs (Assume max 4 channels)
         n_channels = 4;
+        g.(str)(i).AI_chSave = h.channelSave;
         g.(str)(i).AI      = cell(n_channels, 1);
         g.(str)(i).AI_mean = cell(n_channels, 1);
-        g.(str)(i).AI_channelSave = h.channelSave;
         
         for j=1:n
+            % de-interleave into channels
             ch = vol(:,:,id_ch==j); % de-interleave frames
             ch_mean = mean(ch, 3);
             g.(str)(i).AI{h.channelSave(j)} = ch;
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
-            %subplot(1,n,j);  % subplot(m,n,p) - select p axes among m-by-n
+            % plot mean images
             hf = figure; set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
             myshow(ch_mean, 0.05);
-            s_title = sprintf('%s (CH: %d)', tif_filenames{i}, h.channelSave(j));
+            t_filename = strrep(tif_filenames{i}, '_', '  ');
+            s_title = sprintf('%s (Ch: %d)', t_filename, h.channelSave(j));
             title(s_title);
             makeFigBlack(hf);
             saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);

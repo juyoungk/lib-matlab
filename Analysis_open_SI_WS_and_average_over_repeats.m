@@ -39,10 +39,10 @@
 %% ROI selection
     i_file_for_ROI = 1;
     ch_save = 3;
-    
     img_for_ROI = g.(ex_str)(i_file_for_ROI).AI_mean{ch_save};
-    h = g.(ex_str)(i_file_for_ROI).header;
-           n_ch = h.n_channelSave;
+    %
+       h = g.(ex_str)(i_file_for_ROI).header;
+    n_ch = h.n_channelSave;
     %
     figure;
     roi_array = multiRoi(img_for_ROI);

@@ -7,7 +7,7 @@ function [in_array] = multiRoi(img, varargin)
 % output: 
 %       in_array  - Array of 2-D logical array
 
-[I, h_image] = myshow(img, 1);
+[I, h_image] = myshow(img, 0.5);
 
 in_array = [];
 box_color = 'yellow';
