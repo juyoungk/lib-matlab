@@ -1,22 +1,25 @@
 %% Routine for SI Tif (imaging) and WS H5 (pd) data
 %
-% Run section by section!
+%% 'g' struct initialization
+    g = [];
+%% Run section by section!
     dirpath = pwd;
     tif_filenames = getfilenames(dirpath, '/*.tif');
      h5_filenames = getfilenames(dirpath, '/*.h5');
-    % list of files    
-    tif_filenames{:}
-    h5_filenames{:}
-%% setting
+    % list of files 
+    tif_filenames{:};
+    h5_filenames{:};
+
+%% PLot & Figure setting
     iptsetpref('ImshowInitialMagnification','fit');
     pos     = get(0, 'DefaultFigurePosition');
-    pos_new = [0 950 800 800];
-    set(0, 'DefaultFigurePosition', pos_new); 
+    pos_new = [0 950 600 600];
+    set(0, 'DefaultFigurePosition', pos_new);
+   
 %% Load recording files 
     dirpath = pwd;    
-    % loc 1? ND2 filter. Noisy
-    % loc 2
-    ex_str = 'Loc5_1070'; % must start with numbers
+    %
+    ex_str = 'Loc4_flash'; % must start with numbers
     g = exp_struct_for_data_files(dirpath, ex_str, 'Exp', g);
 
 %% (Optional) Stimulus trigger is correct?
@@ -45,7 +48,7 @@
     roi_array = multiRoi(img_for_ROI);
     %
     saveas(gcf, [ex_str,'_',num2str(1),'_roi.png']);
-    save([ex_str,'_',num2str(1),'_roi'], 'roi_array');
+    save([ex_str,'_ex',num2str(1),'_roi'], 'roi_array');
 
 %% Given the ROIs, intensity over time for all sessions
     % CH selection for ROI trace plot
@@ -97,11 +100,12 @@
             end
             % event timestamps
             for i=1:length(ev)
-                plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.0, 'Color',0.6*[1 1 1]);
+                plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, '--', 'LineWidth', 1.0, 'Color',0.4*[1 1 1]);
             end
             hold off
-            saveas(gcf, [ex_str,'_',num2str(i_ex),'_ROI.png']);
+            makeFigBlack;
+            saveas(gcf, [ex_str,'_ex',num2str(i_ex),'_ROI.png']);
 
         % Average over repeats (only for ch_save)
         numStimulus = g.(ex_str)(i_ex).stimulus.numStimulus;
@@ -123,11 +127,12 @@
                     S = sprintf('ROI %d*', 1:n_roi); C = regexp(S, '*', 'split'); % C is cell array.
                     %ax_legend = legend(C{1:(end-1)}); ax_legend.FontSize = 12;
                     %
-            plot([interval/2 interval/2], ax.YLim, '--', 'LineWidth', 1.0, 'Color',0.6*[1 1 1]);
+            plot([interval/2 interval/2], ax.YLim, '--', 'LineWidth', 1.2, 'Color',0.6*[1 1 1]);
             annotation('textbox',[.8,.8,.3,.3],'String',g.(ex_str)(i_ex).tif_filename,'FitBoxToText','on');
             hold off;
             %
-            saveas(gcf, [ex_str,'_',num2str(i_ex),'_stim_',num2str(k),'_ROI_mean__smoothging',num2str(smoothing_size),'.png']);
+            makeFigBlack;
+            saveas(gcf, [ex_str,'_ex',num2str(i_ex),'_stim_',num2str(k),'_ROI_mean__smoothging',num2str(smoothing_size),'.png']);
         end
     end
 

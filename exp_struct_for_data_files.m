@@ -40,6 +40,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         n_channels = 4;
         g.(str)(i).AI      = cell(n_channels, 1);
         g.(str)(i).AI_mean = cell(n_channels, 1);
+        g.(str)(i).AI_channelSave = h.channelSave;
         
         for j=1:n
             ch = vol(:,:,id_ch==j); % de-interleave frames
@@ -48,9 +49,13 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
             %subplot(1,n,j);  % subplot(m,n,p) - select p axes among m-by-n
             hf = figure; set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
-            myshow(ch_mean);
-            title([tif_filenames{i},' CH: ', num2str(h.channelSave(j))]);
+            myshow(ch_mean, 0.05);
+            s_title = sprintf('%s (CH: %d)', tif_filenames{i}, h.channelSave(j));
+            title(s_title);
+            makeFigBlack(hf);
+            saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
         end
+        
         % Merge if there are multiple channels.
 %         switch n
 %             case 2
@@ -70,7 +75,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             g.(str)(i).pd_header = header;
             g.(str)(i).pd_srate = srate;
             %
-            figure; set(gcf, 'Position', pos+[pos(3)*n,0, 0, 0]);
+            figure; set(gcf, 'Position', pos+[pos(3)*n, -pos(4)*(i-1), 0, 0]);
                 plot(times,pd); hold on; % it is good to plot pd siganl together
                 % event timestamps
                 pd_threshold = 0.9;
@@ -93,7 +98,6 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         end
         
     end
-    
     
 end
 
