@@ -2,26 +2,23 @@
 %
 %% 'g' struct initialization
     g = [];
-%% Run section by section!
     dirpath = pwd;
-    tif_filenames = getfilenames(dirpath, '/*.tif');
-     h5_filenames = getfilenames(dirpath, '/*.h5');
-    % list of files 
-    tif_filenames{:};
-    h5_filenames{:};
-
+%% Run section by section!
+    tif_filenames = getfilenames(dirpath, '/*.tif'); tif_filenames{:};
+     h5_filenames = getfilenames(dirpath, '/*.h5'); h5_filenames{:};
 %% PLot & Figure setting
     iptsetpref('ImshowInitialMagnification','fit');
     pos     = get(0, 'DefaultFigurePosition');
-    pos_new = [0 950 600 600];
+    pos_new = [0 950 800 600];
+    pos_new = [0 950 1200 900];
     set(0, 'DefaultFigurePosition', pos_new);
-   
-%% Load recording files 
+%% Open h5 WaveSurfer recording files
     dirpath = pwd;    
-    %
-    ex_str = 'Loc4_flash'; % must start with numbers
-    g = exp_struct_for_data_files(dirpath, ex_str, 'Exp', g);
-
+    ex_str = 'cell3'; %
+    g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);   
+%% Load recording files 
+    ex_str = 'Loc3_stack'; % must start with numbers
+    g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
 %% (Optional) Stimulus trigger is correct?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;

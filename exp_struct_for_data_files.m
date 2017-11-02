@@ -8,27 +8,35 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
     %
     tif_filenames = getfilenames(dirpath, [str_condition,'.tif'])
      h5_filenames = getfilenames(dirpath, [str_condition,'.h5'])
-    % 
+    %
     if isempty(tif_filenames)
         error('There is no tif files');
     end
     %
     
+    % routine for tif imaging data
     for i=1:numel(tif_filenames)
         g.(str)(i).tif_filename = tif_filenames{i};
+        
+        % PD recording filename
         if isempty(h5_filenames)
+        %if isempty(h5_filenames{i})
             g.(str)(i).PD_h5_filename = [];
+            disp('No corresponding h5 (e.g. photodiode) file');
+        elseif isempty(h5_filenames{i})
+            g.(str)(i).PD_h5_filename = [];
+            disp('No corresponding h5 (e.g. photodiode) file');
         else
             g.(str)(i).PD_h5_filename = [dirpath,'/',h5_filenames{i}]; 
         end
-        
-        % Tif imaging data loading
+
+        % Tif data loading
         SI_data = ScanImageTiffReader([dirpath,'/',g.(str)(i).tif_filename]);
         h = SI_data.metadata;
         h = interpret_SI_header_from_TiffReader(h);
         vol = SI_data.data;      
         
-        % channel info
+        % AI channel info
         [rows, cols, n_frames] = size(vol);
         n = h.n_channelSave;
         h.n_frames = n_frames;
@@ -42,8 +50,8 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         g.(str)(i).AI      = cell(n_channels, 1);
         g.(str)(i).AI_mean = cell(n_channels, 1);
         
+        % de-interleave and plot mean images
         for j=1:n
-            % de-interleave into channels
             ch = vol(:,:,id_ch==j); % de-interleave frames
             ch_mean = mean(ch, 3);
             g.(str)(i).AI{h.channelSave(j)} = ch;

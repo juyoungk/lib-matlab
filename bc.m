@@ -4,7 +4,7 @@ function bc(varargin)
 % See also the function 'cc' for just copying the figure to the clipboard
 % 
 %
-h = makeFigBalck();
+h = makeFigBlack();
 
 editmenufcn(h, 'EditCopyFigure');
 

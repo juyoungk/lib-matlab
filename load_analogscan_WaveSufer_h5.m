@@ -4,10 +4,12 @@ function [A, times, header] = load_analogscan_WaveSufer_h5(h5_filename)
 %    i) if there is only one sweep, 2-D matrix [Sampling points -by- n]. 
 %           'n' is number of analog channels (e.g. voltage, current, and photodiode) 
 %   ii) More than 2 sweeps? Cell array. 
+%
+%      times - samples times
 
 h5_data = ws.loadDataFile(h5_filename);
 
-% contents of h5
+% Contents of h5
 % - header
 % - sweep_001
 % - sweep_002
