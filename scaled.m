@@ -7,6 +7,6 @@ function scaled = scaled(data)
 a = double(data);
 
 min_subtracted = a - min(a(:));
-scaled = min_subtracted/(max(min_subtracted(:))+0.001);
+scaled = min_subtracted/(max(min_subtracted(:))+0.00001);
 
 end

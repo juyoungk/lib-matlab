@@ -12,7 +12,8 @@ function g = exp_struct_for_h5_files(dirpath, str, varargin)
     if isempty(h5_filenames)
         error('There is no h5 recording files');
     end
-    
+    % valid field name
+    str = strrep(str, '-', '_');
     % routine for h5 recording (by WS) data
     for i=1:numel(h5_filenames)
         g.(str)(i).recording_h5_filename = h5_filenames{i};

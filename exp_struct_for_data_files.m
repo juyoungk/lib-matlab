@@ -12,7 +12,8 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
     if isempty(tif_filenames)
         error('There is no tif files');
     end
-    %
+    % valid field name
+    str = strrep(str, '-', '_');
     
     % routine for tif imaging data
     for i=1:numel(tif_filenames)
@@ -58,10 +59,11 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
             % plot mean images
             hf = figure; set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
-            myshow(ch_mean, 0.05);
+            %myshow(ch_mean, 0.05);
+            imvol(ch_mean, hf);
             t_filename = strrep(tif_filenames{i}, '_', '  ');
-            s_title = sprintf('%s (Ch: %d)', t_filename, h.channelSave(j));
-            title(s_title);
+            s_title = sprintf('%s (Ch: %d) ScanZoom: %.1f', t_filename, h.channelSave(j), h.scanZoomFactor);
+            title(s_title, 'FontSize', 15);
             makeFigBlack(hf);
             saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
         end
