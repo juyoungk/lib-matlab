@@ -57,13 +57,12 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             ch_mean = mean(ch, 3);
             g.(str)(i).AI{h.channelSave(j)} = ch;
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
-            % plot mean images
-            hf = figure; set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
-            %myshow(ch_mean, 0.05);
-            imvol(ch_mean, hf);
+            % title name
             t_filename = strrep(tif_filenames{i}, '_', '  ');
             s_title = sprintf('%s (Ch: %d) ScanZoom: %.1f', t_filename, h.channelSave(j), h.scanZoomFactor);
-            title(s_title, 'FontSize', 15);
+            % plot mean images
+            hf = figure; set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
+            [~, hf] = imvol(ch_mean, hf, 'title', s_title);
             makeFigBlack(hf);
             saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
         end
@@ -87,7 +86,8 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             g.(str)(i).pd_header = header;
             g.(str)(i).pd_srate = srate;
             %
-            figure; set(gcf, 'Position', pos+[pos(3)*n, -pos(4)*(i-1), 0, 0]);
+            pos_plot = [pos(1)+pos(3)*n, pos(2)-pos(4)*(i-1), pos(3), pos(3)*2./3.];
+            figure; set(gcf, 'Position', pos_plot);
                 plot(times,pd); hold on; % it is good to plot pd siganl together
                 % event timestamps
                 pd_threshold = 0.9;
@@ -103,12 +103,16 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             % events info & stimulus info
             g.(str)(i).stimulus.events = ev;
             g.(str)(i).stimulus.n_events = numel(ev);
-            g.(str)(i).stimulus.inter_events = ev(2)-ev(1) %secs
-            g.(str)(i).stimulus.numStimulus = 1;
+            if numel(ev) >2
+                g.(str)(i).stimulus.inter_events = ev(2)-ev(1); %secs
+            else
+                g.(str)(i).stimulus.inter_events = [];
+            end
+            g.(str)(i).stimulus.numStimulus = 1; % Default assumption
             g.(str)(i).stimulus.stim_triggers = cell(1,1);
             g.(str)(i).stimulus.stim_triggers{1} = ev;
         end
-        
+        figure(hf); % Give focus back to one of the image figure.
     end
     
 end

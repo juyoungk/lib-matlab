@@ -1,9 +1,12 @@
-function [J] = imvol(vol, hfig)
+function [J, hfig] = imvol(vol, hfig, varargin)
 % imshow() with interactive navigation 
 % input 'vol' should be image or 3-D matrix
 % keypress -> create new figure handle h from imshow. You can't stroe
 % information in previous h created by imshow.
     
+    p = ParseInput(varargin{:});
+    s_title = p.Results.title;
+
     N = ndims(vol);
     if N > 3
         error('image stack (vol) has too high dims >3');
@@ -20,9 +23,14 @@ function [J] = imvol(vol, hfig)
         hfig = figure();
             hfig.Color = 'none';
             hfig.PaperPositionMode = 'auto';
-            hfig.InvertHardcopy = 'off';
+            hfig.InvertHardcopy = 'off';   
     end
-
+    
+    axes('Position', [0  0  1  0.9524], 'Visible', 'off');
+    %ax1 = axes('Position', [0 0.1 1 0.95], 'Visible', 'off');
+    %ax1 = axes('Position', [0 0.05 1 0.95], 'Visible', 'off');
+    %ax2 = axes('Position', [0.00 0  1 0.1], 'Visible', 'off');
+    
     % Set the callback and pass the surf handle
     %set(fig, 'KeyPressFcn', @(fig, evnt)keypress(h, evnt))
     set(hfig, 'KeyPressFcn', @keypress)
@@ -30,8 +38,9 @@ function [J] = imvol(vol, hfig)
     % Default parameters
     data.i = 1; % index for stack
     data.imax = n_frames;
+    FLAG_txt = true;
  
-    tols = [0, 0.05, 0.1:0.1:0.9, 1:1:9, 10:5:95]; % percentage; tolerance for saturation
+    tols = [0, 0.05, 0.1:0.1:0.9, 1:0.2:2, 2.5:0.5:5, 6:1:11, 12:2:20, 25:5:95]; % percentage; tolerance for saturation
     n_tols = length(tols);
     id_tol = 5; % initial tol = 0.05;
     id_add_lower = 1; % initial tol = 0.05;
@@ -44,15 +53,30 @@ function [J] = imvol(vol, hfig)
             I = comp(vol, data.i);
         end
         
-        lower = min((tols(id_tol) + tols(id_add_lower))*0.01, 1);
         upper = max(1 - tols(id_tol)*0.01, 0);
+        lower = min((tols(id_tol) + tols(id_add_lower))*0.01, upper);
+        
         Tol = [lower upper];
         MinMax = stretchlim(I,Tol);
         J = imadjust(I, MinMax);
-        imshow(J); 
-        str = sprintf('%d/%d low=%.3f upp=%.3f',data.i, data.imax, lower, upper);
-        title(str, 'Color', 'w', 'FontSize',17, 'Position', [cols-length(str)-10, 0]);
-        
+        %axes(ax1); 
+        imshow(J);
+        ax = gca;
+        title(s_title, 'FontSize', 17, 'Color', 'y');
+        % text. where? on the image
+        % advantage of text on the image. automatic clear. 
+        if FLAG_txt
+            str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
+            str2 = sprintf('%d/%d', data.i, data.imax);
+            %title(str, 'Color', 'w', 'FontSize',17, 'Position', [cols-length(str)-10, 0]);
+            
+            % x,y for text. Coordinate for imshow is different from plot
+            text(ax.XLim(1), ax.YLim(end), str1, 'FontSize', 17, 'Color', 'w', ...
+                'VerticalAlignment', 'bottom', 'HorizontalAlignment','left');
+            text(ax.XLim(2), ax.YLim(end), str2, 'FontSize', 17, 'Color', 'w', ...
+                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+        end
+
     end
 
     % Update the display of the surface
@@ -83,8 +107,12 @@ function [J] = imvol(vol, hfig)
             case '2'
                 id_add_lower = min(id_add_lower + 1, n_tols);
 
-            case 'space' % default contrast
-                id_tol = 2;
+            case 't'
+                FLAG_txt = ~FLAG_txt;
+                
+            case 'q' % default contrast
+                id_tol = 5;
+                id_add_lower = 1;
             otherwise
                 return;
         end
@@ -92,5 +120,15 @@ function [J] = imvol(vol, hfig)
         redraw();
     end 
 
+end
 
+function p =  ParseInput(varargin)
+    
+    p  = inputParser;   % Create an instance of the inputParser class.
+    
+    addParamValue(p,'title', []);
+    
+    % Call the parse method of the object to read and validate each argument in the schema:
+    p.parse(varargin{:});
+    
 end
