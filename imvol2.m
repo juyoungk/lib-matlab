@@ -1,23 +1,24 @@
-function [J, param] = imvol(vol, varargin)
+function [hfig] = imvol2(vol, varargin)
 % imshow() with interactive navigation 
 % input 'vol' should be image or 3-D matrix
 % keypress -> create new figure handle h from imshow. You can't stroe
 % information in previous h created by imshow.
 % output:
-%   param: struct for parameters used for image
+%   hfig: contains all data including handle.
     
     p = ParseInput(varargin{:});
-    s_title = p.Results.title;
-    FLAG_txt = p.Results.verbose;
     hfig = p.Results.hfig;
     ax = p.Results.axes;
     %hfig_sync = p.Results.sync;
-    SAVE_png = p.Results.png;
+    g.s_title = p.Results.title;
+    g.FLAG_txt = p.Results.verbose;
+    g.SAVE_png = p.Results.png;
+    g.hfig_merge = p.Results.hfig_merge;
     vol_inputname = inputname(1);
     
     % str of input variable
-    if isempty(s_title)
-        s_title = vol_inputname;
+    if isempty(g.s_title)
+        g.s_title = vol_inputname;
     end
     
     N = ndims(vol);
@@ -26,7 +27,11 @@ function [J, param] = imvol(vol, varargin)
     elseif N < 2
         error('Not image (ndims <2)');
     end
+    % Normalization and get frame numbers
+    vol = scaled(vol);
+    [rows, cols, n_frames] = size(vol);
     
+    % Figure setting
     if ishandle(hfig)
         % if fig handle is given, give focus to the figure.
         figure(hfig);
@@ -45,31 +50,82 @@ function [J, param] = imvol(vol, varargin)
     hfig.InvertHardcopy = 'off';   
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
     
-    % Set the callback on figure
+    % Default parameters
+    g.vol = vol;
+    g.i = 1; % index for stack
+    g.imax = n_frames;
+
+    g.tols = [0, 0.05, 0.1:0.1:0.9, 1:0.2:2, 2.5:0.5:5, 6:1:11, 12:2:20, 25:5:95]; % percentage; tolerance for saturation
+    g.n_tols = length(g.tols);
+    g.id_tol = 5; % initial tol = 0.05;
+    g.id_add_lower = 1; % initial tol = 0.05;
+    
+    % assign data in figure handle
+    hfig.UserData = g;    
+    
+    % Set the callback on figure (,not an axes which is created and refreshed by imshow) 
     %set(fig, 'KeyPressFcn', @(fig, evnt)keypress(h, evnt))
     set(hfig, 'KeyPressFcn', @keypress)
     
-    % Normalization and get frame numbers
-    vol = scaled(vol);
-    [rows, cols, n_frames] = size(vol);
+    % Update the display of the surface
+    redraw(hfig);
     
-    % Default parameters
-    data.i = 1; % index for stack
-    data.imax = n_frames;
+end
 
-    tols = [0, 0.05, 0.1:0.1:0.9, 1:0.2:2, 2.5:0.5:5, 6:1:11, 12:2:20, 25:5:95]; % percentage; tolerance for saturation
-    n_tols = length(tols);
-    id_tol = 5; % initial tol = 0.05;
-    id_add_lower = 1; % initial tol = 0.05;
-    
-    % Nested function definition for easy access to stack 'vol'
-    function redraw()
-        % get focus
+function keypress(hfig, evnt)
+        
+        g = hfig.UserData;
+        
+        switch lower(evnt.Key)
+            case 'rightarrow'
+                g.i = min(g.i + 1, g.imax); 
+            case 'leftarrow'
+                g.i = max(1, g.i - 1);
+            case 'uparrow'
+                g.id_tol = min(g.id_tol + 1, g.n_tols);
+            case 'downarrow'
+                g.id_tol = max(1, g.id_tol - 1); 
+            case '1'
+                g.id_add_lower = max(1, g.id_add_lower - 1); 
+            case '2'
+                g.id_add_lower = min(g.id_add_lower + 1, g.n_tols);
+            case 's'
+                g.SAVE_png = true;
+            case 'v' % verbose output
+                g.FLAG_txt = ~g.FLAG_txt;
+            case 'q' % default contrast
+                g.id_tol = 5;
+                g.id_add_lower = 1;
+            otherwise
+                return;
+        end
+        
+        redraw(hfig);
+        if g.hfig_merge
+            %redraw(g.hfig_merge);
+            % call one of the callback Fcn of merge figure handle.
+            g.hfig_merge.KeyPressFcn(0,0);
+        end
+        hfig.UserData = g;     
+end
+
+
+function redraw(hfig)
+        % get focus to figure
         figure(hfig);
+        ax = findall(gcf, 'Type', 'axes');
+        %
+        g = hfig.UserData;
+        %
+        tols   = g.tols;
+        id_tol = g.id_tol;
+        id_add_lower = g.id_add_lower;
+        %
+        N = ndims(g.vol);
         if N == 2
-            I = vol;
+            I = g.vol;
         else
-            I = comp(vol, data.i);
+            I = comp(g.vol, g.i);
         end
         
         upper = max(1 - tols(id_tol)*0.01, 0);
@@ -82,18 +138,18 @@ function [J, param] = imvol(vol, varargin)
             axes(ax); 
         end
         imshow(J);
-        ax = gca;
-        title(s_title, 'FontSize', 17, 'Color', 'w');
+        %ax = gca;
+        title(g.s_title, 'FontSize', 17, 'Color', 'w');
         % text. where? on the image
         % advantage of text on the image. automatic clear.
-        if SAVE_png
+        if g.SAVE_png
             saveas(hfig, [s_title,'.png']);
-            SAVE_png = false; % save only one time
+            g.SAVE_png = false; % save only one time
         end
         
-        if FLAG_txt
+        if g.FLAG_txt
             str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
-            str2 = sprintf('%d/%d', data.i, data.imax);
+            str2 = sprintf('%d/%d', g.i, g.imax);
             %title(str, 'Color', 'w', 'FontSize',17, 'Position', [cols-length(str)-10, 0]);
             
             % x,y for text. Coordinate for imshow is different from plot
@@ -104,48 +160,9 @@ function [J, param] = imvol(vol, varargin)
         end
         
         % save image parameters
-        param.hfig = hfig;
-        param.Tol = Tol;
-
-        % trigger redraw of merged image?
-        
-    end
-
-    % Update the display of the surface
-    redraw();
-    
-    %
-    function keypress(~, evnt)
-        % step for tolerance or contrast
-        s = 0.1;
-        
-        switch lower(evnt.Key)
-            case 'rightarrow'
-                data.i = min(data.i + 1, data.imax); 
-            case 'leftarrow'
-                data.i = max(1, data.i - 1);
-            case 'uparrow'
-                id_tol = min(id_tol + 1, n_tols);
-            case 'downarrow'
-                id_tol = max(1, id_tol - 1); 
-            case '1'
-                id_add_lower = max(1, id_add_lower - 1); 
-            case '2'
-                id_add_lower = min(id_add_lower + 1, n_tols);
-            case 's'
-                SAVE_png = true;
-            case 'v' % verbose output
-                FLAG_txt = ~FLAG_txt;
-            case 'q' % default contrast
-                id_tol = 5;
-                id_add_lower = 1;
-            otherwise
-                return;
-        end
-
-        redraw();
-    end
+        hfig.UserData = g;
 end
+
 
 function p =  ParseInput(varargin)
     
@@ -153,6 +170,7 @@ function p =  ParseInput(varargin)
     
     addParamValue(p,'title', []);
     addParamValue(p,'hfig', []);
+    addParamValue(p,'hfig_merge', []);
     addParamValue(p,'axes', []);
     %addParamValue(p,'sync', []);
     addParamValue(p,'verbose', true, @(x) islogical(x));

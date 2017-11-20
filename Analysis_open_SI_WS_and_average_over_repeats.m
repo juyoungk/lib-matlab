@@ -9,18 +9,19 @@
      h5_filenames = getfilenames(dirpath, '/*.h5'); h5_filenames{:};
 %% PLot & Figure setting
     iptsetpref('ImshowInitialMagnification','fit');
-    %pos     = get(0, 'DefaultFigurePosition');
+    pos     = get(0, 'DefaultFigurePosition');
     width = 600;
-    pos_new = [10 950 width width*1.05];
+    %pos_new = [10 950 width width*1.05];
+    pos_new = [10 pos(2) width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
+%% Load ScanImage Tif files 
+    ex_str = 'Loc3_stack'; % must start with characters
+    g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
 %% Open h5 WaveSurfer recording files
     dirpath = pwd;
     pos_new = [0 950 1200 900]; set(0, 'DefaultFigurePosition', pos_new);
     ex_str = 'cell3'; %
     g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);   
-%% Load ScanImage Tif files 
-    ex_str = 'Loc1'; % must start with characters
-    g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
 %% (Optional) Stimulus trigger is correct?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;

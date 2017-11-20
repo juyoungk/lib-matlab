@@ -7,7 +7,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
     str_condition = ['/*',str,'*'];
     %
     tif_filenames = getfilenames(dirpath, [str_condition,'.tif'])
-     h5_filenames = getfilenames(dirpath, [str_condition,'.h5'])
+     h5_filenames = getfilenames(dirpath, [str_condition,'.h5']);
     %
     if isempty(tif_filenames)
         error('There is no tif files');
@@ -23,10 +23,11 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         if isempty(h5_filenames)
         %if isempty(h5_filenames{i})
             g.(str)(i).PD_h5_filename = [];
-            disp('No corresponding h5 (e.g. photodiode) file');
+            disp([tif_filenames{i},': No corresponding h5 (e.g. photodiode) file']);
         elseif isempty(h5_filenames{i})
             g.(str)(i).PD_h5_filename = [];
-            disp('No corresponding h5 (e.g. photodiode) file');
+            disp([tif_filenames{i},': No corresponding h5 (e.g. photodiode) file']);
+            %disp('No corresponding h5 (e.g. photodiode) file');
         else
             g.(str)(i).PD_h5_filename = [dirpath,'/',h5_filenames{i}]; 
         end
@@ -59,12 +60,18 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
             % title name
             t_filename = strrep(tif_filenames{i}, '_', '  ');
-            s_title = sprintf('%s (Ch: %d) ScanZoom: %.1f', t_filename, h.channelSave(j), h.scanZoomFactor);
+            s_title = sprintf('%s  (PMT Ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
             % plot mean images
-            hf = figure; set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
-            [~, hf] = imvol(ch_mean, hf, 'title', s_title);
-            makeFigBlack(hf);
-            saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
+            hf = figure; 
+                set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
+                imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
+                %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
+                
+            if contains(str, 'stack')
+                hf = figure; 
+                set(hf, 'Position', pos+[pos(3)*(j-1 +3), -pos(4)*(i-1), 0, 0]); % shift by 3
+                imvol(ch, 'hfig', hf, 'title', ['STACK: ',s_title]);
+            end
         end
         
         % Merge if there are multiple channels.
