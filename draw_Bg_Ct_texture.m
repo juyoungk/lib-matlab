@@ -1,13 +1,19 @@
-function draw_Bg_Ct_texture(s, Bg_tex, Ct_tex, Bg_masktex, D_Bg, D_Ct, Bg_shift, Ct_shift, angleBG)
+function draw_Bg_Ct_texture(ex, Bg_tex, Ct_tex, Bg_masktex, D_Bg, D_Ct, Bg_shift, Ct_shift, angleBG)
 %
 % All units should be as pixels.
 % Bg_tex and Ct_tex are texture indexes created by 'MakeTexture' in Screen.  
-% Shift parameters can be either [x] or [x y]. 
-% s (screen object) should contain those fields: [s.window, s.screenRect]
+% Shift parameters can be either [x] or [x y].
+%
+% inputs: 
+%           s (screen object) should contain those fields: [s.window, s.screenRect]
+%           ex.disp.winptr, ex.disp.winrect
 % Annulus (Ct/Bg) is now commented.
 %
 % Oct 2016 Juyoung Kim
 %
+        %% struct 's' has s.window and s.screenRect field?
+        s.window = ex.disp.winptr;
+        s.screenRect = ex.disp.winrect;
         %%
         angleCenter = 0;
         if nargin < 9

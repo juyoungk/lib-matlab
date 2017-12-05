@@ -1,7 +1,8 @@
 function push_git(varargin)
 
 p = ParseInput(varargin{:});
-commit_msg = p.Results.comment;
+
+commit_msg = input('Commit message? ', 's');
 
 eval('!git add -A')
 eval(['!git commit -am "', commit_msg, '"'])
