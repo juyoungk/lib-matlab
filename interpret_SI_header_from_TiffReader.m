@@ -4,37 +4,41 @@ function h = interpret_SI_header_from_TiffReader(t)
 h = [];
 
 % channel parameters
-h = get_digit_numbers_to_new_field(h, t, 'channelSave');
+h = get_digit_numbers_to_new_field(h, t, 'channelSave', [1]);
 h.n_channelSave = numel(h.channelSave);
 
 % beam parameters
-h = get_float_number_to_new_field(h, t, 'hBeams.powers');
+h = get_float_number_to_new_field(h, t, 'hBeams.powers', []);
 
 % scan parameters
-h = get_float_number_to_new_field(h, t, 'scanZoomFactor');
-h = get_float_number_to_new_field(h, t, 'scanFramePeriod');
-h = get_float_number_to_new_field(h, t, 'scanFrameRate');
-h = get_float_number_to_new_field(h, t, 'linesPerFrame');
-h = get_float_number_to_new_field(h, t, 'pixelsPerLine');
-h = get_float_number_to_new_field(h, t, 'logFramesPerFile');
-h = get_float_number_to_new_field(h, t, 'logAverageFactor');
+h = get_float_number_to_new_field(h, t, 'scanZoomFactor', []);
+h = get_float_number_to_new_field(h, t, 'scanFramePeriod', []);
+h = get_float_number_to_new_field(h, t, 'scanFrameRate', []);
+h = get_float_number_to_new_field(h, t, 'linesPerFrame', []);
+h = get_float_number_to_new_field(h, t, 'pixelsPerLine', []);
+h = get_float_number_to_new_field(h, t, 'logFramesPerFile', []);
+h = get_float_number_to_new_field(h, t, 'logAverageFactor', []);
 
 % stack parameters
-h = get_float_number_to_new_field(h, t, 'framesPerSlice');
-h = get_float_number_to_new_field(h, t, 'numSlices');
-h = get_float_number_to_new_field(h, t, 'stackZStepSize');
-h = get_digit_numbers_to_new_field(h, t, 'zs');
+h = get_float_number_to_new_field(h, t, 'framesPerSlice', []);
+h = get_float_number_to_new_field(h, t, 'numSlices', 1);
+h = get_float_number_to_new_field(h, t, 'stackZStepSize', []);
+h = get_digit_numbers_to_new_field(h, t, 'zs', []);
 
 % Motor parameters
 % SI.hMotors.motorPosition = [-706.04 -3209.32 4519.2]
-h = get_digit_numbers_to_new_field(h, t, 'motorPosition');
+h = get_digit_numbers_to_new_field(h, t, 'motorPosition', []);
 
 end
 
-function h = get_float_number_to_new_field(h, text, str)
+function h = get_float_number_to_new_field(h, text, str, default_value)
 % search 'str' in 'text' file and add the float number as a new field of the struct 'h' 
 
 num = get_float_number_after_str(text, [str,' = ']);
+
+if isempty(num)
+    num = default_value;
+end
 
 % exclude any other characters.
 %str = str(isletter(str));
@@ -45,11 +49,15 @@ h.(str) = num;
 
 end
 
-function h = get_digit_numbers_to_new_field(h, text, str)
+function h = get_digit_numbers_to_new_field(h, text, str, default_value)
 % search 'str' in 'text' file and add the float number as a new field of the struct 'h' 
 
 s = get_line(text, str);
 a = extract_numbers(s);
+
+if isempty(a)
+    a = default_value;
+end
 
 h.(str) = a; 
 
@@ -78,6 +86,13 @@ str_lines = splitlines(text(loc:end));
 str_line = str_lines{1};
 
 a = sscanf(str_line, [str, '%f']);
+
+if isnumeric(a)
+    % do nothing
+else
+    disp(['No property or numeric value for the metadata: ', str]);
+
+end
 
 end
 

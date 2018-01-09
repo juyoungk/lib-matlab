@@ -35,22 +35,35 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         % Tif data loading
         SI_data = ScanImageTiffReader([dirpath,'/',g.(str)(i).tif_filename]);
         h = SI_data.metadata;
-        h = interpret_SI_header_from_TiffReader(h);
+        g.(str)(i).metadata = h;
+        
+        %
+        h   = interpret_SI_header_from_TiffReader(h);
         vol = SI_data.data;      
         
         % AI channel info
         [rows, cols, n_frames] = size(vol);
         n = h.n_channelSave;
+%         if n == 0
+%             n = 1; % default channel number is 1
+%         end
         h.n_frames = n_frames;
         h.n_frames_ch = n_frames/n;
+%         if isempty(h.numSlices) 
+%             h.numSlices = 1;
+%         elseif h.numSlices < 1 
+%             h.numSlices = 1;
+%         end
+        h.n_frames_ch_slice = h.n_frames_ch/h.numSlices;    
         id_ch = mod((1:n_frames)-1, n)+1;
-        
-        g.(str)(i).header = h;
+    
         % analog inputs (Assume max 4 channels)
         n_channels = 4;
         g.(str)(i).AI_chSave = h.channelSave;
         g.(str)(i).AI      = cell(n_channels, 1);
         g.(str)(i).AI_mean = cell(n_channels, 1);
+        g.(str)(i).AI_mean_slice = cell(n_channels, 1);
+        g.(str)(i).header = h;
         
         % de-interleave and plot mean images
         for j=1:n
@@ -67,10 +80,24 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
                 imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
                 %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
                 
-            if contains(str, 'stack')
+            %if contains(str, 'stack')
+            if h.numSlices > 1
+                fprintf('numSlice: %d\n', h.numSlices); % print number of slices 
+                % open the whole stack after averaging frames for a given slice.
                 hf = figure; 
                 set(hf, 'Position', pos+[pos(3)*(j-1 +3), -pos(4)*(i-1), 0, 0]); % shift by 3
-                imvol(ch, 'hfig', hf, 'title', ['STACK: ',s_title]);
+                % resize into 4D for averaging over slices.
+                ch_slice_4d = reshape(ch, rows, cols, h.n_frames_ch_slice, h.numSlices);
+                ch_slice_avg = mean(ch_slice_4d, 3);
+                ch_slice_avg = squeeze(ch_slice_avg);
+                g.(str)(i).AI_mean_slice{h.channelSave(j)} = ch_slice_avg;
+                % stack images
+                if h.channelSave(j) == 4
+                    % skip channel 4 since it is an IR scattering image.
+                    disp('Imshow for Ch 4 stack was skipped. Please inspect separately if you are interested'); 
+                else
+                    imvol(ch_slice_avg, 'hfig', hf, 'title', ['STACK: ',s_title]);
+                end
             end
         end
         

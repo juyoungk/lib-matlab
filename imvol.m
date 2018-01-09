@@ -1,5 +1,6 @@
 function [J, param] = imvol(vol, varargin)
-% imshow() with interactive navigation 
+% imshow() with interactive navigation
+% New figure will be created unless fig or axes handles are not given.
 % input 'vol' should be image or 3-D matrix
 % keypress -> create new figure handle h from imshow. You can't stroe
 % information in previous h created by imshow.
@@ -87,7 +88,7 @@ function [J, param] = imvol(vol, varargin)
         % text. where? on the image
         % advantage of text on the image. automatic clear.
         if SAVE_png
-            saveas(hfig, [s_title,'.png']);
+            saveas(hfig, [s_title,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
             SAVE_png = false; % save only one time
         end
         

@@ -15,7 +15,7 @@
     pos_new = [10 pos(2) width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc3_stack'; % must start with characters
+    ex_str = 'aav'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
 %% Open h5 WaveSurfer recording files
     dirpath = pwd;
