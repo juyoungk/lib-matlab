@@ -49,12 +49,13 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
 %         end
         h.n_frames = n_frames;
         h.n_frames_ch = n_frames/n;
-%         if isempty(h.numSlices) 
-%             h.numSlices = 1;
-%         elseif h.numSlices < 1 
-%             h.numSlices = 1;
-%         end
-        h.n_frames_ch_slice = h.n_frames_ch/h.numSlices;    
+        h.n_frames_ch_slice = h.n_frames_ch/h.numSlices;
+        %if ~isinteger(h.n_frames_ch_slice)
+        %
+            disp(['n_frames_ch = ', num2str(h.n_frames_ch)]);
+            disp(['numSlices = ', num2str(h.numSlices)]);
+            %error('h.n_frames_ch_slice is not an integer'); 
+        
         id_ch = mod((1:n_frames)-1, n)+1;
     
         % analog inputs (Assume max 4 channels)
@@ -125,7 +126,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
                 plot(times,pd); hold on; % it is good to plot pd siganl together
                 % event timestamps
                 pd_threshold = 0.9;
-                min_ev_interval_secs = 2.5;
+                min_ev_interval_secs = 0.4;
                 ev_idx = th_crossing(pd, pd_threshold, min_ev_interval_secs*srate);
 
                 plot(times(ev_idx),pd(ev_idx),'bo');

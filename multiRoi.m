@@ -1,20 +1,37 @@
 function [in_array] = multiRoi(img, varargin)
 % Choose multiple 'Square ROI'
+% Figure should be created in advance if you don't want to mess up other
+% figures.
 %
 % input: 
 %       img - image data (2-D)
-%       
+%       varargin{1} - previous ROI array
 % output: 
 %       in_array  - Array of 2-D logical array
 
-[I, h_image] = myshow(img, 0.5);
+if nargin > 1 
+    in_array = varargin{1};
+    [~, ~, id] = size(in_array); 
+    disp([num2str(id), ' ROIs were given as an input to function multiRoi']);
+    % Check the given ROIs
+    roi_tot = sum(in_array, 3) > 0;
+    I = merge(img, roi_tot);
+    figure; 
+        hfig = gcf;
+        hfig.Color = 'none';
+        hfig.PaperPositionMode = 'auto';
+        hfig.InvertHardcopy = 'off';
+        axes('Position', [0  0  1  0.9524], 'Visible', 'off');
+    imshow(I);
+else
+    in_array = [];
+    id = 0; % current ROI index
+    [I, ~] = myshow(img, 0.5);
+end
 
-in_array = [];
 box_color = 'yellow';
 
-try
-    id = 0; % current ROI index
-    
+try    
     [in, h] = ellipseRoi(img);
     %[in, h] = squareRoi(img);
 
@@ -23,7 +40,7 @@ try
         id = id +1; 
         in_array = cat(3, in_array, in);
         
-        pos = getPosition(h); % rectangular specific function
+        pos = getPosition(h); % handle location. rectangular specific function.
         
         % add ROI Rect & ROI id
         I = insertShape(I,'Rectangle', pos,'linewidth',1,'color',[255 255 0]);
