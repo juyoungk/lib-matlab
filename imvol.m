@@ -63,6 +63,9 @@ function [J, param] = imvol(vol, varargin)
     id_tol = 5; % initial tol = 0.05;
     id_add_lower = 1; % initial tol = 0.05;
     
+    % sensitivity for adaptive binarization
+    sensitivity = 0.25;
+    
     % Nested function definition for easy access to stack 'vol'
     function redraw()
         % get focus
@@ -135,6 +138,13 @@ function [J, param] = imvol(vol, varargin)
                 id_add_lower = min(id_add_lower + 1, n_tols);
             case 's'
                 SAVE_png = true;
+            case 'b' % open binarization figure
+                    pos     = get(0, 'DefaultFigurePosition');
+                    pos_new = [pos(1)+pos(3) pos(2) pos(3) pos(4)];
+                    set(0, 'DefaultFigurePosition', pos_new);
+                [~, hfig_b] = myimbinarize(J);
+                figure(hfig_b);
+                    %set(0, 'DefaultFigurePosition', pos);
             case 'v' % verbose output
                 FLAG_txt = ~FLAG_txt;
             case 'q' % default contrast

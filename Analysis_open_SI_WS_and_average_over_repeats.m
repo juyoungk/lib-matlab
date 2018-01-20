@@ -14,7 +14,7 @@
     pos_new = [10 pos(2) width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'stack_00006'; % must start with characters
+    ex_str = 'Loc1'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
 %% Open h5 WaveSurfer recording files
     dirpath = pwd;
@@ -69,7 +69,6 @@
     roi_array = g.(ex_str)(i_file_for_ROI).roi;
 
 %% (Optional) Add more ROIs?
-%
     roi_array = multiRoi(img_for_ROI, roi_array);
     
 %% (Optioanl) Check whether correct roi array was imported. 

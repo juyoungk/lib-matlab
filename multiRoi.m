@@ -10,7 +10,7 @@ function [in_array] = multiRoi(img, varargin)
 %       in_array  - Array of 2-D logical array
 
 if nargin > 1 
-    in_array = varargin{1};
+    in_array = varargin{1}; 
     [~, ~, id] = size(in_array); 
     disp([num2str(id), ' ROIs were given as an input to function multiRoi']);
     % Check the given ROIs
@@ -59,3 +59,9 @@ catch ME
     %rethrow(ME)
 
 end
+
+% Methods for roi object
+% Excute callback fn whenever Roi location is changed.
+% Method: createMask
+% annotaion('ellipse') then control size and position, then create roi,
+% create mask? 
