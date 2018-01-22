@@ -8,6 +8,7 @@ function [J, param] = imvol(vol, varargin)
 %   param: struct for parameters used for image
     
     p = ParseInput(varargin{:});
+    pos = get(0, 'DefaultFigurePosition');
     s_title = p.Results.title;
     FLAG_txt = p.Results.verbose;
     hfig = p.Results.hfig;
@@ -60,11 +61,9 @@ function [J, param] = imvol(vol, varargin)
 
     tols = [0, 0.05, 0.1:0.1:0.9, 1:0.2:2, 2.5:0.5:5, 6:1:11, 12:2:20, 25:5:95]; % percentage; tolerance for saturation
     n_tols = length(tols);
-    id_tol = 5; % initial tol = 0.05;
-    id_add_lower = 1; % initial tol = 0.05;
-    
-    % sensitivity for adaptive binarization
-    sensitivity = 0.25;
+    id_tol = 12; % initial tol = 0.05;
+    id_add_lower = 1;
+    id_add_upper = 1;
     
     % Nested function definition for easy access to stack 'vol'
     function redraw()
@@ -76,14 +75,14 @@ function [J, param] = imvol(vol, varargin)
             I = comp(vol, data.i);
         end
         
-        upper = max(1 - tols(id_tol)*0.01, 0);
+        upper = max(1 - (tols(id_tol) + tols(id_add_upper))*0.01, 0);
         lower = min((tols(id_tol) + tols(id_add_lower))*0.01, upper);
         
         Tol = [lower upper];
         MinMax = stretchlim(I,Tol);
         J = imadjust(I, MinMax);
         if ~isempty(ax)
-            axes(ax); 
+            axes(ax);    
         end
         imshow(J);
         ax = gca;
@@ -136,15 +135,18 @@ function [J, param] = imvol(vol, varargin)
                 id_add_lower = max(1, id_add_lower - 1); 
             case '2'
                 id_add_lower = min(id_add_lower + 1, n_tols);
+            case '9'
+                id_add_upper = max(1, id_add_upper - 1); 
+            case '0'
+                id_add_upper = min(id_add_upper + 1, n_tols);
             case 's'
                 SAVE_png = true;
             case 'b' % open binarization figure
-                    pos     = get(0, 'DefaultFigurePosition');
-                    pos_new = [pos(1)+pos(3) pos(2) pos(3) pos(4)];
-                    set(0, 'DefaultFigurePosition', pos_new);
-                [~, hfig_b] = myimbinarize(J);
+                pos_new = [pos(1)+pos(3) pos(2) pos(3) pos(4)];
+                hfig_b = myfig(pos_new);
+                myimbinarize(J, 'hfig',hfig_b);
                 figure(hfig_b);
-                    %set(0, 'DefaultFigurePosition', pos);
+
             case 'v' % verbose output
                 FLAG_txt = ~FLAG_txt;
             case 'q' % default contrast
