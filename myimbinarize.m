@@ -58,6 +58,7 @@ function [cc, hfig] = myimbinarize(J, varargin)
 
         if FLAG_remove_small
             bw = bwareaopen(bw, P_connected);
+            
         end
         cc = bwconncomp(bw, 8);
         labeled = labelmatrix(cc);
@@ -70,6 +71,7 @@ function [cc, hfig] = myimbinarize(J, varargin)
         
         if ~FLAG_color
             imshow(bw);
+            %visboundaries(bw,'Color','r');
         else    
             imshow(RGB_label);
         end

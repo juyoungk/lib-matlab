@@ -9,19 +9,20 @@
 %% PLot & Figure setting
     iptsetpref('ImshowInitialMagnification','fit');
     pos     = get(0, 'DefaultFigurePosition');
-    width = 600;
+    width = 845;
     %pos_new = [10 950 width width*1.05];
-    pos_new = [10 pos(2) width width*1.05];
+    pos_new = [210 pos(2) width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc1'; % must start with characters
+    ex_str = 'Loc2'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
+    % save ROI 'cc'?
 %% Open h5 WaveSurfer recording files
     dirpath = pwd;
     pos_new = [0 950 1200 900]; set(0, 'DefaultFigurePosition', pos_new);
     ex_str = 'cell3'; %
     g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);   
-%% (Optional) Stimulus trigger is correct?
+%% (Optional) Events: multiple experiments?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;
     ev = g.(ex_str)(i_experiment).stimulus.events;
@@ -60,7 +61,7 @@
     saveas(gcf, [ex_str,'_exp',num2str(i_file_for_ROI),'_Ch',num2str(ch_save),'_roi.png']);
     save([ex_str,'_exp',num2str(i_file_for_ROI),'_Ch',num2str(ch_save),'_roi'], 'roi_array');
 %% (Optional) Specity ex info for ROI analysis
-    ex_str = 'Loc1';
+    ex_str = 'Loc2';
     i_file_for_ROI = 1;
     ch_save =1; % or array such as [1, 3]
     img_for_ROI = g.(ex_str)(i_ex).AI_mean{ch_save};
@@ -80,18 +81,14 @@
     set(0, 'DefaultFigurePosition', pos_new); 
 %% Given the ROIs, avg response over repeats for all sessions
     i_ex_repeats = [1]; % choose ex id for repeat analysis
+    roi_selected = roi_array(:,:,[1:end]); % You can select a fraction of ROIs.
+    ch_save =1; % or array such as [1, 3]
+    %roi_selected = roi_array(:,:,[1:18,24]); % You can select a fraction of ROIs.
     smoothing_size = 3;
     smoothing_method = 'movmean'; % or 'sgolay'
     n_col_subplot = 3; % raw trace plot
-    %roi_selected = roi_array(:,:,[1:18,24]); % You can select a fraction of ROIs.
-    roi_selected = roi_array(:,:,[1:end]); % You can select a fraction of ROIs.
-    
     
     [~, ~, n_roi] = size(roi_selected);
-    frate = g.(ex_str)(i_ex).header.scanFramePeriod;
-    str_smooth_info = sprintf('smooth size %d (~%.0f ms bin)', smoothing_size, frate*smoothing_size*1000);
-    str_events_info = sprintf('ev interval: %.1fs', interval); 
-    str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
     
     for i_ex = i_ex_repeats
         % Experiment (or recording) parameters
@@ -106,17 +103,24 @@
             f_times = (1:h.n_frames_ch)*ifi; % frame times
             ev = g.(ex_str)(i_ex).stimulus.events;
             interval = g.(ex_str)(i_ex).stimulus.inter_events;
-           
-        % Mean value over ROI
-        roi_mean = roi_avg_output(g.(ex_str)(i_ex).AI, roi_selected); % 2-D cell array: {roi#, ch#}
+            
+        % exp info str    
+        frate = g.(ex_str)(i_ex).header.scanFramePeriod;
+        str_smooth_info = sprintf('smooth size %d (~%.0f ms bin)', smoothing_size, frate*smoothing_size*1000);
+        str_events_info = sprintf('ev interval: %.1fs', interval); 
+        str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
 
-        % Smoothing over time for all channels.
+        % Mean value over ROI
+        %roi_mean = roi_avg_output(g.(ex_str)(i_ex).AI, roi_selected); % 2-D cell array: {roi#, ch#}
+        roi_mean = roi_trace(g.(ex_str)(i_ex).AI, cc); % 2-D cell array: {roi#, ch#}
+
+        % Smoothing (or Model-based inferring..)
         roi_smoothed = cell(1, n_ch);
         for ch = 1:n_ch
             roi_smoothed{ch} = zeros(n_roi, h.n_frames_ch);
             for i = 1:n_roi        
                 if ~isempty(roi_mean{i,ch})
-                    roi_smoothed{ch}(i,:) = smoothdata(roi_mean{i,ch}, smoothing_method, smoothing_size);
+                    roi_smoothed{ch}(i,:) = smoothdata(roi_mean{i, ch}, smoothing_method, smoothing_size);
                 end
             end
         end
@@ -181,33 +185,7 @@
             avg_response = mean(roi_aligned, 3); 
             avg_response = avg_response.';
             x_text = mean(s_times);
-            
-%             figure;
-%             for i_line = 1:n_roi
-%                 y = avg_response(:,i_line);
-%                 plot(s_times, y, 'LineWidth', 1.1); 
-%                 text(x_text, y(floor(end/2)), C{i_line});
-%                 hold on;
-%             end
-%                 xlabel('sec'); ylabel('fluorescence (a.u.)');
-%                 ax = gca; Fontsize = 18;
-%                 ax.XAxis.FontSize = Fontsize;
-%                 ax.YAxis.FontSize = Fontsize;
-%                 ax.XLim = [0 interval];
-%                 %title('Mean responses of ROIs','FontSize',18);
-%                 title(['ROI responses (avg) - ', s_filename, ' ch',num2str(ch_save)], 'FontSize', 17);
-%                 text(ax.XLim(end), ax.YLim(1), ['smoothing: ',num2str(smoothing_size),''], 'FontSize', 14, 'Color', 'k', ...
-%                         'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-%                 % legend              
-%                 %ax_legend = legend(C{1:(end-1)}); ax_legend.FontSize = 12;
-%       
-%             plot([interval/2 interval/2], ax.YLim, '--', 'LineWidth', 1.2, 'Color',0.6*[1 1 1]);
-%             %annotation('textbox',[.8,.8,.3,.3],'String',g.(ex_str)(i_ex).tif_filename,'FitBoxToText','on');
-%             hold off;
-%             %
-%             makeFigBlack;
-%             saveas(gcf, [ex_str,'_ex',num2str(i_ex),'_stim_',num2str(k),'_ROI_mean__smoothging',num2str(smoothing_size),'.png']);
-%             
+              
             % Tiled Figure
             figure('Position', [pos_new(1), pos_new(2), pos_new(3)*2, pos_new(4)*1.5]);
             title(s_filename);
@@ -222,7 +200,7 @@
                     y = mean(y, 2);
                     % variance between raw data?
                     %
-                    %plot(s_times, y, 'LineWidth', 0.2, 'Color', 0.1*[1 1 1]); hold on
+                    plot(s_times, y,'LineWidth', 0.2, 'Color', 0.1*[1 1 1]); hold on
                 % 1. smoothed data
                     y = avg_response(:,rr);
                     plot(s_times, y, 'LineWidth', 1.5, 'Color', [0 0.4470 0.7410]); hold on % default color

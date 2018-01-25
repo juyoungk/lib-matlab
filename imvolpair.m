@@ -1,4 +1,4 @@
-function [J, cc] = imvol(vol, varargin)
+function [J1, cc] = imvolpair(vol1, vol2, varargin)
 % imshow() with interactive navigation for stack and ROI selection
 % New figure will be created unless fig or axes handles are not given.
 % input 'vol' should be image or 3-D matrix
@@ -16,7 +16,6 @@ function [J, cc] = imvol(vol, varargin)
     SAVE_png = p.Results.png;
     FLAG_roi = false;
     FLAG_color_segmentation = false;
-    FLAG_hole_fill_off = false;
     %FLAG_color_segmentation = false;
     vol_inputname = inputname(1);
     
@@ -25,11 +24,17 @@ function [J, cc] = imvol(vol, varargin)
         s_title = vol_inputname;
     end
     
-    N = ndims(vol);
-    if N > 3
-        error('image stack (vol) has too high dims >3');
-    elseif N < 2
-        error('Not image (ndims <2)');
+    N1 = ndims(vol1);
+    N2 = ndims(vol2);
+    if N1 > 3
+        error('image stack (vol1) has too high dims >3');
+    elseif N1 < 2
+        error('vol1: Not image (ndims <2)');
+    end
+    if N2 > 3
+        error('image stack (vol2) has too high dims >3');
+    elseif N2 < 2
+        error('vol2: Not image (ndims <2)');
     end
     
     if ishandle(hfig)
@@ -55,8 +60,9 @@ function [J, cc] = imvol(vol, varargin)
     set(hfig, 'KeyPressFcn', @keypress)
     
     % Normalization and get frame numbers
-    vol = scaled(vol);
-    [rows, cols, n_frames] = size(vol);
+    vol1 = scaled(vol1);
+    vol2 = scaled(vol2);
+    [rows, cols, n_frames] = size(vol1);
     
     % mask variables for ROI removal by user
     mask = false(rows, cols);
@@ -82,33 +88,34 @@ function [J, cc] = imvol(vol, varargin)
     function redraw()
         % get focus
         figure(hfig);
-        if N == 2
-            I = vol;
+        if N1 == 2
+            I1 = vol1;
+            I2 = vol1;
         else
-            I = comp(vol, data.i);
+            I1 = comp(vol1, data.i);
+            I2 = comp(vol2, data.i);
         end
         
         upper = max(1 - (tols(id_tol) + tols(id_add_upper))*0.01, 0);
         lower = min((tols(id_tol) + tols(id_add_lower))*0.01, upper);
         
         Tol = [lower upper];
-        MinMax = stretchlim(I,Tol);
-        J = imadjust(I, MinMax);
+        MinMax = stretchlim(I1,Tol);
+        J1 = imadjust(I1, MinMax);
+        MinMax = stretchlim(I2,Tol);
+        J2 = imadjust(I2, MinMax);
         if ~isempty(ax)
             axes(ax);    
         end
   
         if ~FLAG_roi 
-            imshow(J)
+            imshowpair(J1, J2)
         else 
             % ROI mode
-            bw = imbinarize(J, 'adaptive', 'Sensitivity', sensitivity);
+            bw = imbinarize(J1, 'adaptive', 'Sensitivity', sensitivity);
             bw = bw & (~mask);    % get ROI mask and then subtract it from the image
             bw = bwareaopen(bw, P_connected); % remove small area
             bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
-            if ~FLAG_hole_fill_off
-                bw = imfill(bw, 'hole');
-            end
             cc = bwconncomp(bw, 8);
             % Filled image
             %regionprops(cc, 'FilledImage');
@@ -117,7 +124,7 @@ function [J, cc] = imvol(vol, varargin)
             
             % visualization of computed ROI
             if ~FLAG_color_segmentation
-                imshow(J); 
+                imshow(J1); 
                 hold on
                     % Contour 
                     visboundaries(bw,'Color','r','LineWidth', 0.7); 
@@ -151,7 +158,7 @@ function [J, cc] = imvol(vol, varargin)
         % advantage of text on the image. automatic clear.
             str1 = sprintf('%d/%d', data.i, data.imax);
             str2 = sprintf('low=%.3f upp=%.3f', lower, upper);
-            str3 = sprintf('Sens.=%.2f Pconn.=%.2f. Press ''d'' or ''r'' to remove ROIs', sensitivity, P_connected);
+            str3 = sprintf('Sens.=%.2f Pconn.=%.2f', sensitivity, P_connected);
             %title(str, 'Color', 'w', 'FontSize',17, 'Position', [cols-length(str)-10, 0]);
             
             % x,y for text. Coordinate for imshow is different from plot
@@ -249,10 +256,8 @@ function [J, cc] = imvol(vol, varargin)
                     mask = mask | m;
                     hrect = imrect;
                 end
-            case 'n' % display numbers on ROIs
-            
-            case 'f' % turn off automatic filling (imfill) inside the grain.
-                FLAG_hole_fill_off = ~FLAG_hole_fill_off;
+            case 'n' %display numbers on ROIs
+                
                 
             case 'v' % verbose output
                 FLAG_txt = ~FLAG_txt;
