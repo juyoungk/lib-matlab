@@ -21,7 +21,9 @@
     dirpath = pwd;
     pos_new = [0 950 1200 900]; set(0, 'DefaultFigurePosition', pos_new);
     ex_str = 'cell3'; %
-    g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);   
+    g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);
+%% convert cc to bwmask
+    roi_array = conn_to_bwmask(cc);
 %% (Optional) Events: multiple experiments?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;

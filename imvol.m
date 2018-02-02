@@ -1,10 +1,11 @@
-function [J, cc] = imvol(vol, varargin)
+function [hfig] = imvol(vol, varargin)
 % imshow() with interactive navigation for stack and ROI selection
 % New figure will be created unless fig or axes handles are not given.
 % input 'vol' should be image or 3-D matrix
 
 % output:
-%       cc - ROI output. Struct of connected components. Sorted by ...
+%       hfig - ROI data will be saved in UserData field.
+%               (hfig.UserData.cc)
     
     p = ParseInput(varargin{:});
     pos = get(0, 'DefaultFigurePosition');
@@ -16,7 +17,7 @@ function [J, cc] = imvol(vol, varargin)
     SAVE_png = p.Results.png;
     FLAG_roi = false;
     FLAG_color_segmentation = false;
-    FLAG_hole_fill_off = false;
+    FLAG_hole_fill = true;
     %FLAG_color_segmentation = false;
     vol_inputname = inputname(1);
     
@@ -106,10 +107,10 @@ function [J, cc] = imvol(vol, varargin)
             bw = bw & (~mask);    % get ROI mask and then subtract it from the image
             bw = bwareaopen(bw, P_connected); % remove small area
             bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
-            if ~FLAG_hole_fill_off
+            if FLAG_hole_fill
                 bw = imfill(bw, 'hole');
             end
-            cc = bwconncomp(bw, 8);
+            cc = bwconncomp(bw, 8); % 'cc' is updated inside a local function. 
             % Filled image
             %regionprops(cc, 'FilledImage');
             % filter by ecentriccity?
@@ -135,8 +136,14 @@ function [J, cc] = imvol(vol, varargin)
                 RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
                 imshow(RGB_label);
             end
-            
-            
+            % update 'cc' whenever ROI mode is activated.
+                % figure handle
+                hfig.UserData.cc = cc;
+                % in workspace 
+                v_name = 'cc';
+                assignin('base', v_name, cc);
+                %
+            disp([num2str(cc.NumObjects), ' Objects (ROIs) are selected.']);    
         end
         ax = gca;
         title(s_title, 'FontSize', 17, 'Color', 'w');
@@ -149,21 +156,25 @@ function [J, cc] = imvol(vol, varargin)
         if FLAG_txt
         % text. where? on the image
         % advantage of text on the image. automatic clear.
-            str1 = sprintf('%d/%d', data.i, data.imax);
-            str2 = sprintf('low=%.3f upp=%.3f', lower, upper);
-            str3 = sprintf('Sens.=%.2f Pconn.=%.2f. Press ''d'' or ''r'' to remove ROIs', sensitivity, P_connected);
-            %title(str, 'Color', 'w', 'FontSize',17, 'Position', [cols-length(str)-10, 0]);
+            if FLAG_roi
+                str1 = sprintf('Sens.=%.2f Pconn.=%.2f.', sensitivity, P_connected);
+                str2 = sprintf('Press ''d'' or ''r'' to remove ROIs. ''q'' for default settings');
+                str3 = sprintf('%d/%d', data.i, data.imax);
+            else
+                str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
+                str2 = '''q'' for default contrast. ''SPACE'' for ROI mode.';
+                str3 = sprintf('%d/%d', data.i, data.imax);
+            end
             
             % x,y for text. Coordinate for imshow is different from plot
-            text(ax.XLim(2), ax.YLim(end), str1, 'FontSize', 17, 'Color', 'w', ...
-                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-            text(ax.XLim(1), ax.YLim(end), str2, 'FontSize', 17, 'Color', 'w', ...
+            text(ax.XLim(1), ax.YLim(end), str1, 'FontSize', 17, 'Color', 'w', ...
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','left');
-            if FLAG_roi
-                text((ax.XLim(1)+ax.XLim(end))/2, ax.YLim(end), str3, 'FontSize', 17, 'Color', 'w', ...
+            text(ax.XLim(2), ax.YLim(end), str3, 'FontSize', 17, 'Color', 'w', ...
+                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+            text((ax.XLim(1)+ax.XLim(end))/2, ax.YLim(end), str2, 'FontSize', 17, 'Color', 'w', ...
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
-            end
-        end    
+        end
+        
     end
 
     % Update the display of the surface
@@ -235,14 +246,14 @@ function [J, cc] = imvol(vol, varargin)
             case 'c' % Color map
                 FLAG_color_segmentation = ~FLAG_color_segmentation;
             case 'space' 
-                % ROI mode change
+                % Go back to imshow mode
                 FLAG_roi = ~FLAG_roi;
                 set(hfig, 'KeyPressFcn', @keypress)
-            case 'r' % remove connected components by multiple mouse clicks
+            case 'r' % mask update. remove connected components by multiple mouse clicks
                 [col, row] = getpts;
                 c = [c; col];
                 r = [r; row];
-            case 'd' % 'Drag': remove all components in specified rect ROI.
+            case 'd' % makse update. 'Drag': remove all components in specified rect ROI.
                 hrect = imrect;
                 while ~isempty(hrect)
                     m = createMask(hrect);
@@ -252,7 +263,7 @@ function [J, cc] = imvol(vol, varargin)
             case 'n' % display numbers on ROIs
             
             case 'f' % turn off automatic filling (imfill) inside the grain.
-                FLAG_hole_fill_off = ~FLAG_hole_fill_off;
+                FLAG_hole_fill = ~FLAG_hole_fill;
                 
             case 'v' % verbose output
                 FLAG_txt = ~FLAG_txt;
@@ -266,19 +277,14 @@ function [J, cc] = imvol(vol, varargin)
         end
 
         redraw();
-        uiwait(hfig); % imrect breaks previous uiwait 
+        %%uiwait(hfig); % imrect breaks previous uiwait 
+        
+
+        % update traces?
+        
     end
 
-    uiwait(hfig);
-    % evaluate the output variables after ROI selection
-    if exist('cc') == 1
-        v_name = 'cc';
-        assignin('base', v_name, cc);
-        disp([num2str(cc.NumObjects), ' Objects (ROIs) are selected.']);
-    else
-        cc = [];
-        disp('No roi has been selected.');
-    end
+    %%uiwait(hfig); % how to break uiwait?
     
 end
 
