@@ -9,12 +9,12 @@
 %% PLot & Figure setting
     iptsetpref('ImshowInitialMagnification','fit');
     pos     = get(0, 'DefaultFigurePosition');
-    width = 845;
+    width = 545;
     %pos_new = [10 950 width width*1.05];
-    pos_new = [210 pos(2) width width*1.05];
+    pos_new = [210 500 width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc2'; % must start with characters
+    ex_str = 'Loc2_flash'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
     % save ROI 'cc'?
 %% Open h5 WaveSurfer recording files
@@ -24,6 +24,7 @@
     g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);
 %% convert cc to bwmask
     roi_array = conn_to_bwmask(cc);
+    %average over roi? Use roi_trace with input 'cc' 
 %% (Optional) Events: multiple experiments?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;
@@ -82,7 +83,7 @@
     pos_new = pos_new + [100 -pos_new(4) 0 0];
     set(0, 'DefaultFigurePosition', pos_new); 
 %% Given the ROIs, avg response over repeats for all sessions
-    i_ex_repeats = [1]; % choose ex id for repeat analysis
+    i_ex_repeats = [3]; % choose ex id for repeat analysis
     roi_selected = roi_array(:,:,[1:end]); % You can select a fraction of ROIs.
     ch_save =1; % or array such as [1, 3]
     %roi_selected = roi_array(:,:,[1:18,24]); % You can select a fraction of ROIs.
@@ -148,9 +149,9 @@
                 ax.XAxis.FontSize = Fontsize;
                 ax.YAxis.FontSize = Fontsize;
                 ax.XLim = [0 f_times(end)];
-                ax.XLim = [0 ev(10)];
+                %ax.XLim = [0 ev(10)];
                 %ax.XTickLabel = []; 
-                text(ax.XLim(end), ax.YLim(end), C{rr}, 'FontSize', 12, 'Color', 'k', ...
+                text(ax.XLim(end), ax.YLim(end), C{rr}, 'FontSize', 10, 'Color', 'k', ...
                         'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');
                 for i=1:length(ev)
                     plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
@@ -202,7 +203,7 @@
                     y = mean(y, 2);
                     % variance between raw data?
                     %
-                    plot(s_times, y,'LineWidth', 0.2, 'Color', 0.1*[1 1 1]); hold on
+                    %plot(s_times, y,'LineWidth', 0.2, 'Color', 0.1*[1 1 1]); hold on
                 % 1. smoothed data
                     y = avg_response(:,rr);
                     plot(s_times, y, 'LineWidth', 1.5, 'Color', [0 0.4470 0.7410]); hold on % default color
@@ -213,7 +214,7 @@
                     ax.YAxis.FontSize = Fontsize;
                     ax.XLim = [0 interval];
                     %title(C{rr}); 
-                    text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 12, 'Color', 'k', ...
+                    text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 10, 'Color', 'k', ...
                         'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');
                 % Additional line for On-Off transition.
                 plot([0 0], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);

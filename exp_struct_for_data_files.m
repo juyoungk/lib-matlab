@@ -1,5 +1,8 @@
 function g = exp_struct_for_data_files(dirpath, str, varargin) 
     
+    % field name for time reference (or PD) siganl
+    PD_AI_name = 'photodiode';
+
     p = ParseInput(varargin{:});
     g = p.Results.Exp;
     pos = get(0, 'DefaultFigurePosition');
@@ -112,10 +115,22 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         
         % PD data loading
         if ~isempty(g.(str)(i).PD_h5_filename)
-            [pd, times, header] = load_analogscan_WaveSufer_h5(g.(str)(i).PD_h5_filename);
+            [A, times, header] = load_analogscan_WaveSufer_h5(g.(str)(i).PD_h5_filename);
             srate = header.Acquisition.SampleRate;
-            pd = scaled(pd);
+            
+            AI_CH_Num = numel(header.AIChannelNames);
+            if AI_CH_Num == 1
+                pd = A;
+            else
+                PD_CH = find(strcmp(header.AIChannelNames, PD_AI_name));
+                if numel(PD_CH) > 1
+                    disp(['More than 2 AI channels names ', PD_AI_name, '. First CH is selected for PD.']);
+                    PD_CH = PD_CH(1);
+                end
+                pd = A(:,PD_CH);
+            end 
             %
+            pd = scaled(pd);
             g.(str)(i).pd = pd;
             g.(str)(i).pd_times = times;
             g.(str)(i).pd_header = header;
@@ -126,7 +141,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
                 plot(times,pd); hold on; % it is good to plot pd siganl together
                 % event timestamps
                 pd_threshold = 0.9;
-                min_ev_interval_secs = 0.4;
+                min_ev_interval_secs = 0.3;
                 ev_idx = th_crossing(pd, pd_threshold, min_ev_interval_secs*srate);
 
                 plot(times(ev_idx),pd(ev_idx),'bo');
