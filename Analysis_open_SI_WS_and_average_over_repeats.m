@@ -11,10 +11,10 @@
     pos     = get(0, 'DefaultFigurePosition');
     width = 545;
     %pos_new = [10 950 width width*1.05];
-    pos_new = [210 500 width width*1.05];
+    pos_new = [210 600 width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc2_flash'; % must start with characters
+    ex_str = 'Loc4'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
     % save ROI 'cc'?
 %% Open h5 WaveSurfer recording files
@@ -23,7 +23,6 @@
     ex_str = 'cell3'; %
     g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);
 %% convert cc to bwmask
-    roi_array = conn_to_bwmask(cc);
     %average over roi? Use roi_trace with input 'cc' 
 %% (Optional) Events: multiple experiments?
     % check the trigger events of each stimulus during the recording.
@@ -83,15 +82,15 @@
     pos_new = pos_new + [100 -pos_new(4) 0 0];
     set(0, 'DefaultFigurePosition', pos_new); 
 %% Given the ROIs, avg response over repeats for all sessions
-    i_ex_repeats = [3]; % choose ex id for repeat analysis
-    roi_selected = roi_array(:,:,[1:end]); % You can select a fraction of ROIs.
-    ch_save =1; % or array such as [1, 3]
-    %roi_selected = roi_array(:,:,[1:18,24]); % You can select a fraction of ROIs.
+    ch_save = 3; % or array (e.g. [1, 3])    
+    % 'cc': created whenever ROI is assigned in currnet figure. 
+    n_roi = cc.NumObjects;
+    n_ex = numel(g.(ex_str);
+    i_ex_repeats = 1:n_ex; % choose ex id for repeat analysis
+    % roi_array = conn_to_bwmask(cc);
     smoothing_size = 3;
     smoothing_method = 'movmean'; % or 'sgolay'
     n_col_subplot = 3; % raw trace plot
-    
-    [~, ~, n_roi] = size(roi_selected);
     
     for i_ex = i_ex_repeats
         % Experiment (or recording) parameters
