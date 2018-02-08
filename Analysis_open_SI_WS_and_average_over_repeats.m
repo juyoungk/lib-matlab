@@ -14,7 +14,7 @@
     pos_new = [210 600 width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc4'; % must start with characters
+    ex_str = 'Loc1_moving'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
     % save ROI 'cc'?
 %% Open h5 WaveSurfer recording files
@@ -63,10 +63,11 @@
     saveas(gcf, [ex_str,'_exp',num2str(i_file_for_ROI),'_Ch',num2str(ch_save),'_roi.png']);
     save([ex_str,'_exp',num2str(i_file_for_ROI),'_Ch',num2str(ch_save),'_roi'], 'roi_array');
 %% (Optional) Specity ex info for ROI analysis
-    ex_str = 'Loc2';
-    i_file_for_ROI = 1;
-    ch_save =1; % or array such as [1, 3]
+    ex_str = 'Loc1_moving';
+    ch_save =3; % or array such as [1, 3]
+    i_ex = 1;
     img_for_ROI = g.(ex_str)(i_ex).AI_mean{ch_save};
+    %imvol(img_for_ROI);
 %% (Optioanl) Load ROI array from 'g' or from saved file
     % ex_str = ;
     roi_array = g.(ex_str)(i_file_for_ROI).roi;
@@ -85,10 +86,10 @@
     ch_save = 3; % or array (e.g. [1, 3])    
     % 'cc': created whenever ROI is assigned in currnet figure. 
     n_roi = cc.NumObjects;
-    n_ex = numel(g.(ex_str);
+    n_ex = numel(g.(ex_str));
     i_ex_repeats = 1:n_ex; % choose ex id for repeat analysis
     % roi_array = conn_to_bwmask(cc);
-    smoothing_size = 3;
+    smoothing_size = 2;
     smoothing_method = 'movmean'; % or 'sgolay'
     n_col_subplot = 3; % raw trace plot
     
@@ -129,7 +130,7 @@
           
         % Plot individual traces
         for ch = ch_save
-            figure('Position', [pos_new(1), pos_new(2), pos_new(3)*2.4, pos_new(4)*2]);
+            figure('Position', [pos_new(1), 100, pos_new(3)*2.4, pos_new(4)*2]);
             axes('Position', [0  0  1  0.9524], 'Visible', 'off');
             title(s_filename);
             y = roi_smoothed{ch};
@@ -144,13 +145,13 @@
                 plot(f_times, y(rr,:), 'LineWidth', 1.5); hold on
                 ylabel('a.u.');
                 axis auto;
-                ax = gca; Fontsize = 12;
+                ax = gca; Fontsize = 10;
                 ax.XAxis.FontSize = Fontsize;
                 ax.YAxis.FontSize = Fontsize;
                 ax.XLim = [0 f_times(end)];
                 %ax.XLim = [0 ev(10)];
                 %ax.XTickLabel = []; 
-                text(ax.XLim(end), ax.YLim(end), C{rr}, 'FontSize', 10, 'Color', 'k', ...
+                text(ax.XLim(end), ax.YLim(end), C{rr}, 'FontSize', 8, 'Color', 'k', ...
                         'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');
                 for i=1:length(ev)
                     plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
@@ -168,9 +169,9 @@
             % Text comment on final subplot
             subplot(n_row, n_col_subplot, n_row*n_col_subplot);
             ax = gca; axis off;
-            text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 14, 'Color', 'k', ...
+            text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
                         'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-            text(ax.XLim(end), ax.YLim(1), ['exp: ',s_ex_name], 'FontSize', 14, 'Color', 'k', ...
+            text(ax.XLim(end), ax.YLim(1), ['exp: ',s_ex_name], 'FontSize', 11, 'Color', 'k', ...
                         'VerticalAlignment', 'top', 'HorizontalAlignment','right');
             %makeFigBlack;
             saveas(gcf, [ex_str,'_ex',num2str(i_ex),'_stims_ROI_traces.png']);
@@ -189,35 +190,54 @@
             x_text = mean(s_times);
               
             % Tiled Figure
-            figure('Position', [pos_new(1), pos_new(2), pos_new(3)*2, pos_new(4)*1.5]);
+            figure('Position', [pos_new(1)+50, 150, pos_new(3)*2, pos_new(4)*1.5]);
             title(s_filename);
+            % double times in case for drawing 2 periods
+            s_times = [s_times, s_times + interval];
             for rr = 1:n_roi % loop over ROIs
                 n_row = 4;
-                subplot(n_row, ceil(n_roi/n_row), rr);
+                n_col = ceil(n_roi/n_row);
+                subplot(n_row, n_col, rr);
                
                 % 0. non-smoothed raw data plot
                     y = roi_mean{rr, ch};
-                    [y, s_times] = align_analog_signal_to_events(y, f_times, ev, interval);
+                    [y, x_times] = align_analog_signal_to_events(y, f_times, ev, interval);
                     y = squeeze(y);
                     y = mean(y, 2);
                     % variance between raw data?
                     %
-                    %plot(s_times, y,'LineWidth', 0.2, 'Color', 0.1*[1 1 1]); hold on
+                    %%plot(x_times, y,'LineWidth', 0.2, 'Color', 0.1*[1 1 1]); hold on
                 % 1. smoothed data
                     y = avg_response(:,rr);
+                    y = [y; y];
+                    t_shift = 0.5;
+                    
                     plot(s_times, y, 'LineWidth', 1.5, 'Color', [0 0.4470 0.7410]); hold on % default color
-                    xlabel('sec'); ylabel('a.u.');
-                    axis off;
-                    ax = gca; Fontsize = 12;
+                    %xlabel('sec'); ylabel('a.u.');
+                    axis on;
+                    ax = gca; Fontsize = 10;
                     ax.XAxis.FontSize = Fontsize;
                     ax.YAxis.FontSize = Fontsize;
-                    ax.XLim = [0 interval];
-                    %title(C{rr}); 
-                    text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 10, 'Color', 'k', ...
-                        'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');
+                    if strfind(g.(ex_str)(i_ex).tif_filename, 'flash')
+                        ax.XLim = [0 2*interval];
+                        ax.XTick = 0:(interval/2):(2*interval);
+                    else % moving bar?
+                        ax.XLim = [0 interval];
+                        ax.XTick = [];
+                    end
+                    xtickformat('%.0f');     
+                    text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 9, 'Color', 'k', ...
+                        'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
                 % Additional line for On-Off transition.
                 plot([0 0], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-                plot([interval/2 interval/2], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]); hold off
+                plot([interval, interval], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                plot([interval*0.5, interval*0.5], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                plot([interval*1.5, interval*1.5], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]); hold off
+                
+                % bottom-most subplot: x label
+                if any([rr == n_roi])
+                    xlabel('sec');
+                end
                 
             end
             % Text comment on final subplot
@@ -225,15 +245,14 @@
             ax = gca; axis off;
 %             text(ax.XLim(end), ax.YLim(1), str_events_info, 'FontSize', 14, 'Color', 'k', ...
 %                         'VerticalAlignment', 'bottom', 'HorizontalAlignment','left');
-            text(ax.XLim(end), ax.YLim(1), str_info, 'FontSize', 14, 'Color', 'k', ...
+            text(ax.XLim(end), ax.YLim(1), str_info, 'FontSize', 11, 'Color', 'k', ...
                         'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-            text(ax.XLim(end), ax.YLim(1), ['exp: ',s_ex_name], 'FontSize', 14, 'Color', 'k', ...
+            text(ax.XLim(end), ax.YLim(1), ['exp: ',s_ex_name], 'FontSize', 11, 'Color', 'k', ...
                     'VerticalAlignment', 'top', 'HorizontalAlignment','right');
             %
             saveas(gcf, [ex_str,'_ex',num2str(i_ex),'_stim_',num2str(k),'_ROI_mean__smoothging',num2str(smoothing_size),'_tiled.png']);
         end
     end
-
 %% (optional) Smooth the movie 
     ch_save = 1;
     % smooth the multiframe data?

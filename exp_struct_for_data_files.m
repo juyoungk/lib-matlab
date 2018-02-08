@@ -77,7 +77,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             g.(str)(i).AI_mean{h.channelSave(j)} = ch_mean;
             % title name
             t_filename = strrep(tif_filenames{i}, '_', '  ');
-            s_title = sprintf('%s  (PMT Ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
+            s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
             % plot mean images
             hf = figure; 
                 set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);

@@ -2,7 +2,9 @@ function [hfig] = imvol(vol, varargin)
 % imshow() with interactive navigation for stack and ROI selection
 % New figure will be created unless fig or axes handles are not given.
 % input 'vol' should be image or 3-D matrix
-
+%
+% options:
+%       'roi' - predefined cc structure for ROI mode
 % output:
 %       hfig - ROI data will be saved in UserData field.
 %               (hfig.UserData.cc)
@@ -61,6 +63,7 @@ function [hfig] = imvol(vol, varargin)
     
     % mask variables for ROI removal by user
     mask = false(rows, cols);
+    white = false(rows, cols);
     r = []; c = []; % row, col for selected points by clicks
     
     % Default parameters
@@ -105,6 +108,7 @@ function [hfig] = imvol(vol, varargin)
             % ROI mode
             bw = imbinarize(J, 'adaptive', 'Sensitivity', sensitivity);
             bw = bw & (~mask);    % get ROI mask and then subtract it from the image
+            bw = bw | (white);
             bw = bwareaopen(bw, P_connected); % remove small area
             bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
             if FLAG_hole_fill
@@ -146,10 +150,13 @@ function [hfig] = imvol(vol, varargin)
             disp([num2str(cc.NumObjects), ' Objects (ROIs) are selected.']);    
         end
         ax = gca;
-        title(s_title, 'FontSize', 17, 'Color', 'w');
+        title(s_title, 'FontSize', 15, 'Color', 'w');
         
         if SAVE_png
-            saveas(hfig, [s_title,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
+            filename = strrep(s_title, ' ', '_');
+            filename = strrep(s_title, '(', '_');
+            filename = strrep(s_title, ':', '');
+            saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
             SAVE_png = false; % save only one time
         end   
         
@@ -253,13 +260,21 @@ function [hfig] = imvol(vol, varargin)
                 [col, row] = getpts;
                 c = [c; col];
                 r = [r; row];
-            case 'd' % makse update. 'Drag': remove all components in specified rect ROI.
+            case 'd' % mask update. 'Drag': remove all components in specified rect ROI.
                 hrect = imrect;
                 while ~isempty(hrect)
                     m = createMask(hrect);
                     mask = mask | m;
                     hrect = imrect;
                 end
+            case 'l' % line mask
+                hline = imline;
+                m = createMask(hline);
+                mask = mask | m;                
+            case 'a' % add patch 
+                h_ellip = imellipse;
+                m = createMask(h_ellip);
+                white = white | m;         
             case 'n' % display numbers on ROIs
             
             case 'f' % turn off automatic filling (imfill) inside the grain.
@@ -271,6 +286,9 @@ function [hfig] = imvol(vol, varargin)
             case 'q' % default contrast
                 sensitivity = sensitivity_0;
                 P_connected = P_connected_0;
+                mask = false(rows, cols);
+                white = false(rows, cols);
+                r = []; c = [];
            
             otherwise
                 return;
@@ -295,6 +313,7 @@ function p =  ParseInput(varargin)
     addParamValue(p,'title', []);
     addParamValue(p,'hfig', []);
     addParamValue(p,'axes', []);
+    addParamValue(p,'roi', []);
     %addParamValue(p,'sync', []);
     addParamValue(p,'verbose', true, @(x) islogical(x));
     addParamValue(p,'png', false, @(x) islogical(x));
