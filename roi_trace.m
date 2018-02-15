@@ -1,10 +1,14 @@
 function roi_mean = roi_trace(vol_ch, cc)
 % inputs:
-%       1) multi-frame images (vol image or stack). Channels as cell array.
+%       1) Cell array (Channels). each cell is a multi-frame images (vol image or stack).
 %       2) cc: struct for connected components in binarized image or ROI
 % output:
 %       1) avg_output - (roi_id x channel#) cell array 
-
+    
+    if ~iscell(vol_ch)
+        error('Input to fn:''roi_trace'' should be a cell array');
+    end
+    
     n_ch = numel(vol_ch);
     n_roi = cc.NumObjects;
     

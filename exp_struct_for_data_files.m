@@ -158,8 +158,9 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
             else
                 g.(str)(i).stimulus.inter_events = [];
             end
-            g.(str)(i).stimulus.numStimulus = 1; % Default assumption
-            g.(str)(i).stimulus.stim_triggers = cell(1,1);
+            numStimulus = 1; % Default assumption
+            g.(str)(i).stimulus.numStimulus = numStimulus; 
+            g.(str)(i).stimulus.stim_triggers = cell(1,numStimulus);
             g.(str)(i).stimulus.stim_triggers{1} = ev;
         end
         figure(hf); % Give focus back to one of the image figure.

@@ -1,7 +1,9 @@
 %% Routine for SI Tif (imaging) and WS H5 (pd) data
-%
+% python env
+    setenv('PATH', '/Users/peterfish/Modules/miniconda2/bin:/Users/peterfish/Modules/miniconda2/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/git/bin');
 %% 'g' struct initialization
     g = [];
+    
 %% Run section by section!
     dirpath = pwd;
     tif_filenames = getfilenames(dirpath, '/*.tif'); tif_filenames{:};
@@ -14,7 +16,7 @@
     pos_new = [210 600 width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc1_moving'; % must start with characters
+    ex_str = 'Loc2_flash_center'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
     % save ROI 'cc'?
 %% Open h5 WaveSurfer recording files

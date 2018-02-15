@@ -4,7 +4,8 @@ function [hfig] = imvol(vol, varargin)
 % input 'vol' should be image or 3-D matrix
 %
 % options:
-%       'roi' - predefined cc structure for ROI mode
+%       'roi'    - predefined cc structure for ROI mode
+%       'ex_str' - name string for experiment 
 % output:
 %       hfig - ROI data will be saved in UserData field.
 %               (hfig.UserData.cc)
@@ -154,8 +155,8 @@ function [hfig] = imvol(vol, varargin)
         
         if SAVE_png
             filename = strrep(s_title, ' ', '_');
-            filename = strrep(s_title, '(', '_');
-            filename = strrep(s_title, ':', '');
+            filename = strrep(filename, '(', '_');
+            filename = strrep(filename, ':', '');
             saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
             SAVE_png = false; % save only one time
         end   
@@ -317,6 +318,7 @@ function p =  ParseInput(varargin)
     %addParamValue(p,'sync', []);
     addParamValue(p,'verbose', true, @(x) islogical(x));
     addParamValue(p,'png', false, @(x) islogical(x));
+    addParamValue(p,'ex_str', [], @(x) ischar(x));
     
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});
