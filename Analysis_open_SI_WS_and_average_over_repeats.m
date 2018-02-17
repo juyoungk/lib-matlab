@@ -16,13 +16,13 @@
     pos_new = [210 600 width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'Loc2_flash_center'; % must start with characters
+    ex_str = 'loc1_flash'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
     % save ROI 'cc'?
 %% Open h5 WaveSurfer recording files
     dirpath = pwd;
-    pos_new = [0 950 1200 900]; set(0, 'DefaultFigurePosition', pos_new);
-    ex_str = 'cell3'; %
+    %pos_new = [0 950 1200 900]; set(0, 'DefaultFigurePosition', pos_new);
+    ex_str = 'test'; %
     g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);
 %% convert cc to bwmask
     %average over roi? Use roi_trace with input 'cc' 
@@ -85,11 +85,11 @@
     pos_new = pos_new + [100 -pos_new(4) 0 0];
     set(0, 'DefaultFigurePosition', pos_new); 
 %% Given the ROIs, avg response over repeats for all sessions
-    ch_save = 3; % or array (e.g. [1, 3])    
+    ch_save = 1; % or array (e.g. [1, 3])    
     % 'cc': created whenever ROI is assigned in currnet figure. 
     n_roi = cc.NumObjects;
     n_ex = numel(g.(ex_str));
-    i_ex_repeats = 1:n_ex; % choose ex id for repeat analysis
+    i_ex_repeats = 2; % choose ex id for repeat analysis
     % roi_array = conn_to_bwmask(cc);
     smoothing_size = 2;
     smoothing_method = 'movmean'; % or 'sgolay'

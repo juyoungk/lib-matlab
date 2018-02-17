@@ -23,7 +23,13 @@ function g = exp_struct_for_h5_files(dirpath, str, varargin)
         filename_wo_h5 = str_file(1:str_end-1);
         % Load the data
         [rec, times, header] = load_analogscan_WaveSufer_h5(g.(str)(i).recording_h5_filename);
-        srate = header.Acquisition.SampleRate;
+        if isfield(header, 'AcquisitionSampleRate')
+            srate = header.AcquisitionSampleRate;
+        elseif isfield(header, 'Acquisition')
+            srate = header.Acquisition.SampleRate;
+        else
+            disp('Cannot find appropriate field name for acq rate');
+        end
         % rec can be m x 3 matrix (e.g. Votage, Current and Photodiode)
         % photodiode?
    

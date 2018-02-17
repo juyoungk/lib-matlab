@@ -7,7 +7,8 @@ function move_conex_xyz_stage(src, evt)
     % conversion factor for 285A
     c = 1;
     
-    % ref positions for top (285A) and bottom (CONEX) units.
+    % Check ref positions 
+    % top (285A) and bottom (CONEX) units.
     pos_top_ref = [1.5242e+03 641.9000 -1.1977e+03];% MEA R-side align
     pos_top_ref = [27 10 8.3800e+03]; %MEA R-side 5x zoom align 0215 2018
     pos_bot_ref = [7.228, 12.946, 22.76];           % 0214 2018 4x obj

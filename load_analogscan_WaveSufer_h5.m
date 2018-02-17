@@ -28,7 +28,6 @@ is_sweep = contains(field_names, 'sweep');
 fields_for_sweeps = field_names(is_sweep); % cell array
 n_sweep = numel(fields_for_sweeps);
 
-
 % get the data
 if n_sweep > 1
     A = cell(n_sweep, 1);
@@ -45,7 +44,14 @@ else
     error('No analoscans data in WaveSurfer h5 file');
 end
 
-r_sampling = header.Acquisition.SampleRate;
+if isfield(header, 'AcquisitionSampleRate')
+    r_sampling = header.AcquisitionSampleRate;
+elseif isfield(header, 'Acquisition')
+    r_sampling = header.Acquisition.SampleRate;
+else
+    disp('Cannot find appropriate field name for acq rate');
+end
+
 times = (1:n_sampling)*(1/r_sampling);
 header.n_sweep = n_sweep;
 

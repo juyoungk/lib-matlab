@@ -18,6 +18,8 @@ h = get_float_number_to_new_field(h, t, 'linesPerFrame', []);
 h = get_float_number_to_new_field(h, t, 'pixelsPerLine', []);
 h = get_float_number_to_new_field(h, t, 'logFramesPerFile', []);
 h = get_float_number_to_new_field(h, t, 'logAverageFactor', []);
+h.logFramePeriod = h.scanFramePeriod * h.logAverageFactor;
+h.logFrameRate   = h.scanFrameRate / h.logAverageFactor;
 
 % stack parameters
 h = get_float_number_to_new_field(h, t, 'framesPerSlice', []);
