@@ -16,6 +16,8 @@ function [hfig] = imvol(vol, varargin)
     FLAG_txt = p.Results.verbose;
     hfig = p.Results.hfig;
     ax = p.Results.axes;
+    cc = p.Results.roi;
+    ex_str = p.Results.ex_str;
     %hfig_sync = p.Results.sync;
     SAVE_png = p.Results.png;
     FLAG_roi = false;
@@ -54,6 +56,9 @@ function [hfig] = imvol(vol, varargin)
     hfig.InvertHardcopy = 'off';   
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
     
+    % ex str in UserData
+    hfig.UserData.ex_str = ex_str;
+    
     % Set the callback on figure
     %set(fig, 'KeyPressFcn', @(fig, evnt)keypress(h, evnt))
     set(hfig, 'KeyPressFcn', @keypress)
@@ -78,8 +83,8 @@ function [hfig] = imvol(vol, varargin)
     id_add_upper = 3;
     
     % ROI mode parameters
-    sensitivity_0 = 0.05; % sensitivity for adaptive binarization
-    P_connected_0 = 45; % depending on magnification (zoom) factor
+    sensitivity_0 = 0.02; % sensitivity for adaptive binarization
+    P_connected_0 = 75; % depending on magnification (zoom) factor
     sensitivity = sensitivity_0; 
     P_connected = P_connected_0; 
     
@@ -106,21 +111,28 @@ function [hfig] = imvol(vol, varargin)
         if ~FLAG_roi 
             imshow(J)
         else 
-            % ROI mode
-            bw = imbinarize(J, 'adaptive', 'Sensitivity', sensitivity);
-            bw = bw & (~mask);    % get ROI mask and then subtract it from the image
-            bw = bw | (white);
-            bw = bwareaopen(bw, P_connected); % remove small area
-            bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
-            if FLAG_hole_fill
-                bw = imfill(bw, 'hole');
+            % if cc is given
+            if ~isempty(p.Results.roi)
+                cc = p.Results.roi;
+                bw = conn_to_bwmask(cc);
+                bw = max(bw, [], 3);
+            else
+                % ROI mode
+                bw = imbinarize(J, 'adaptive', 'Sensitivity', sensitivity);
+                bw = bw & (~mask);    % get ROI mask and then subtract it from the image
+                bw = bw | (white);
+                bw = bwareaopen(bw, P_connected); % remove small area
+                bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
+                if FLAG_hole_fill
+                    bw = imfill(bw, 'hole');
+                end
+                cc = bwconncomp(bw, 8); % 'cc' is updated inside a local function. 
+                % Filled image
+                %regionprops(cc, 'FilledImage');
+                % filter by ecentriccity?
+                %s = regionprops(cc, 'Eccentricity');
             end
-            cc = bwconncomp(bw, 8); % 'cc' is updated inside a local function. 
-            % Filled image
-            %regionprops(cc, 'FilledImage');
-            % filter by ecentriccity?
-            %s = regionprops(cc, 'Eccentricity');
-            
+
             % visualization of computed ROI
             if ~FLAG_color_segmentation
                 imshow(J); 
@@ -147,6 +159,8 @@ function [hfig] = imvol(vol, varargin)
                 % in workspace 
                 v_name = 'cc';
                 assignin('base', v_name, cc);
+                assignin('base', 'mask', mask);
+                assignin('base', 'white', white);
                 %
             disp([num2str(cc.NumObjects), ' Objects (ROIs) are selected.']);    
         end
@@ -157,7 +171,11 @@ function [hfig] = imvol(vol, varargin)
             filename = strrep(s_title, ' ', '_');
             filename = strrep(filename, '(', '_');
             filename = strrep(filename, ':', '');
-            saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
+            if ~FLAG_roi
+                saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
+            else
+                saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'_ROI.png']);
+            end
             SAVE_png = false; % save only one time
         end   
         
@@ -183,6 +201,7 @@ function [hfig] = imvol(vol, varargin)
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
         end
         
+        uiresume(hfig);
     end
 
     % Update the display of the surface
@@ -229,7 +248,7 @@ function [hfig] = imvol(vol, varargin)
     % ROI mode
     function keypress_roi(~, evnt)
         % step for tolerance or contrast
-        s = 0.05;
+        s = 0.02;
         s_pixel = 5;
         
         switch lower(evnt.Key)
@@ -266,8 +285,10 @@ function [hfig] = imvol(vol, varargin)
                 while ~isempty(hrect)
                     m = createMask(hrect);
                     mask = mask | m;
+                    redraw();
                     hrect = imrect;
                 end
+                %uiwait(hfig); % imrect breaks previous uiwait
             case 'l' % line mask
                 hline = imline;
                 m = createMask(hline);
@@ -294,17 +315,28 @@ function [hfig] = imvol(vol, varargin)
             otherwise
                 return;
         end
-
-        redraw();
-        %%uiwait(hfig); % imrect breaks previous uiwait 
         
-
+        redraw();
+        
         % update traces?
         
     end
 
-    %%uiwait(hfig); % how to break uiwait?
     
+    
+end
+
+function roi_array = conn_to_bwmask(cc)
+% convert cc to bwmask
+
+roi_array = false([cc.ImageSize, cc.NumObjects]);
+
+for i = 1:cc.NumObjects
+    grain = false(cc.ImageSize);
+    grain(cc.PixelIdxList{i}) = true;
+    roi_array(:,:,i) = grain;
+end
+
 end
 
 function p =  ParseInput(varargin)

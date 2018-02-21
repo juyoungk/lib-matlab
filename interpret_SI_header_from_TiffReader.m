@@ -1,11 +1,14 @@
-function h = interpret_SI_header_from_TiffReader(t)
-
+function h = interpret_SI_header_from_TiffReader(t, size_vol)
+% inputs: 
 %
 h = [];
 
 % channel parameters
 h = get_digit_numbers_to_new_field(h, t, 'channelSave', [1]);
 h.n_channelSave = numel(h.channelSave);
+if h.n_channelSave == 0
+    error('No saved channel? # of channel saved is 0.');
+end
 
 % beam parameters
 h = get_float_number_to_new_field(h, t, 'hBeams.powers', []);
@@ -23,17 +26,31 @@ h.logFrameRate   = h.scanFrameRate / h.logAverageFactor;
 
 % stack parameters
 h = get_float_number_to_new_field(h, t, 'framesPerSlice', []);
-h = get_float_number_to_new_field(h, t, 'numSlices', 1);
+h = get_float_number_to_new_field(h, t, 'numSlices', 1); % not actual slice numbers in stored file
 h = get_float_number_to_new_field(h, t, 'stackZStepSize', []);
 h = get_digit_numbers_to_new_field(h, t, 'zs', []);
+h.logFramesPerSlice = h.framesPerSlice / h.logAverageFactor;
 
-% Motor parameters
+% Motor parameters: need to be updated !!!
 % SI.hMotors.motorPosition = [-706.04 -3209.32 4519.2]
 h = get_digit_numbers_to_new_field(h, t, 'motorPosition', []);
+h = get_digit_numbers_to_new_field(h, t, 'motorPositionTarget', []);
+
+if nargin > 1
+    n_frames = size_vol(3);
+    %
+    h.n_frames = n_frames;
+    h.n_frames_ch = n_frames/h.n_channelSave;
+    h.logNumSlices = floor(h.n_frames_ch / h.logFramesPerSlice);                
+end
+
+
 
 end
 
 function h = get_float_number_to_new_field(h, text, str, default_value)
+% inputs:
+%           h - header struct. Should be predefined. 
 % search 'str' in 'text' file and add the float number as a new field of the struct 'h' 
 
 num = get_float_number_after_str(text, [str,' = ']);

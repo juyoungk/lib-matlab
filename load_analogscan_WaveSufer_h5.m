@@ -51,8 +51,9 @@ elseif isfield(header, 'Acquisition')
 else
     disp('Cannot find appropriate field name for acq rate');
 end
+header.srate = r_sampling;
+header.n_sweep = n_sweep;
 
 times = (1:n_sampling)*(1/r_sampling);
-header.n_sweep = n_sweep;
 
 end

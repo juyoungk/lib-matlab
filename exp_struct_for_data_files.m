@@ -24,7 +24,6 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         
         % PD recording filename
         if isempty(h5_filenames)
-        %if isempty(h5_filenames{i})
             g.(str)(i).PD_h5_filename = [];
             disp([tif_filenames{i},': No corresponding h5 (e.g. photodiode) file']);
         elseif isempty(h5_filenames{i})
@@ -55,8 +54,8 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         h.n_frames_ch_slice = h.n_frames_ch/h.numSlices;
         %if ~isinteger(h.n_frames_ch_slice)
         %
-            disp(['n_frames_ch = ', num2str(h.n_frames_ch)]);
-            disp(['numSlices = ', num2str(h.numSlices)]);
+            %disp(['n_frames_ch = ', num2str(h.n_frames_ch)]);
+            %disp(['numSlices = ', num2str(h.numSlices)]);
             %error('h.n_frames_ch_slice is not an integer'); 
         
         id_ch = mod((1:n_frames)-1, n)+1;
@@ -86,12 +85,18 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
                 
             %if contains(str, 'stack')
             if h.numSlices > 1
-                fprintf('numSlice: %d\n', h.numSlices); % print number of slices 
+                %fprintf('numSlice: %d\n', h.numSlices); % print number of slices 
                 % open the whole stack after averaging frames for a given slice.
                 hf = figure; 
                 set(hf, 'Position', pos+[pos(3)*(j-1 +3), -pos(4)*(i-1), 0, 0]); % shift by 3
+                
+                % Num of slices stored. Select only the complete imaging
+                % acquisition
+                h.logNumSlices = floor(h.n_frames_ch / h.logFramesPerSlice);
+                stack_ch = ch(:,:,1:(h.logFramesPerSlice*h.logNumSlices));
+                
                 % resize into 4D for averaging over slices.
-                ch_slice_4d = reshape(ch, rows, cols, h.n_frames_ch_slice, h.numSlices);
+                ch_slice_4d = reshape(stack_ch, rows, cols, h.logFramesPerSlice, h.logNumSlices);
                 ch_slice_avg = mean(ch_slice_4d, 3);
                 ch_slice_avg = squeeze(ch_slice_avg);
                 g.(str)(i).AI_mean_slice{h.channelSave(j)} = ch_slice_avg;
@@ -116,14 +121,7 @@ function g = exp_struct_for_data_files(dirpath, str, varargin)
         % PD data loading
         if ~isempty(g.(str)(i).PD_h5_filename)
             [A, times, header] = load_analogscan_WaveSufer_h5(g.(str)(i).PD_h5_filename);
-            if isfield(header, 'AcquisitionSampleRate')
-                srate = header.AcquisitionSampleRate;
-            elseif isfield(header, 'Acquisition')
-                srate = header.Acquisition.SampleRate;
-            else
-                disp('Cannot find appropriate field name for acq rate');
-            end
-            
+
             AI_CH_Num = numel(header.AIChannelNames);
             if AI_CH_Num == 1
                 pd = A;

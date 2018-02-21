@@ -2,7 +2,7 @@ function hfig = plot(r)
 % Method of class 'roiData'
 % Create new figure with interactive keyboard navigation over roi#
 
-    hfig = figure('Position', [100 230 1300 650]);
+    hfig = figure('Position', [100 230 1300 840]);
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
     
     cc = r.roi_cc;

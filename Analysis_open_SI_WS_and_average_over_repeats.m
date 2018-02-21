@@ -16,16 +16,20 @@
     pos_new = [210 600 width width*1.05];
     set(0, 'DefaultFigurePosition', pos_new);
 %% Load ScanImage Tif files 
-    ex_str = 'loc1_flash'; % must start with characters
+    ex_str = 'Loc1_flash_center'; % must start with characters
     g = exp_struct_for_data_files(pwd, ex_str, 'Exp', g);
     % save ROI 'cc'?
+    
+%%  
+    
+    
+    
 %% Open h5 WaveSurfer recording files
     dirpath = pwd;
     %pos_new = [0 950 1200 900]; set(0, 'DefaultFigurePosition', pos_new);
     ex_str = 'test'; %
     g = exp_struct_for_h5_files(dirpath, ex_str, 'Exp', g);
-%% convert cc to bwmask
-    %average over roi? Use roi_trace with input 'cc' 
+
 %% (Optional) Events: multiple experiments?
     % check the trigger events of each stimulus during the recording.
     i_experiment = 1;
@@ -104,7 +108,7 @@
         S = sprintf('ROI %d*', 1:n_roi); C = regexp(S, '*', 'split'); % C is cell array.
         h = g.(ex_str)(i_ex).header;
             n_ch = numel(g.(ex_str)(i_ex).AI);
-            ifi = h.scanFramePeriod;
+            ifi = h.logFramePeriod;
             f_times = (1:h.n_frames_ch)*ifi; % frame times
             ev = g.(ex_str)(i_ex).stimulus.events;
             interval = g.(ex_str)(i_ex).stimulus.inter_events;
