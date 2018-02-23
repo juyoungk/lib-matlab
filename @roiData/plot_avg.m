@@ -1,7 +1,9 @@
-function plot_avg(r, id_roi)    
+function plot_avg(r, id_roi, varargin)
+    
     if nargin>1
+        y = r.avg_trace(:,id_roi);
         % plot single roi avg trace
-        plot(r.s_times, r.avg_trace(:,id_roi));
+        plot(r.p_times, r.adjustForPlot(y), varargin{:});
     else
         % No id for ROI: plot all trace
         

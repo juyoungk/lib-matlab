@@ -1,5 +1,5 @@
 classdef gdata < handle
-    % load data for single experiment session.
+    % class for single experiment session.
     % single TIF file or multiple TIFs if there are logged into mutiple
     % files. Confine the filenames using long string.
     % Assumptions for AI channels:
@@ -7,6 +7,7 @@ classdef gdata < handle
     properties
             % File info
             ex_name
+            dirpath
             tif_filename
              h5_filename
             
@@ -14,13 +15,9 @@ classdef gdata < handle
             n_channels = 4; % max channel #
             AI_chSave
             AI
-            AI_mean
+            AI_mean  % mean up to 1000 frames
             header
             metadata % raw text file
-            
-            % ROI analysis result
-            cc
-            roiData
             
             % Recording (pd & e-phys) data [h5 wavesurfer]
             h5_header
@@ -34,183 +31,238 @@ classdef gdata < handle
             pd_trace
             pd_events
             
-            % interpret stimulus events
-            numStimulus
-            stims
-            intervals % if it's not empty, the stim was repeated. Probably good to average.
+            % stimulus events
+            stims      % up to 10 stimulus
+            intervals  % if it's not empty, the stim was repeated. Probably good to average.
+            % roi response data per stimulus
+            rr            
     end
     
-%     properties(Dependent)
-%         numSavedChannel
-%     end
+    properties (AbortSet)
+            numStimulus % and initialize roiDATA objects. Should be initialized at least 1.
+            cc          % ROI connectivity structure
+            roi_channel
+    end   
+
 
     methods
-            % constructor1: str filter for one exp session
-            function g = gdata(ex_str, dirpath)
-                pos = gdata.figure_setting();
-                
-                if nargin > 0
-                    % get filenames
-                    if nargin < 2; dirpath = pwd; end;
-                    [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, ex_str)
-                    
-                    % TIF data import (single or multiple files) 
-                    if numel(tif_filenames) > 1
-                        reply = input('Are they all for single experiment session? Y/N [N]:','s');
-                        if isempty(reply)
-                            reply = 'N';
-                        end
-                    else
-                        % single file case
-                        reply = 'N';
-                    end
+            function set.numStimulus(obj, n)
+                if n <1
+                    error('numStimulus should be 1 or larger');
+                end
+                % (re)-initialize array of roiDATA
+                r(1, n) = roiData;
+                obj.rr = r;
+                obj.numStimulus = n;
+            end
 
-                    if strcmp(reply, 'N') | strcmp(reply, 'n')
-                        % open single TIF file
-                        disp('Select the first file.. Import SI data..');
-                        i = 1;
-                        g.tif_filename = tif_filenames{i};
-                        SI_data = ScanImageTiffReader([dirpath, '/', g.tif_filename]);
-                        g.metadata = SI_data.metadata;
-                        g.ex_name = get_ex_name(g.tif_filename);
-                        % 
-                        vol = SI_data.data; 
-                    else
-                        % open multiple data files
-                        for i = 1:numel(tif_filenames)
-                            
-                        end
+            function set.cc(obj, cc)
+                % channel select
+                if ~isempty(obj.roi_channel)
+                    ch = obj.roi_channel;
+                elseif obj.header.n_channelSave == 1
+                    ch = obj.header.channelSave(1);
+                    disp(['Ch# ',num2str(ch),' is selected for roi analysis']);
+                else    
+                    ch = input(['Imaging PMT channel # (Available: ', num2str(obj.header.channelSave),') ? ']);
+                end
+
+                % compute roiData objects
+                for i=1:obj.numStimulus
+                    obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.header.logFramePeriod, obj.stims{i});
+                end
+                obj.cc = cc;
+                obj.roi_channel = ch;
+            end
+            
+            function set.roi_channel(obj, ch)
+                if ch >0 && ch <=obj.n_channels
+                    obj.roi_channel = ch;
+                else
+                    error('Not available channel number for roi analysis');
+                end
+            end
+
+            function g = gdata(tif_filename, h5_filename)
+            % Construct input type1: single tif and single h5 (including path)
+            % Construct input type2: single str input as filter in current directory
+                pos = gdata.figure_setting();
+
+                if nargin > 0     
+                    % single string input: string filter in current directory.
+                    if nargin == 1 
+                            dirpath = pwd;
+                            ex_str = tif_filename;
+                            [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, ex_str)
+
+                            % TIF data import (single or multiple files) 
+                            if numel(tif_filenames) > 1
+                                reply = input('Are they all for single experiment session? Y/N [N]:','s');
+                                if isempty(reply)
+                                    reply = 'N';
+                                end
+                            else
+                                % single file case
+                                reply = 'N';
+                            end
+
+                            if strcmp(reply, 'N') || strcmp(reply, 'n')
+                                % open single TIF file
+                                disp('Select the first file.. Import SI data..');
+                                i = 1;
+                                tif_filename = [dirpath,'/',tif_filenames{i}]; 
+
+                                if ~isempty(h5_filenames)
+                                    % h5 file exists
+                                    h5_filename = [dirpath,'/',h5_filenames{i}]
+                                else
+                                    h5_filename = [];
+                                end
+
+                            else
+                                % open multiple data files
+                                for i = 1:numel(tif_filenames)
+                                    disp('Multiple Tif files logging. Under construction..Sorry.');
+
+                                end
+                            end                                
                     end
+                    name_tif = strsplit(tif_filename, '/');
+                    name_h5 = strsplit(h5_filename, '/');
+                    g.tif_filename = name_tif{end};
+                    g.h5_filename = name_h5{end};
+                    
+                    % import h5 file
+                    SI_data = ScanImageTiffReader(tif_filename);
+                    g.metadata = SI_data.metadata;
+                    g.ex_name = get_ex_name(g.tif_filename);
+                    %
+                    vol = SI_data.data; 
 
                     % Header file
                     h   = interpret_SI_header_from_TiffReader(g.metadata, size(vol));
                     g.header = h;
-                    
+
                     % AI channel info
                     g.AI_chSave = h.channelSave;
                     g.AI            = cell(g.n_channels, 1);
                     g.AI_mean       = cell(g.n_channels, 1);
                     %g.AI_mean_slice = cell(g.n_channels, 1);
-                            
+
                     % channel de-interleave and save sanpshots
                     n     = h.n_channelSave;
                     id_ch = mod((1:h.n_frames)-1, n)+1;
-                    
-                        % loop over channels
-                        for j=1:n
-                            % de-interleave
-                            ch = vol(:,:,id_ch==j); % de-interleave frames
-                            g.AI{h.channelSave(j)} = ch;
 
-                            % mean of first 1000 frames
-                            [~, ~, ch_frames] = size(ch);
-                            n_snapshot = min(ch_frames, 1000);
-                            ch_mean = mean(ch(:,:,1:n_snapshot), 3);
-                            g.AI_mean{h.channelSave(j)} = ch_mean;
+                    % loop over channels
+                    for j=1:n
+                        % de-interleave
+                        ch = vol(:,:,id_ch==j); % de-interleave frames
+                        g.AI{h.channelSave(j)} = ch;
 
-                            % title name
-                            t_filename = strrep(g.tif_filename, '_', '  ');
-                            s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
-                            
-                            % plot mean images
-                            hf = figure; 
-                                set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
-                                imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
-                                %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
-                        end
+                        % mean of first 1000 frames
+                        [~, ~, ch_frames] = size(ch);
+                        n_snapshot = min(ch_frames, 1000);
+                        ch_mean = mean(ch(:,:,1:n_snapshot), 3);
+                        g.AI_mean{h.channelSave(j)} = ch_mean;
 
-                        % h5 file: PD
-                        % PD recording filename: {i}
-                        if isempty(h5_filenames)
-                            g.h5_filename = [];
-                            disp([tif_filenames{i},': No corresponding h5 (e.g. photodiode) file']);
-                        elseif isempty(h5_filenames{i})
-                            g.h5_filename = [];
-                            disp([tif_filenames{i},': No corresponding h5 (e.g. photodiode) file']);
-                            %disp('No corresponding h5 (e.g. photodiode) file');
+                        % title name
+                        t_filename = strrep(g.tif_filename, '_', '  ');
+                        s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
+
+                        % plot mean images
+                        hf = figure; 
+                            set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
+                            imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
+                            %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
+                    end
+
+                    % h5 file: PD
+                    % PD recording filename: {i}
+                    if isempty(h5_filename)
+                        disp([tif_filename,': No corresponding h5 (e.g. photodiode) file']);
+                        g.numStimulus = 1; % default value for numStimulus.
+                    else
+                        % import data from h5 
+                        [A, times, header] = load_analogscan_WaveSufer_h5(h5_filename);
+                        g.h5_AI = A;
+                        g.h5_times  = times;
+                        g.h5_header = header;
+                        g.h5_srate  = header.srate;
+
+                        % Infer 'photodiode' channel
+                        numAI_Ch = numel(header.AIChannelNames);
+                        if numAI_Ch == 1
+                            pd = A;
                         else
-                            g.h5_filename = [dirpath,'/',h5_filenames{i}];
-                            % import data from h5 
-                            [A, times, header] = load_analogscan_WaveSufer_h5(g.h5_filename);
-                            g.h5_AI = A;
-                            g.h5_times  = times;
-                            g.h5_header = header;
-                            g.h5_srate  = header.srate;
-                            
-                            % Infer 'photodiode' channel
-                            numAI_Ch = numel(header.AIChannelNames);
-                            if numAI_Ch == 1
-                                pd = A;
-                            else
-                                PD_CH = find(strcmp(header.AIChannelNames, g.PD_AI_name));
-                                if numel(PD_CH) > 1
-                                    disp(['More than 2 AI channels names ', g.PD_AI_name, '. First CH is selected for PD.']);
-                                    PD_CH = PD_CH(1);
-                                end
-                                pd = A(:,PD_CH);
-                            end 
-                            %
-                            pd = scaled(pd);
-                            g.pd_trace = pd;
-                            
-                            %
-                            pos_plot = [pos(1)+pos(3)*n, pos(2)-pos(4)*(i-1), pos(3), pos(3)*2./3.];
-                            figure; set(gcf, 'Position', pos_plot);
-                                plot(times,pd); hold on; % it is good to plot pd siganl together
-                                % event timestamps
-                                pd_threshold = 0.9;
-                                ev_idx = th_crossing(pd, pd_threshold, g.min_interval_secs * header.srate);
-                                ev = times(ev_idx);
-                                plot(ev, pd(ev_idx),'bo');
-                                    legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
-                                hold off
-                            g.pd_events = ev;
-                            n_events = numel(ev);
+                            PD_CH = find(strcmp(header.AIChannelNames, g.PD_AI_name));
+                            if numel(PD_CH) > 1
+                                disp(['More than 2 AI channels names ', g.PD_AI_name, '. First CH is selected for PD.']);
+                                PD_CH = PD_CH(1);
+                            end
+                            pd = A(:,PD_CH);
+                        end 
+                        %
+                        pd = scaled(pd);
+                        g.pd_trace = pd;
 
-                            % stimulus cluster for multiple events 
-                            g.stims = cell(1,10);
-                                % count # of odd events
-                                
-                            if n_events <= 1
-                                % one stimulus
-                                g.numStimulus = 1;
-                                g.stims{1} = ev;
-                            elseif n_events < 5
-                                % Regard all different stimulus
-                                for k=1:n_events
-                                    g.stims{k} = ev(k);
-                                end
-                                g.numStimulus = n_events;
-                            else
-                                % n_events >= 5
-                                % detect last event of the stimulus:
-                                % increase in interval by 20 %
-                                ev_interval = ev(2:end) - ev(1:end-1); % indicates the last event for stimulus
-                                i_ev = 1;   % current   ev id
-                                   k = 1;   % current stim id
-                                while i_ev < n_events
-                                    odd_events = find(ev_interval > ev_interval(i_ev)*1.2);
-                                    
-                                    if isempty(odd_events)
-                                        g.stims{k} = ev(i_ev:end);
-                                        g.intervals{k} = ev_interval(i_ev);
-                                        g.numStimulus = k;
-                                        break;
-                                    end
-                                    g.stims{k} = ev(i_ev:odd_events(1));
+                        %
+                        pos_plot = [pos(1)+pos(3)*n, pos(2)-pos(4)*(i-1), pos(3), pos(3)*2./3.];
+                        figure; set(gcf, 'Position', pos_plot);
+                            plot(times,pd); hold on; % it is good to plot pd siganl together
+                            % event timestamps
+                            pd_threshold = 0.9;
+                            ev_idx = th_crossing(pd, pd_threshold, g.min_interval_secs * header.srate);
+                            ev = times(ev_idx);
+                            plot(ev, pd(ev_idx),'bo');
+                                legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
+                            hold off
+                        g.pd_events = ev;
+                        n_events = numel(ev);
+
+                        % stimulus cluster for multiple events 
+                        g.stims = cell(1,10);
+                            % count # of odd events
+
+                        if n_events <= 1
+                            % one stimulus
+                            g.numStimulus = 1;
+                            g.stims{1} = ev;
+                        elseif n_events < 5
+                            % Regard all different stimulus
+                            for k=1:n_events
+                                g.stims{k} = ev(k);
+                            end
+                            g.numStimulus = n_events;
+                        else
+                            % n_events >= 5
+                            % detect last event of the stimulus:
+                            % increase in interval by 20 %
+                            ev_interval = ev(2:end) - ev(1:end-1); % indicates the last event for stimulus
+                            i_ev = 1;   % current   ev id
+                               k = 1;   % current stim id
+                            while i_ev < n_events
+                                odd_events = find(ev_interval > ev_interval(i_ev)*1.2);
+
+                                if isempty(odd_events)
+                                    g.stims{k} = ev(i_ev:end);
                                     g.intervals{k} = ev_interval(i_ev);
                                     g.numStimulus = k;
-                                    k = k + 1;
-                                    i_ev = odd_events(1) + 1;
+                                    break;
                                 end
-
+                                g.stims{k} = ev(i_ev:odd_events(1));
+                                g.intervals{k} = ev_interval(i_ev);
+                                g.numStimulus = k;
+                                k = k + 1;
+                                i_ev = odd_events(1) + 1;
                             end
-                        end    
+                        end
+                    end   % if h5 file exists.
 
+                    end
                 end
-            end
-            
-            % function: viewer
+
+                % function: callbacks
+                % function: roi
         end
         
     methods(Static)

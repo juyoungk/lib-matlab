@@ -1,4 +1,4 @@
-function hfig = plot(r)
+function plot(r)
 % Method of class 'roiData'
 % Create new figure with interactive keyboard navigation over roi#
 
@@ -18,7 +18,7 @@ function hfig = plot(r)
     % roi # and max #
     i_roi = 1;
     imax = r.numRoi;
-    S = sprintf('ROI %d    *', 1:imax); C = regexp(S, '*', 'split'); % C is cell array.
+    S = sprintf('ROI %d  *', 1:imax); C = regexp(S, '*', 'split'); % C is cell array.
     
     % roi rgb image
     labeled = labelmatrix(cc);
@@ -37,7 +37,7 @@ function hfig = plot(r)
             hold on
             ylabel('a.u.');
             axis auto;
-            ax = gca; Fontsize = 10;
+            ax = gca; Fontsize = 15;
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis.FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
@@ -61,9 +61,34 @@ function hfig = plot(r)
             text(ax.XLim(end), ax.YLim(1), str1, 'FontSize', 12, 'Color', 'k', ...
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
             
-
+        % 3. roi avg over multiple repeats
         subplot(2, n_col_subplot, n_col_subplot+2);
             plot_avg(r, i_roi);
+                ax = findobj(gca, 'Type', 'Line');
+                ax.LineWidth = 1.5;
+                ax = gca; 
+                Fontsize = 14;
+                ax.XAxis.FontSize = Fontsize;
+                ax.YAxis.FontSize = Fontsize;
+                
+                axis on;
+                
+                if strfind(r.ex_name, 'flash')
+%                     ax.XLim = [0 2*interval];
+%                     ax.XTick = 0:(interval/2):(2*interval);                  
+%                     % Additional line for On-Off transition.
+%                     plot([0 0], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+%                     plot([interval, interval], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+%                     plot([interval*0.5, interval*0.5], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+%                     plot([interval*1.5, interval*1.5], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]); 
+
+                else
+                    % moving bar or etc.
+                    ax.XLim = [0 interval];
+                    ax.XTick = [];
+                end
+                hold off
+                xtickformat('%.0f');
     end
 
     redraw();

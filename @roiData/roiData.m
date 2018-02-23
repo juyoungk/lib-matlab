@@ -1,6 +1,6 @@
 classdef roiData
-% Extract roi-avg traces from vol data.
-% If times are given, trial-avg will be computed.
+% Given cc, extract roi-avg traces from vol data.
+% If trigger-times are given, trial-avg will be computed.
 %
 % Constructor input: 
 %        vol - 3-D matrix. Single channel. Each channel might have different ROI.
@@ -13,8 +13,7 @@ classdef roiData
         stim_times
         smoothing_method
         smoothing_size
-    % end
-    % properties (Dependent)
+   
         numFrames
         numRoi
         roi_trace
@@ -23,13 +22,18 @@ classdef roiData
         f_times     % frame times
         s_times     % single trial times
         stim_duration % one trial
+        
+        % properties for plot
+        n_cycle
+        s_phase % shift phase
+        p_times % times for plot
     end
     
     methods
         % constructor
         function r = roiData(vol, cc, ex_str, ifi, stim_times)
             % ifi: inter-frame interval or log-frames-period
-            if nargin > 0 % in order to create an array with no arguments.
+            if nargin > 0 % in order to create an array with no input arguments.
                 r.roi_cc = cc;
                 r.numRoi = cc.NumObjects;
                 r.numFrames = size(vol, 3);
@@ -71,18 +75,37 @@ classdef roiData
                     r.s_times   = s_times;
                     r.stim_duration = s_times(end);
                 end
+                
+                % params for plot
+                if strfind(r.ex_name, 'flash')
+                    r.n_cycle = 2;
+                    r.s_phase = 0.25;
+                else
+                    r.n_cycle = 1;
+                    r.s_phase = 0;
+                end
+                r.p_times = r.adjustForPlot(s_times);
             end
         end
         
-        plot_avg(r, id_roi)
-            
-        plot_trace(r, id_roi)
-        
-        h = plot(r)
-        
-        function update_cc
+        % Function for phase shift and multiply
+        function aa = adjustForPlot(obj, y)
+            [row, col] = size(y);
+            if row == 1
+                aa = circshift(y, round( obj.phase * col ) );
+                aa = repmat(aa, [1, obj.n_cycle]);
+            elseif col == 1
+                aa = circshift(y, round( obj.phase * row ) );
+                aa = repmat(aa, [obj.n_cycle, 1]);
+            else
+                error('Trace should be either row or col vector');
+            end
         end
         
-    end % methods
+    end
+    
+    methods(Static)
+
+    end
     
 end % classdef
