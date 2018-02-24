@@ -12,7 +12,7 @@ function move_conex_xyz_stage(src, evt)
     pos_top_ref = [1.5242e+03 641.9000 -1.1977e+03];% MEA R-side align
     pos_top_ref = [27 10 8.3800e+03]; %MEA R-side 5x zoom align 0215 2018
     pos_bot_ref = [7.228, 12.946, 22.76];           % 0214 2018 4x obj
-    z_offset_vstim = 0.150; % [mm]
+    z_offset_vstim = 0.150 + 0.150; % [mm]
     
     % open serial ports
     s1 = conex_serial_init('COM6');

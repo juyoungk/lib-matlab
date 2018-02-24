@@ -92,10 +92,10 @@ classdef roiData
         function aa = adjustForPlot(obj, y)
             [row, col] = size(y);
             if row == 1
-                aa = circshift(y, round( obj.phase * col ) );
+                aa = circshift(y, round( obj.s_phase * col ) );
                 aa = repmat(aa, [1, obj.n_cycle]);
             elseif col == 1
-                aa = circshift(y, round( obj.phase * row ) );
+                aa = circshift(y, round( obj.s_phase * row ) );
                 aa = repmat(aa, [obj.n_cycle, 1]);
             else
                 error('Trace should be either row or col vector');
