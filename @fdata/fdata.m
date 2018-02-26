@@ -3,13 +3,16 @@ classdef fdata < handle
 % Array of gdata objects
 % class for imaging sessions that can share same roi cc structure
     properties
+        FOV_name
         g
-        numImaging
-    end
-    
-    properties (AbortSet)
-        cc          % New cc will trigger to compute roi data for all imaging sessions 
-        roi_channel % Ch number will be automatically shared. 
+        numImaging  % # of imaging sessions under same FOV
+        %
+        cc          % Setting cc will trigger to compute roi data for all imaging sessions
+        numRoi
+        roi_channel % ch number will be automatically shared. 
+        roi_rgb     % roi rgb snapshot
+        %
+        roi_selected 
     end
     % pipieline: ch select -> cc input -> roi data 
     
@@ -17,17 +20,24 @@ classdef fdata < handle
         % constructor
         function obj = fdata(ex_str, dirpath)
            if nargin > 0
+               obj.FOV_name = ex_str;
+               % in case of no dirpath
                if nargin < 2; dirpath = pwd; end;
+               
+               % List of filenames
                [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, ex_str)
                
-               % cluster into ex sessions
+               % cluster into imaging sessions
                n = numel(tif_filenames);
                
                % construct n gdata
                g(1, n) = gdata;
                obj.numImaging = n;
                for i =1:n
-                    g(i) = gdata(tif_filenames{i}, h5_filenames{i});
+                    tif_filename = [dirpath,'/',tif_filenames{i}];
+                    h5_filename = [dirpath,'/',h5_filenames{i}];
+                    %
+                    g(i) = gdata(tif_filename, h5_filename);
                end
                obj.g = g;
            end
@@ -51,6 +61,10 @@ classdef fdata < handle
             for i=1:obj.numImaging
                 obj.g(i).cc = cc;
             end
+            obj.cc = cc;
+            obj.numRoi = cc.NumObjects;
+            obj.roi_rgb = label2rgb(labelmatrix(cc), @parula, 'k', 'shuffle');
+            obj.roi_selected = 1:obj.numRoi;
         end
         
         % roi analysis channel number set function
@@ -61,13 +75,36 @@ classdef fdata < handle
             obj.roi_channel = ch;
         end
         
-            
-        
+        % compare mean images between imaging sessions
+        function imshowpair(obj)
+            for ch = obj.g(1).header.channelSave
+                figure('Position', [100 150 737 774]);
+                hfig.Color = 'none';
+                hfig.PaperPositionMode = 'auto';
+                hfig.InvertHardcopy = 'off';
+                axes('Position', [0  0  1  0.9524], 'Visible', 'off');
+                
+                % loop for non-diagonal subscripts.
+                n = obj.numImaging;
+                m = ones(n) - eye(n);
+                ind_pairs = find(m(:));
+                n_subplots = length(ind_pairs)/2;
+                for kk = n_subplots
+                    if n_subplots ~= 1
+                        subplot(1, n_subplots, kk);
+                    end
+                    k = ind_pairs(kk);
+                    [i, j] = ind2sub([n, n], k);
+                    imshowpair(obj.g(i).AI_mean{ch}, obj.g(j).AI_mean{ch});
+                    title(['session pair: ', num2str(i), ', ', num2str(j)], 'FontSize', 18, 'Color', 'k');
+                end
+            end
+        end
+
     end
     
     
 end
-
 
 
 function [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, str)

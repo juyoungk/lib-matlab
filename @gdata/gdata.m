@@ -34,16 +34,13 @@ classdef gdata < handle
             % stimulus events
             stims      % up to 10 stimulus
             intervals  % if it's not empty, the stim was repeated. Probably good to average.
+            
             % roi response data per stimulus
-            rr            
-    end
-    
-    properties (AbortSet)
             numStimulus % and initialize roiDATA objects. Should be initialized at least 1.
+            rr
             cc          % ROI connectivity structure
             roi_channel
     end   
-
 
     methods
             function set.numStimulus(obj, n)
@@ -66,13 +63,15 @@ classdef gdata < handle
                 else    
                     ch = input(['Imaging PMT channel # (Available: ', num2str(obj.header.channelSave),') ? ']);
                 end
-
-                % compute roiData objects
-                for i=1:obj.numStimulus
-                    obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.header.logFramePeriod, obj.stims{i});
-                end
-                obj.cc = cc;
                 obj.roi_channel = ch;
+                
+                obj.cc = cc;
+                % compute roiData objects
+                if ~isempty(cc)
+                    for i=1:obj.numStimulus
+                        obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.header.logFramePeriod, obj.stims{i});
+                    end
+                end
             end
             
             function set.roi_channel(obj, ch)
@@ -81,6 +80,8 @@ classdef gdata < handle
                 else
                     error('Not available channel number for roi analysis');
                 end
+                % how to recalculate rr for new channel? reassign cc to
+                % obj.cc
             end
 
             function g = gdata(tif_filename, h5_filename)
@@ -114,7 +115,7 @@ classdef gdata < handle
 
                                 if ~isempty(h5_filenames)
                                     % h5 file exists
-                                    h5_filename = [dirpath,'/',h5_filenames{i}]
+                                    h5_filename = [dirpath,'/',h5_filenames{i}];
                                 else
                                     h5_filename = [];
                                 end
@@ -171,7 +172,7 @@ classdef gdata < handle
 
                         % plot mean images
                         hf = figure; 
-                            set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(i-1), 0, 0]);
+                            %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
                             imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
                             %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
                     end
@@ -206,7 +207,7 @@ classdef gdata < handle
                         g.pd_trace = pd;
 
                         %
-                        pos_plot = [pos(1)+pos(3)*n, pos(2)-pos(4)*(i-1), pos(3), pos(3)*2./3.];
+                        pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
                         figure; set(gcf, 'Position', pos_plot);
                             plot(times,pd); hold on; % it is good to plot pd siganl together
                             % event timestamps

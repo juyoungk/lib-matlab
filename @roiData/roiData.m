@@ -10,23 +10,31 @@ classdef roiData
         ex_name
         roi_cc
         ifi         % inter-frame interval of vol (data)
-        stim_times
-        smoothing_method
-        smoothing_size
+        stim_times  % stim trigger events
+        smoothing_method = 'movmean'
+        smoothing_size = 3;
    
         numFrames
         numRoi
         roi_trace
         roi_smoothed
-        avg_trace   % avg over trials: (times x roi#): good for 2-D plot
         f_times     % frame times
-        s_times     % single trial times
-        stim_duration % one trial
+        
+        % avg trace timed at stim_times
+        avg_trace       % avg over trials: (times x roi#): good for 2-D plot
+        s_times         % single trial times
+        stim_duration   % one trial
+        
+        % rf result
+        rf              % cell arrays
+        
+        %
+        roi_selected
         
         % properties for plot
         n_cycle
         s_phase % shift phase
-        p_times % times for plot
+        a_times % times for avg plot
     end
     
     methods
@@ -39,8 +47,6 @@ classdef roiData
                 r.numFrames = size(vol, 3);
                 r.roi_trace    = zeros(r.numFrames, r.numRoi);
                 r.roi_smoothed = zeros(r.numFrames, r.numRoi);
-                r.smoothing_method = 'movmean';
-                r.smoothing_size = 3;
             
                 if nargin > 2
                     r.ex_name = ex_str;
@@ -66,7 +72,8 @@ classdef roiData
                 end
                 
                 % Avg (smoothed) trace over multiple stim repeats
-                if ~isempty(stim_times) & numel(stim_times) >1
+                if ~isempty(stim_times) && numel(stim_times) >4 && ...
+                        isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung'))
                     % Align roi traces to stim_times
                     [roi_aligned, s_times] = align_rows_to_events(r.roi_smoothed, r.f_times, stim_times, r.stim_duration);
 
@@ -84,28 +91,36 @@ classdef roiData
                     r.n_cycle = 1;
                     r.s_phase = 0;
                 end
-                r.p_times = r.adjustForPlot(s_times);
+                r.a_times = r.timesForAvgPlot;
             end
         end
         
         % Function for phase shift and multiply
-        function aa = adjustForPlot(obj, y)
+        function yy = traceForAvgPlot(obj, y)
             [row, col] = size(y);
             if row == 1
-                aa = circshift(y, round( obj.s_phase * col ) );
-                aa = repmat(aa, [1, obj.n_cycle]);
+                yy = circshift(y, round( obj.s_phase * col ) );
+                yy = repmat(yy, [1, obj.n_cycle]);
             elseif col == 1
-                aa = circshift(y, round( obj.s_phase * row ) );
-                aa = repmat(aa, [obj.n_cycle, 1]);
+                yy = circshift(y, round( obj.s_phase * row ) );
+                yy = repmat(yy, [obj.n_cycle, 1]);
             else
                 error('Trace should be either row or col vector');
             end
         end
+ 
+        function tt = timesForAvgPlot(obj)
+            N = length(obj.s_times);
+            % extend times
+            tt = repmat(obj.s_times, [1, obj.n_cycle]);
+            c = meshgrid(0:(obj.n_cycle-1), 1:N);
+            tt = tt + (vec(c).')*obj.s_times(end);
+            % phase shift
+            tt = tt - obj.s_phase * obj.s_times(end);
+        end
         
     end
     
-    methods(Static)
-
-    end
-    
 end % classdef
+
+
