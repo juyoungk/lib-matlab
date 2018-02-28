@@ -17,7 +17,8 @@ fprintf('# of data and time (adjusted) = %d and %d, respectively. Binning compet
 bindata = reshape(bindata, [], 1); % column vector
 
 % sampling rate of the correlation (after binning the recording data)
-fsampling = samplingRate/num_bin;
+%fsampling = samplingRate/num_bin;
+fsampling = bintime(2)-bintime(1);
 % # of frames for maxlag duration
 N_maxcorr = round(maxlag/fsampling);
 % Ignore first N_maxcorr frames for correlation
@@ -69,7 +70,7 @@ function p = ParseInput(varargin)
     % p.addParameter('stimFrameInterval', 0.0333, @(x)x>=0);
     p.addParameter('stimFrameInterval', 0.0300147072065313, @(x)x>=0);
     p.addParameter('samplingRate', 10000, @(x)x>=0);
-    p.addParameter('nBinning', 100, @(x) x>=0 && x<=255);
+    p.addParameter('nBinning', 10, @(x) x>=0 && x<=255);
     
     % 
     p.parse(varargin{:});

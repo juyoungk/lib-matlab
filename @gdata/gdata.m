@@ -16,8 +16,9 @@ classdef gdata < handle
             AI_chSave
             AI
             AI_mean  % mean up to 1000 frames
+            ifi
             header
-            metadata % raw text file
+            metadata % raw header file
             
             % Recording (pd & e-phys) data [h5 wavesurfer]
             h5_header
@@ -26,13 +27,16 @@ classdef gdata < handle
             h5_times
             
             % pd events info
-            PD_AI_name = 'photodiode';
-            min_interval_secs = 0.2;
+            pd_AI_name = 'photodiode';
+            pd_threshold = 0.8;
+            min_interval_secs = 0.5;
             pd_trace
             pd_events
             
             % stimulus events
-            stims      % up to 10 stimulus
+            stim_fliptimes  % trigger events or fliptimes. up to 10 differnet cell arrays
+            stim_whitenoise        % whitenoise stim pattern
+            stims      % stim event times 
             intervals  % if it's not empty, the stim was repeated. Probably good to average.
             
             % roi response data per stimulus
@@ -143,6 +147,7 @@ classdef gdata < handle
                     % Header file
                     h   = interpret_SI_header_from_TiffReader(g.metadata, size(vol));
                     g.header = h;
+                    g.ifi = g.header.logFramePeriod;
 
                     % AI channel info
                     g.AI_chSave = h.channelSave;
@@ -195,9 +200,9 @@ classdef gdata < handle
                         if numAI_Ch == 1
                             pd = A;
                         else
-                            PD_CH = find(strcmp(header.AIChannelNames, g.PD_AI_name));
+                            PD_CH = find(strcmp(header.AIChannelNames, g.pd_AI_name));
                             if numel(PD_CH) > 1
-                                disp(['More than 2 AI channels names ', g.PD_AI_name, '. First CH is selected for PD.']);
+                                disp(['More than 2 AI channels names ', g.pd_AI_name, '. First CH is selected for PD.']);
                                 PD_CH = PD_CH(1);
                             end
                             pd = A(:,PD_CH);
@@ -211,8 +216,7 @@ classdef gdata < handle
                         figure; set(gcf, 'Position', pos_plot);
                             plot(times,pd); hold on; % it is good to plot pd siganl together
                             % event timestamps
-                            pd_threshold = 0.9;
-                            ev_idx = th_crossing(pd, pd_threshold, g.min_interval_secs * header.srate);
+                            ev_idx = th_crossing(pd, g.pd_threshold, g.min_interval_secs * header.srate);
                             ev = times(ev_idx);
                             plot(ev, pd(ev_idx),'bo');
                                 legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
@@ -226,8 +230,8 @@ classdef gdata < handle
 
                         if n_events <= 1
                             % one stimulus
-                            g.numStimulus = 1;
                             g.stims{1} = ev;
+                            g.numStimulus = 1;
                         elseif n_events < 5
                             % Regard all different stimulus
                             for k=1:n_events
@@ -240,22 +244,26 @@ classdef gdata < handle
                             % increase in interval by 20 %
                             ev_interval = ev(2:end) - ev(1:end-1); % indicates the last event for stimulus
                             i_ev = 1;   % current   ev id
-                               k = 1;   % current stim id
+                               k = 0;   % current stim id
                             while i_ev < n_events
-                                odd_events = find(ev_interval > ev_interval(i_ev)*1.2);
+                                % new stim id
+                                %i_ev;
+                                k = k + 1;
+                                % identify the next odd event
+                                % relative index for next odd event
+                                odd_events = find(ev_interval(i_ev:end) > ev_interval(i_ev)*1.2);
 
                                 if isempty(odd_events)
                                     g.stims{k} = ev(i_ev:end);
                                     g.intervals{k} = ev_interval(i_ev);
-                                    g.numStimulus = k;
                                     break;
                                 end
-                                g.stims{k} = ev(i_ev:odd_events(1));
+                                t_ev = i_ev + odd_events(1) - 1;
+                                g.stims{k} = ev(i_ev:t_ev);
                                 g.intervals{k} = ev_interval(i_ev);
-                                g.numStimulus = k;
-                                k = k + 1;
-                                i_ev = odd_events(1) + 1;
+                                i_ev = t_ev + 1;
                             end
+                            g.numStimulus = k;
                         end
                     end   % if h5 file exists.
 

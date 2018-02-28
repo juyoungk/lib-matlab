@@ -1,12 +1,12 @@
-function ax = plot_avg(r, id_roi, varargin)
+function ax = plot_avg_fil(r, id_roi, varargin)
     
     if nargin>1 && numel(id_roi) == 1
-        if isempty(r.avg_trace)
+        if isempty(r.avg_trace_fil)
             ax = []
             return;
         end
         % plot single roi avg trace
-        y = r.avg_trace(:,id_roi);
+        y = r.avg_trace_fil(:,id_roi);
         y = r.traceForAvgPlot(y);
         duration = r.s_times(end);
         
@@ -42,12 +42,11 @@ function ax = plot_avg(r, id_roi, varargin)
         str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
                 
         % subplot params
-        n_row = 8;
-        n_col = 10; % limit num of subplots by fixing n_col
+        n_row = 7;
+        n_col = 9; % limit num of subplots by fixing n_col
         % Figure params
-        n_cells_per_fig = 75;
+        n_cells_per_fig = 60;
         
-        %        
         if nargin < 2
             roi_array = 1:r.numRoi; % loop over all rois
         else
@@ -72,7 +71,7 @@ function ax = plot_avg(r, id_roi, varargin)
                     subplot(n_row, n_col, i);
                     rr = roi_array(k);
                     % plot for roi# rr
-                    ax = r.plot_avg(rr);
+                    ax = r.plot_avg_fil(rr);
                     
                     text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 9, 'Color', 'k', ...
                         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
@@ -84,7 +83,7 @@ function ax = plot_avg(r, id_roi, varargin)
                     % increase roi id
                     k = k + 1;
             end
-            
+           
             % Text comment on final subplot
             subplot(n_row, n_col, n_row*n_col);
             ax = gca; axis off;

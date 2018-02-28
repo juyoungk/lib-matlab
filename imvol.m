@@ -288,11 +288,14 @@ function [hfig] = imvol(vol, varargin)
                     redraw();
                     hrect = imrect;
                 end
-                %uiwait(hfig); % imrect breaks previous uiwait
             case 'l' % line mask
                 hline = imline;
-                m = createMask(hline);
-                mask = mask | m;                
+                while ~isempty(hline)
+                    m = createMask(hline);
+                    mask = mask | m;
+                    redraw();
+                    hline = imline;
+                end
             case 'a' % add patch 
                 h_ellip = imellipse;
                 m = createMask(h_ellip);

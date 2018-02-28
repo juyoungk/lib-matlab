@@ -20,7 +20,7 @@ classdef fdata < handle
         % constructor
         function obj = fdata(ex_str, dirpath)
            if nargin > 0
-               obj.FOV_name = ex_str;
+               obj.FOV_name = get_ex_name(ex_str);
                % in case of no dirpath
                if nargin < 2; dirpath = pwd; end;
                
@@ -89,14 +89,22 @@ classdef fdata < handle
                 m = ones(n) - eye(n);
                 ind_pairs = find(m(:));
                 n_subplots = length(ind_pairs)/2;
-                for kk = n_subplots
-                    if n_subplots ~= 1
-                        subplot(1, n_subplots, kk);
-                    end
+                i_plot =1;
+                kk = 1;
+                while kk <= length(ind_pairs)
                     k = ind_pairs(kk);
                     [i, j] = ind2sub([n, n], k);
-                    imshowpair(obj.g(i).AI_mean{ch}, obj.g(j).AI_mean{ch});
-                    title(['session pair: ', num2str(i), ', ', num2str(j)], 'FontSize', 18, 'Color', 'k');
+                    if i >= j 
+                        % do nothing
+                    else
+                        if n_subplots ~= 1
+                            subplot(1, n_subplots, i_plot);
+                            i_plot = i_plot +1;
+                        end
+                        imshowpair(obj.g(i).AI_mean{ch}, obj.g(j).AI_mean{ch});
+                        title(['session pair: ', num2str(i), ', ', num2str(j)], 'FontSize', 18, 'Color', 'k');
+                    end
+                    kk = kk+1;
                 end
             end
         end
