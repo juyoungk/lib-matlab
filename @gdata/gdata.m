@@ -47,6 +47,16 @@ classdef gdata < handle
     end   
 
     methods
+            function show(g, ch)
+                if nargin > 1
+                    imvol(g.AI_mean{ch});
+                else
+                    for ch=1:obj.header.channelSave
+                        imvol(g.AI_mean{ch});
+                    end
+                end
+            end
+        
             function set.numStimulus(obj, n)
                 if n <1
                     error('numStimulus should be 1 or larger');
@@ -128,14 +138,11 @@ classdef gdata < handle
                                 % open multiple data files
                                 for i = 1:numel(tif_filenames)
                                     disp('Multiple Tif files logging. Under construction..Sorry.');
-
                                 end
                             end                                
                     end
                     name_tif = strsplit(tif_filename, '/');
-                    name_h5 = strsplit(h5_filename, '/');
                     g.tif_filename = name_tif{end};
-                    g.h5_filename = name_h5{end};
                     
                     % import h5 file
                     SI_data = ScanImageTiffReader(tif_filename);
@@ -194,6 +201,8 @@ classdef gdata < handle
                         g.h5_times  = times;
                         g.h5_header = header;
                         g.h5_srate  = header.srate;
+                        name_h5 = strsplit(h5_filename, '/');
+                        g.h5_filename = name_h5{end};
 
                         % Infer 'photodiode' channel
                         numAI_Ch = numel(header.AIChannelNames);

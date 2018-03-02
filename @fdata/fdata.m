@@ -28,14 +28,19 @@ classdef fdata < handle
                [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, ex_str)
                
                % cluster into imaging sessions
-               n = numel(tif_filenames);
+               numTifFiles = numel(tif_filenames);
+               numh5Files = numel(h5_filenames);
                
                % construct n gdata
-               g(1, n) = gdata;
-               obj.numImaging = n;
-               for i =1:n
+               g(1, numTifFiles) = gdata;
+               obj.numImaging = numTifFiles;
+               for i =1:numTifFiles
                     tif_filename = [dirpath,'/',tif_filenames{i}];
-                    h5_filename = [dirpath,'/',h5_filenames{i}];
+                    if i <=numh5Files
+                        h5_filename = [dirpath,'/',h5_filenames{i}];
+                    else
+                        h5_filename = [];
+                    end
                     %
                     g(i) = gdata(tif_filename, h5_filename);
                end
@@ -76,37 +81,46 @@ classdef fdata < handle
         end
         
         % compare mean images between imaging sessions
-        function imshowpair(obj)
-            for ch = obj.g(1).header.channelSave
-                figure('Position', [100 150 737 774]);
-                hfig.Color = 'none';
-                hfig.PaperPositionMode = 'auto';
-                hfig.InvertHardcopy = 'off';
-                axes('Position', [0  0  1  0.9524], 'Visible', 'off');
-                
-                % loop for non-diagonal subscripts.
-                n = obj.numImaging;
-                m = ones(n) - eye(n);
-                ind_pairs = find(m(:));
-                n_subplots = length(ind_pairs)/2;
-                i_plot =1;
-                kk = 1;
-                while kk <= length(ind_pairs)
-                    k = ind_pairs(kk);
-                    [i, j] = ind2sub([n, n], k);
-                    if i >= j 
-                        % do nothing
-                    else
-                        if n_subplots ~= 1
-                            subplot(1, n_subplots, i_plot);
-                            i_plot = i_plot +1;
+        function imshowpair(obj, s1, s2)
+            
+                for ch = obj.g(1).header.channelSave
+                    figure('Position', [100 150 737 774]);
+                    hfig.Color = 'none';
+                    hfig.PaperPositionMode = 'auto';
+                    hfig.InvertHardcopy = 'off';
+                    axes('Position', [0  0  1  0.9524], 'Visible', 'off');
+                    
+                    if nargin >1
+                        imshowpair(obj.g(s1).AI_mean{ch}, obj.g(s2).AI_mean{ch});
+                        title(['session pair: ', num2str(s1), ', ', num2str(s2)], 'FontSize', 18, 'Color', 'k');
+                    else 
+                        
+                        % loop for non-diagonal subscripts.
+                        n = obj.numImaging;
+                        m = ones(n) - eye(n);
+                        ind_pairs = find(m(:));
+                        n_subplots = length(ind_pairs)/2;
+                        i_plot =1;
+                        kk = 1;
+                        while kk <= length(ind_pairs)
+                            k = ind_pairs(kk);
+                            [i, j] = ind2sub([n, n], k);
+                            if i >= j 
+                                % do nothing
+                            else
+                                if n_subplots > 1 && n_subplots < 4
+                                    subplot(1, n_subplots, i_plot);
+                                elseif n_subplots >= 4
+                                    subplot(2, ceil(n_subplots/2.), i_plot);
+                                end
+                                imshowpair(obj.g(i).AI_mean{ch}, obj.g(j).AI_mean{ch});
+                                title(['session pair: ', num2str(i), ', ', num2str(j)], 'FontSize', 18, 'Color', 'k');
+                                i_plot = i_plot +1;
+                            end
+                            kk = kk+1;
                         end
-                        imshowpair(obj.g(i).AI_mean{ch}, obj.g(j).AI_mean{ch});
-                        title(['session pair: ', num2str(i), ', ', num2str(j)], 'FontSize', 18, 'Color', 'k');
                     end
-                    kk = kk+1;
-                end
-            end
+                end  
         end
 
     end
