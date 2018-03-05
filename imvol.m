@@ -18,8 +18,10 @@ function [hfig] = imvol(vol, varargin)
     ax = p.Results.axes;
     cc = p.Results.roi;
     ex_str = p.Results.ex_str;
+    zoom = p.Results.scanZoom;
     %hfig_sync = p.Results.sync;
     SAVE_png = p.Results.png;
+    FLAG_scale_bar = true;
     FLAG_roi = false;
     FLAG_color_segmentation = false;
     FLAG_hole_fill = true;
@@ -107,7 +109,8 @@ function [hfig] = imvol(vol, varargin)
         if ~isempty(ax)
             axes(ax);    
         end
-  
+        
+        % draw image
         if ~FLAG_roi 
             imshow(J)
         else 
@@ -166,6 +169,14 @@ function [hfig] = imvol(vol, varargin)
         end
         ax = gca;
         title(s_title, 'FontSize', 15, 'Color', 'w');
+        
+        % scale bar
+        if FLAG_scale_bar && ~isempty(zoom)
+%             hold on
+%             n_pixels =  
+%             
+%             line( [100 200], round(0.85*ax.YLim(end)), 'Color', 'w', 'LineWidth', 4);
+        end
         
         if SAVE_png
             filename = strrep(s_title, ' ', '_');
@@ -229,6 +240,8 @@ function [hfig] = imvol(vol, varargin)
                 id_add_upper = min(id_add_upper + 1, n_tols);
             case 's'
                 SAVE_png = true;
+            case 'b'
+                FLAG_scale_bar = ~FLAG_scale_bar;
             case 'space' % ROI mode switch
                 FLAG_roi = ~FLAG_roi;
                 set(hfig, 'KeyPressFcn', @keypress_roi)
@@ -354,6 +367,7 @@ function p =  ParseInput(varargin)
     addParamValue(p,'verbose', true, @(x) islogical(x));
     addParamValue(p,'png', false, @(x) islogical(x));
     addParamValue(p,'ex_str', [], @(x) ischar(x));
+    addParamValue(p,'scanZoom', [], @(x) isnumeric(x));
     
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});

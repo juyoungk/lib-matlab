@@ -47,11 +47,16 @@ classdef gdata < handle
     end   
 
     methods
+            function display_scalebar(g)
+                mag = h.scanZoomFactor;
+                
+            end
+
             function show(g, ch)
                 if nargin > 1
                     imvol(g.AI_mean{ch});
                 else
-                    for ch=1:obj.header.channelSave
+                    for ch=g.header.channelSave
                         imvol(g.AI_mean{ch});
                     end
                 end
@@ -186,7 +191,11 @@ classdef gdata < handle
                         hf = figure; 
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
                             imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
-                            %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
+                                %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
+                            % scale bar display
+                            %display_scalebar(mag)
+                            %line([100 200],[100 100], 'Color', 'r', 'LineWidth', 3)
+                            
                     end
 
                     % h5 file: PD
