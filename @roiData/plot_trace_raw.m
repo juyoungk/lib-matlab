@@ -1,15 +1,15 @@
-function ax = plot_raw(r, id_roi)
+function ax = plot_trace_raw(r, id_roi)
 % plot roi_trace & trend
 
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
         plot(r.f_times, r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
         plot(r.f_times, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
-        title('raw trace (PMT Background substracted)');
-        legend('raw trace (bg substracted)', 'F (trend)');
+        title('Raw trace (PMT Background substracted)');
+        %legend('raw trace (bg substracted)', 'F (trend)');
             ylabel('a.u.'); axis auto;
             ax = gca; 
-            Fontsize = 10;
+            Fontsize = 14;
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis.FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
@@ -61,7 +61,7 @@ function ax = plot_raw(r, id_roi)
             %
             subplot(n_row, ceil(r.numRoi/n_row), id_subplot);
             % single roi trace plot
-            ax = plot_raw(r, rr);
+            ax = plot_trace_raw(r, rr);
                 
             text(ax.XLim(end), ax.YLim(end), C{rr}, 'FontSize', 8, 'Color', 'k', ...
                     'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');

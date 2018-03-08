@@ -49,7 +49,6 @@ classdef gdata < handle
     methods
             function display_scalebar(g)
                 mag = h.scanZoomFactor;
-                
             end
 
             function show(g, ch)
@@ -63,8 +62,10 @@ classdef gdata < handle
             end
         
             function set.numStimulus(obj, n)
-                if n <1
+                if n < 1
                     error('numStimulus should be 1 or larger');
+                elseif n > 5
+                    error('>5 stimulus in one recording session? Too many numStimulus.');
                 end
                 % (re)-initialize array of roiDATA
                 r(1, n) = roiData;
@@ -88,7 +89,17 @@ classdef gdata < handle
                 % compute roiData objects
                 if ~isempty(cc)
                     for i=1:obj.numStimulus
-                        obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.header.logFramePeriod, obj.stims{i});
+                        if strfind(obj.ex_name, 'whitenoise')
+                            % update stim repo
+                            
+                            % import stimulus.h5
+                                %load(filename,'-mat',variables) 
+                            % roiDATA object
+                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.ifi, obj.stims{i});
+                            % break;
+                        else
+                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.ifi, obj.stims{i});
+                        end
                     end
                 end
             end
@@ -178,9 +189,9 @@ classdef gdata < handle
                         g.AI{h.channelSave(j)} = ch;
 
                         % mean of first 1000 frames
-                        [~, ~, ch_frames] = size(ch);
-                        n_snapshot = min(ch_frames, 1000);
-                        ch_mean = mean(ch(:,:,1:n_snapshot), 3);
+                        [row, col, ch_frames] = size(ch);
+                        n_frames_snap = min(ch_frames, round(512*512*1000/row/col));
+                        ch_mean = mean(ch(:,:,1:n_frames_snap), 3);
                         g.AI_mean{h.channelSave(j)} = ch_mean;
 
                         % title name

@@ -1,8 +1,10 @@
-function ax = plot_trace(r, id_roi)
+function ax = plot_trace_norm(r, id_roi)
+% plot normalized trace [dF/F]
 
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
         plot(r.f_times, r.roi_normalized(:,id_roi), 'LineWidth', 0.7); hold on
+        title('Normalized trace');
             ylabel('a.u.'); axis auto;
             ax = gca; 
             Fontsize = 10;
@@ -57,7 +59,7 @@ function ax = plot_trace(r, id_roi)
             %
             subplot(n_row, ceil(r.numRoi/n_row), id_subplot);
             % single roi trace plot
-            ax = plot_trace(r, rr);
+            ax = plot_trace_norm(r, rr);
                 
             text(ax.XLim(end), ax.YLim(end), C{rr}, 'FontSize', 8, 'Color', 'k', ...
                     'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');

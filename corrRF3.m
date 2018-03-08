@@ -11,16 +11,16 @@ stimFrameInterval = fliptimes(2)-fliptimes(1);
      samplingRate = 1/(rtime(2)-rtime(1));
 
 % stim size & reshape [ch, frames]
-Dim = ndims(stim);
-if Dim >3
+Dim_stim = ndims(stim);
+if Dim_stim >3
     disp('stim is dim>3 array. It should be dim 1-3 data');
     rf = [];
     return;
-elseif Dim ==3
+elseif Dim_stim ==3
     [Xstim, Ystim, Nframe] = size(stim);
-elseif Dim == 2
-    [Ystim,Nframe] = size(stim);
-elseif Dim == 1
+elseif Dim_stim == 2
+    [Ystim, Nframe] = size(stim);
+elseif Dim_stim == 1
     Nframe = length(stim);
 end
 
@@ -93,13 +93,11 @@ for i=0:N_maxcorr
     rf = [rf, corr]; 
 end
 
-% final RF matrix
-if Dim == 3
+% Reshape RF matrix same as stim dims
+if Dim_stim == 3
     rf = reshape(rf,Xstim,Ystim,[]);
-elseif Dim == 2
-    rf = reshape(rf,Ystim,[]);
-elseif Dim == 1
-    rf = reshape(rf,1,[]);
+else
+    % do nothing.
 end
 
 % display

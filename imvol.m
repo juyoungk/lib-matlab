@@ -69,6 +69,10 @@ function [hfig] = imvol(vol, varargin)
     vol = scaled(vol);
     [rows, cols, n_frames] = size(vol);
     
+    n_phase_shift = 2;
+    
+    
+    
     % mask variables for ROI removal by user
     mask = false(rows, cols);
     white = false(rows, cols);
@@ -112,7 +116,7 @@ function [hfig] = imvol(vol, varargin)
         
         % draw image
         if ~FLAG_roi 
-            imshow(J)
+            imshow(J);
         else 
             % if cc is given
             if ~isempty(p.Results.roi)

@@ -1,4 +1,4 @@
-classdef roiData
+classdef roiData < handle
 % Given cc, extract roi-avg traces from vol data.
 % bg remove, bandpass filtering, normalize raw traces.
 % If trigger-times are given, trial-avg will be computed.
@@ -20,25 +20,29 @@ classdef roiData
         % 
         numFrames
         numRoi
-        roi_trace       % raw trace
-        roi_smoothed    % smoothed trace
+        roi_trace       % raw trace (bg substracted. only post-processing)
+        roi_smoothed    % smoothed raw trace
         roi_filtered    % lowpass filtered
         roi_trend
-        roi_normalized  % dF/F and (detrended)
+        roi_normalized  % dF/F @ dF = filtered - detrended, F = detrended_trace
         f_times         % frame times
         
-        %
+        % smoothing params
+        smoothing_method
+        smoothing_size
+                
+        % filter params
         cutoff_period = 10; % secs. for high-pass filtering
         w_filter_low = 0.5 
-        w_filter_high = 0.; % in terms of norm. (or Nyquist) freq. 
-        smoothing_method = 'movmean'
-        smoothing_size = 3;
+        w_filter_high = 0.05; % in terms of norm. (or Nyquist) freq. 
         
         % avg trace timed at stim_times
+        avg_FLAG
         avg_trace       % avg over (smoothed) trials: (times x roi#): good for 2-D plot
-        avg_trace_fil   % avg over filtered trials.
-        s_times         % single trial times
-        stim_duration   % one trial
+        avg_trace_fil   % avg over (filtered) trials.
+        avg_times
+        
+        stim_duration   % one trial. confusing word 
         
         % whitenoise responses
         rf              % cell arrays
@@ -54,9 +58,40 @@ classdef roiData
     properties (Hidden, Access = private)
         % old names
         stim_times  % PD trigger events
+        s_times     % single trial times
     end
     
     methods
+        
+        function set.stim_trigger_times(obj, value)
+            obj.stim_trigger_times = value;
+            obj.stim_times = value; % old name
+        end
+        
+        function set.avg_times(obj, value)
+            obj.avg_times = value;
+            obj.s_times = value; % old name
+        end
+        
+        function set.smoothing_size(r, t)
+            
+            for i=1:r.numRoi
+                y = r.roi_trace(:,i);
+                r.roi_smoothed(:,i) = smoothdata(y, r.smoothing_method, t);
+            end
+
+            if r.avg_FLAG
+               % Align roi traces to stim_times
+               [roi_aligned, ~] = align_rows_to_events(r.roi_smoothed, r.f_times, r.stim_trigger_times, r.stim_duration);
+               %[roi_aligned_fil, ~] = align_rows_to_events(r.roi_normalized, r.f_times, r.stim_trigger_times, r.stim_duration);
+
+                % Avg over trials (dim 3)
+                r.avg_trace = mean(roi_aligned, 3); 
+                %r.avg_trace_fil = mean(roi_aligned_fil, 3); 
+            end
+            r.smoothing_size = t;
+        end
+        
         % constructor
         function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_whitenoise, stim_fliptimes)
             % ifi: inter-frame interval or log-frames-period
@@ -70,26 +105,27 @@ classdef roiData
                 r.roi_normalized = zeros(r.numFrames, r.numRoi);
                 r.roi_trend = zeros(r.numFrames, r.numRoi);
                 r.rf = cell(1, r.numRoi);
-                fil_low  =  designfilt('lowpassiir', 'PassbandFrequency', .3, 'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-                fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .005, 'StopbandFrequency', .01, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-                fil_high = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-                % trend - lowpassfilter is better than
-                % smoothdata('movmean').
                 
                 if nargin > 2
                     r.ex_name = ex_str;
                 end
+                
+                % stimulus trigger times
                 if nargin > 3
                     r.ifi = ifi;
-                    r.stim_times = stim_trigger_times;
+                    %r.stim_times = stim_trigger_times;
                     r.stim_trigger_times = stim_trigger_times;
-                    r.f_times = (1:r.numFrames)*ifi; % frame times
-                    % Duration for one trial
+                    r.f_times = ((1:r.numFrames)-0.5)*ifi; % frame times. in the middle of the frame
+                    
+                    % Duration for single trial (stim duration. somewhat confusing)
                     if numel(stim_trigger_times)>1
                         r.stim_duration = stim_trigger_times(2)  - stim_trigger_times(1);
                     else
+                        % total recording time after the trigger.
                         r.stim_duration = r.f_times(end) - stim_trigger_times(1);
                     end
+                    n = floor(r.stim_duration*(1./ifi)); % same as qx in align_rows_to_events function
+                    r.avg_times = ((1:n)-0.5)*ifi; 
                 end
                 
                 % backgound PMT level
@@ -102,39 +138,47 @@ classdef roiData
                 for i=1:r.numRoi
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;                           % bg substraction
-                    y_filtered = filtfilt(fil_low,   y);  % low-pass filtering
-                       y_trend = filtfilt(fil_trend, y_filtered);
-                    y_normalized = ((y_filtered - y_trend)./y_trend)*100;
-                    
-                    r.roi_trace(:,i) = y;
-                    r.roi_smoothed(:,i) = smoothdata(y, r.smoothing_method, r.smoothing_size);
-                    r.roi_filtered(:,i) = y_filtered;
-                    r.roi_normalized(:,i) = y_normalized;
-                    r.roi_trend(:,i) = y_trend;
+                    r.roi_trace(:,i) = y; % raw data (bg substracted)
                 end
                     
                 % Avg (smoothed) trace over multiple stim repeats
                 if ~isempty(stim_trigger_times) && numel(stim_trigger_times) >=3 && ...
                         isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))
-                    % Align roi traces to stim_times
-                    [roi_aligned, s_times] = align_rows_to_events(r.roi_smoothed, r.f_times, stim_trigger_times, r.stim_duration);
-                    [roi_aligned_fil, ~] = align_rows_to_events(r.roi_normalized, r.f_times, stim_trigger_times, r.stim_duration);
-
-                    % Avg over trials (dim 3)
-                    r.avg_trace = mean(roi_aligned, 3); 
-                    r.avg_trace_fil = mean(roi_aligned_fil, 3); 
-                    r.s_times   = s_times;
-                    r.stim_duration = s_times(end);
                     
-                    % params for plot
-                    if strfind(r.ex_name, 'flash')
-                        r.n_cycle = 2;
-                        r.s_phase = 0.25;
-                    else
-                        r.n_cycle = 1;
-                        r.s_phase = 0;
-                    end
-                    r.a_times = r.timesForAvgPlot;
+                    r.avg_FLAG = true;
+                    
+                        % params for plot
+                        if strfind(r.ex_name, 'flash')
+                            r.n_cycle = 2;
+                            r.s_phase = 0.25;
+                        else
+                            r.n_cycle = 1;
+                            r.s_phase = 0;
+                        end
+                        r.a_times = r.timesForAvgPlot;
+                        
+                else
+                    r.avg_FLAG = false;
+                end
+                
+                % default smoothing or filtering:
+                r.smoothing_method = 'movmean';
+                r.smoothing_size = 5;
+                fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+                fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .005, 'StopbandFrequency', .01, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+                fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+                    % trend - lowpassfilter is better than smoothdata('movmean').
+                for i=1:r.numRoi
+                    y = r.roi_trace(:,i); % raw data (bg substracted)
+                    %
+                    y_filtered = filtfilt(fil_low,   y);      % low-pass filtering
+                       y_trend = filtfilt(fil_trend, y_filtered);
+                    y_fil_normalized = ((y_filtered - y_trend)./y_trend)*100;
+                    
+                    %r.roi_smoothed(:,i) = smoothdata(y, r.smoothing_method, r.smoothing_size); % set by smoothing_size?
+                    r.roi_filtered(:,i) = y_filtered;                                          % set by filter definition?
+                    r.roi_normalized(:,i) = y_fil_normalized; %
+                    r.roi_trend(:,i) = y_trend;
                 end
                 
                 % whitenoise stim
@@ -169,13 +213,13 @@ classdef roiData
         end
  
         function tt = timesForAvgPlot(obj)
-            N = length(obj.s_times);
+            N = length(obj.avg_times);
             % extend times
-            tt = repmat(obj.s_times, [1, obj.n_cycle]);
+            tt = repmat(obj.avg_times, [1, obj.n_cycle]);
             c = meshgrid(0:(obj.n_cycle-1), 1:N);
-            tt = tt + (vec(c).')*obj.s_times(end);
+            tt = tt + (vec(c).')*obj.avg_times(end);
             % phase shift
-            tt = tt - obj.s_phase * obj.s_times(end);
+            tt = tt - obj.s_phase * obj.avg_times(end);
         end
         
     end

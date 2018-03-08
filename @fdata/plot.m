@@ -33,7 +33,7 @@ function plot(obj, i)
             subplot(n_row_subplot, n_col_subplot, (k-1)*n_col_subplot+[1, n_col_subplot]);
 
                 i_imaging_session = k;
-                ax = plot_raw(obj.g(i_imaging_session).rr, i_roi);
+                ax = plot_trace_raw(obj.g(i_imaging_session).rr, i_roi);
                 text(ax.XLim(end), ax.YLim(end), str1, 'FontSize', 15, 'Color', 'k', ...
                         'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');
         end
