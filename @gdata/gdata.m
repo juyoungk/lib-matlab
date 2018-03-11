@@ -28,8 +28,9 @@ classdef gdata < handle
             
             % pd events info
             pd_AI_name = 'photodiode';
-            pd_threshold = 0.8;
-            min_interval_secs = 0.5;
+            pd_threshold = 0.4;
+            min_interval_secs = 3.5;
+            ignore_secs = 5;
             pd_trace
             pd_events
             
@@ -51,13 +52,45 @@ classdef gdata < handle
                 mag = h.scanZoomFactor;
             end
 
-            function show(g, ch)
+            function J = myshow(g, ch)
                 if nargin > 1
-                    imvol(g.AI_mean{ch});
+                    J = myshow(g.AI_mean{ch});
                 else
                     for ch=g.header.channelSave
-                        imvol(g.AI_mean{ch});
+                        J = myshow(g.AI_mean{ch});
                     end
+                end
+            end
+            
+            function J = imvol(g, ch)
+                if nargin > 1
+                    J = imvol(g.AI_mean{ch});
+                else
+                    for ch=g.header.channelSave
+                        J = imvol(g.AI_mean{ch});
+                    end
+                end
+            end
+            
+            function setting_pd_event_params(g)
+                
+                g.ignore_secs = 5;
+                
+                if strfind(g.ex_name, 'flash')
+                    g.pd_threshold = 0.4;
+                    g.min_interval_secs = 3.5;
+                elseif strfind(g.ex_name, 'movingbar')
+                    g.pd_threshold = 0.4;
+                    g.min_interval_secs = 1.2;
+                elseif strfind(g.ex_name, 'jitter')
+                    g.pd_threshold = 0.4;
+                    g.min_interval_secs = 1;
+                elseif strfind(g.ex_name, 'whitenoise')
+                    g.pd_threshold = 0.4;
+                    g.min_interval_secs = 0.25;
+                else
+                    g.pd_threshold = 0.8;
+                    g.min_interval_secs = 0.5;
                 end
             end
         
@@ -206,8 +239,9 @@ classdef gdata < handle
                             % scale bar display
                             %display_scalebar(mag)
                             %line([100 200],[100 100], 'Color', 'r', 'LineWidth', 3)
-                            
                     end
+                    
+                    
 
                     % h5 file: PD
                     % PD recording filename: {i}
@@ -234,25 +268,31 @@ classdef gdata < handle
                                 disp(['More than 2 AI channels names ', g.pd_AI_name, '. First CH is selected for PD.']);
                                 PD_CH = PD_CH(1);
                             end
-                            pd = A(:,PD_CH);
-                        end 
+                            pd = A(:,PD_CH); % raw pd trace including any unwanted events.
+                        end
+                        
                         %
                         pd = scaled(pd);
                         g.pd_trace = pd;
 
-                        %
-                        pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
-                        figure; set(gcf, 'Position', pos_plot);
-                            plot(times,pd); hold on; % it is good to plot pd siganl together
-                            % event timestamps
-                            ev_idx = th_crossing(pd, g.pd_threshold, g.min_interval_secs * header.srate);
-                            ev = times(ev_idx);
-                            plot(ev, pd(ev_idx),'bo');
-                                legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
-                            hold off
+                        % event timestamps from pd
+                        g.setting_pd_event_params();
+                        i_start = g.ignore_secs * header.srate + 1; 
+                        pd_for_events = pd(i_start:end);
+                        ev_idx = th_crossing(pd_for_events, g.pd_threshold * max(pd_for_events), g.min_interval_secs * header.srate);
+                        ev_idx = ev_idx + i_start -1;
+                        ev = times(ev_idx);
                         g.pd_events = ev;
                         n_events = numel(ev);
-
+                        
+                        % plot pd % event stamps
+                        pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
+                        figure; set(gcf, 'Position', pos_plot);
+                        plot(times(i_start:end),pd(i_start:end)); hold on; % it is good to plot pd siganl together    
+                        plot(ev, pd(ev_idx),'bo');
+                            legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
+                        hold off
+                        
                         % stimulus cluster for multiple events 
                         g.stims = cell(1,10);
                             % count # of odd events

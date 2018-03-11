@@ -3,7 +3,7 @@ function ax = plot_trace_norm(r, id_roi)
 
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
-        plot(r.f_times, r.roi_normalized(:,id_roi), 'LineWidth', 0.7); hold on
+        plot(r.f_times_norm, r.roi_normalized(:,id_roi), 'LineWidth', 0.7); hold on
         title('Normalized trace');
             ylabel('a.u.'); axis auto;
             ax = gca; 

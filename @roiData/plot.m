@@ -1,5 +1,4 @@
 function plot(r)
-% Method of class 'roiData'
 % Create new figure with interactive keyboard navigation over roi#
 
     hfig = figure('Position', [100 230 1300 840]);
@@ -25,11 +24,11 @@ function plot(r)
     n_col_subplot = 3;
     n_row_subplot = 3;
     
-    % ex info
-    str_smooth_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
-    
+
     function redraw()
         mask = false(cc.ImageSize);
+        % ex info
+        str_smooth_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
         
         % 1. whole trace
         subplot(n_row_subplot, n_col_subplot, [1, n_col_subplot]);

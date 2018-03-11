@@ -1,4 +1,4 @@
-function idx_ev = th_crossing(data, threshold, min_interval)
+function idx_ev = th_crossing(data, threshold, min_interval, ignore_points)
 %%
 % returns the "indexes" of the data whenever it crosses the threshold
 % 2 conditions:
@@ -7,6 +7,10 @@ function idx_ev = th_crossing(data, threshold, min_interval)
 %       min_interval (3rd argument)
 %
 % display: hold on; plot(idx,data(idx),'bo');
+
+if nargin < 4
+    ignore_points = 0;
+end
 
 if nargin < 3
     min_interval = 2;

@@ -2,13 +2,17 @@ function ax = plot_avg(r, id_roi, varargin)
     
     if nargin>1 && numel(id_roi) == 1
         if isempty(r.avg_trace)
-            ax = []
+            ax = [];
             return;
         end
+        
         % plot single roi avg trace
+        
         y = r.avg_trace(:,id_roi);
+        %y = r.avg_trace_fil(:,id_roi);
+        
         y = r.traceForAvgPlot(y);
-        duration = r.s_times(end);
+        duration = r.avg_trigger_interval;
         
         plot(r.a_times, y, 'LineWidth', 1.5, varargin{:}); hold on;
         ax = gca;  Fontsize = 10; 
@@ -29,6 +33,12 @@ function ax = plot_avg(r, id_roi, varargin)
                 x = (n-1) * duration + duration/2.;
                 plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
             end
+            % stim trigger lines between avg triggers
+            for k = 1:(r.avg_every-1)
+                x = (n-1) * duration + k * r.stim_trigger_interval;
+                plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+            end
+
         end
         hold off;
 

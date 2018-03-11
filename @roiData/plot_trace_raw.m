@@ -4,7 +4,7 @@ function ax = plot_trace_raw(r, id_roi)
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
         plot(r.f_times, r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
-        plot(r.f_times, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
+        plot(r.f_times_fil, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
         title('Raw trace (PMT Background substracted)');
         %legend('raw trace (bg substracted)', 'F (trend)');
             ylabel('a.u.'); axis auto;

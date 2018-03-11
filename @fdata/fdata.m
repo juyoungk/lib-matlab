@@ -80,9 +80,10 @@ classdef fdata < handle
             obj.roi_channel = ch;
         end
         
-        % compare mean images between imaging sessions
+        
         function imshowpair(obj, s1, s2)
-            
+        % compare mean images between imaging sessions
+        % s1, s2 is session id#    
                 for ch = obj.g(1).header.channelSave
                     figure('Position', [100 150 737 774]);
                     hfig.Color = 'none';
@@ -91,7 +92,10 @@ classdef fdata < handle
                     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
                     
                     if nargin >1
-                        imshowpair(obj.g(s1).AI_mean{ch}, obj.g(s2).AI_mean{ch});
+                        %imshowpair(obj.g(s1).AI_mean{ch}, obj.g(s2).AI_mean{ch});
+                        im1 = obj.g(s1).myshow(ch);
+                        im2 = obj.g(s2).myshow(ch);
+                        imshowpair(im1, im2);
                         title(['session pair: ', num2str(s1), ', ', num2str(s2)], 'FontSize', 18, 'Color', 'k');
                     else 
                         
@@ -144,5 +148,5 @@ function str_ex_name = get_ex_name(tif_filename)
     s_filename = strrep(tif_filename, '_', '  ');    
     s_filename = strrep(s_filename, '00', '');
     loc_name = strfind(s_filename, '.');
-    str_ex_name = s_filename(1:loc_name-1);
+    str_ex_name = s_filename(1:(loc_name-1));
 end
