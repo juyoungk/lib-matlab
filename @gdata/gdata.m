@@ -35,10 +35,10 @@ classdef gdata < handle
             pd_events
             
             % stimulus events
+            stims      % 1~10 stimulus. Times for stim trigger events.
+            intervals  % if it's not empty, the stim was repeated. Probably good to average.
             stim_fliptimes  % trigger events or fliptimes. up to 10 differnet cell arrays
             stim_whitenoise        % whitenoise stim pattern
-            stims      % stim event times 
-            intervals  % if it's not empty, the stim was repeated. Probably good to average.
             
             % roi response data per stimulus
             numStimulus % and initialize roiDATA objects. Should be initialized at least 1.

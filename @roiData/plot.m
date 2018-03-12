@@ -53,15 +53,33 @@ function plot(r)
             
         % 3. roi avg (smoothed) over multiple repeats
         subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+2);
-            ax = plot_avg(r, i_roi);
-            title('Avg response (smoothed) over trials');
-            text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
-                        'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+            
+            if strfind(r.ex_name, 'whitenoise')
+                r.plot_rf(i_roi, 'smoothed');
+                title('Revrse correlation (smoothed trace)');
+            else
+                ax = plot_avg(r, i_roi);
+                title('Avg response (smoothed) over trials');
+                if ~isempty(ax)
+                    text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+                end
+            end
             
         % 4. roi avg (filtered) over multiple repeats
         subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+3);
-            ax = plot_avg_fil(r, i_roi);
-            title('Avg response (filtered) over trials');
+            
+            if strfind(r.ex_name, 'whitenoise')
+                r.plot_rf(i_roi, 'normalized');
+                title('Revrse correlation (norm. trace)');
+            else
+                ax = plot_avg_fil(r, i_roi);
+                title('Avg response (filtered) over trials');
+                if ~isempty(ax)
+                    text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+                end
+            end
 
     end
 

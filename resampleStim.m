@@ -1,12 +1,14 @@
-function qstim = resampleStim(stim, fliptimes, newtimes);
+function qstim = resampleStim(stim, fliptimes, newtimes)
+% currently, I can't understand how this function works. 
+
 
 % stim upsampling  
-[Xstim,Ystim,Nframe] = size(stim);
+[~, ~, Nframe] = size(stim);
+
 stimas1d = reshape(stim, [], Nframe);
+
 stimvect = shiftdim(stimas1d, 1);
-% stim flip times and resample times
-fliptimes = linspace(0, stimFrameInterval*Nframe, Nframe+1);
- newtimes = bintime;
+ 
 %
 qstim = [];
 for i=1:Nframe

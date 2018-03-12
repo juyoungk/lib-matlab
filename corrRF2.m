@@ -1,4 +1,5 @@
 function rf = corrRF2(rdata, rtime, stim, upsampling, maxlag, varargin)
+% rate matching by binning recording data
 % Default setting: 10K sampling data, 100 binning, 0.033 flipinterval
 % rtime: recording timestamps (real time)
 % stim: checker box array sequence (type:doulble, row * col * # frames)

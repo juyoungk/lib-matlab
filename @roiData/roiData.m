@@ -73,6 +73,21 @@ classdef roiData < handle
     
     methods
         
+        function load_h5(r)
+        % load stim data from 'stimulus.h5' in current directory    
+            %h5info('stimulus.h5')
+            %h5disp('stimulus.h5')
+            stim = h5read('stimulus.h5', '/expt1/stim');
+            times = h5read('stimulus.h5', '/expt1/timestamps');
+            r.get_stimulus(stim, times);
+        end
+        
+        function get_stimulus(r, stims_whitenoise, fliptimes)
+            % for whithenoise stim
+            r.stim_whitenoise = stims_whitenoise;
+            r.stim_fliptimes = fliptimes;
+        end
+        
         function set.smoothing_size(r, t)
             for i=1:r.numRoi
                 y = r.roi_trace(:,i);
@@ -191,6 +206,8 @@ classdef roiData < handle
                             r.s_phase = 0.25;
                         elseif strfind(r.ex_name, 'movingbar')
                             r.avg_every = 4;
+                        elseif strfind(r.ex_name, 'jitter')
+                            
                         end
                         
                         % avg trigger times
