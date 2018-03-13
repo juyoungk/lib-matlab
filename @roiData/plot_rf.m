@@ -1,10 +1,24 @@
 function plot_rf(r, id_roi, traceType, maxlag, upsampling)
+    
+    if nargin < 5
+        upsampling = 1;
+    end
+    
+    if nargin < 4
+        maxlag = 1.8; %sec
+    end
+    
 
     if nargin>1 && numel(id_roi) == 1 && isnumeric(id_roi)
         
-        rf = rf_corr(r, id_roi, traceType, maxlag, upsampling);
+        if nargin < 3
+            traceType = 'normalized';
+        end
         
-        imshow(rf, 'Colormap', parula); % jet, parula, winter ..
+        [rf, rf_time] = rf_corr(r, id_roi, traceType, maxlag, upsampling);
+        
+        imshow(scaled(rf), 'Colormap', parula); % jet, parula, winter ..
+        %plot(rf_time);
         
     else
         % plot rf for all rois
@@ -51,7 +65,7 @@ function plot_rf(r, id_roi, traceType, maxlag, upsampling)
                     rr = roi_array(k);
                     
                     % plot for roi# rr
-                    rf = rf_corr(r, rr, traceType, maxlag, upsampling);
+                    plot_rf(r, rr, traceType, maxlag, upsampling);
                     
                     %
                     ax = gca;

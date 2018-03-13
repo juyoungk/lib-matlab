@@ -91,7 +91,6 @@ end
 % display
 %displayRF(rf);
 
-fprintf('\n');
 end
 
 function p = ParseInput(varargin)
