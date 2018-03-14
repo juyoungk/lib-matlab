@@ -5,7 +5,7 @@ function ax = plot_trace_raw(r, id_roi)
         % plot single roi trace (smoothed)
         plot(r.f_times, r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
         plot(r.f_times_fil, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
-        title('Raw trace (PMT Background substracted)');
+        title([r.ex_name, '- raw trace']);
         %legend('raw trace (bg substracted)', 'F (trend)');
             ylabel('a.u.'); axis auto;
             ax = gca; 
@@ -26,8 +26,9 @@ function ax = plot_trace_raw(r, id_roi)
                 end
             end
         else
-            % only start line
+            % 1st & last event lines
             plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+            plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
         end
         hold off
     else

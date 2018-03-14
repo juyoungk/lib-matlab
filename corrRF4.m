@@ -35,8 +35,8 @@ r_ifi = rtime(2)-rtime(1);
 f_ifi = fliptimes(2)-fliptimes(1); % upsampling of stim
 if upsampling == 1
     fliptimes = fliptimes +0.5*f_ifi;
-elseif upsampling == 2 % 2 should be enough
-    fliptimes = [fliptimes; fliptimes+0.9*f_ifi];
+elseif upsampling == 2
+    fliptimes = [fliptimes+0.25*f_ifi; fliptimes+0.75*f_ifi];
 end
 fliptimes = reshape(fliptimes, [], 1);
 

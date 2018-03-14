@@ -63,11 +63,15 @@ classdef gdata < handle
             end
             
             function J = imvol(g, ch)
-                if nargin > 1
-                    J = imvol(g.AI_mean{ch});
-                else
-                    for ch=g.header.channelSave
-                        J = imvol(g.AI_mean{ch});
+                if nargin < 2
+                    ch = g.header.channelSave;
+                end
+                
+                for i = ch
+                    if strfind(g.ex_name, 'stack')
+                        J = imvol(g.AI{i}, 'scanZoom', g.header.scanZoomFactor);
+                    else
+                        J = imvol(g.AI_mean{i}, 'scanZoom', g.header.scanZoomFactor);
                     end
                 end
             end
@@ -128,10 +132,10 @@ classdef gdata < handle
                             % import stimulus.h5
                                 %load(filename,'-mat',variables) 
                             % roiDATA object
-                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.ifi, obj.stims{i});
+                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
                             % break;
                         else
-                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,'_ch',num2str(ch)], obj.ifi, obj.stims{i});
+                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
                         end
                     end
                 end
@@ -234,14 +238,12 @@ classdef gdata < handle
                         % plot mean images
                         hf = figure; 
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                            imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true);
+                            imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
                                 %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
                             % scale bar display
                             %display_scalebar(mag)
                             %line([100 200],[100 100], 'Color', 'r', 'LineWidth', 3)
                     end
-                    
-                    
 
                     % h5 file: PD
                     % PD recording filename: {i}
@@ -355,7 +357,6 @@ classdef gdata < handle
     end
 end
 
-
 function [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, str)
     str_condition = ['/*',str,'*'];
     %
@@ -371,5 +372,15 @@ function str_ex_name = get_ex_name(tif_filename)
     s_filename = strrep(tif_filename, '_', '  ');    
     s_filename = strrep(s_filename, '00', '');
     loc_name = strfind(s_filename, '.');
-    str_ex_name = s_filename(1:loc_name-1);
+    
+    if isempty(loc_name)
+        str_ex_name = s_filename;
+    else
+        str_ex_name = s_filename(1:(loc_name-1));
+    end
+    
+    % ignore last file number
+    str_by_space = strsplit(str_ex_name, ' ');
+    str_ex_name = sprintf('%s ', str_by_space{1:end-1});
+
 end

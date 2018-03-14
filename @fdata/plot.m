@@ -19,10 +19,10 @@ function plot(obj, i)
     
     % col # = img session # + ROI portrait
     n_col_subplot = obj.numImaging + 1;
-    n_row_subplot = obj.numImaging + 2;
+    n_row_subplot = obj.numImaging + 1;
     tot_subplot = n_col_subplot * n_row_subplot;
     %
-     imax = numel(obj.numRoi);
+     imax = obj.numRoi;
        cc = obj.cc;
     %
     str1 = sprintf('ROI %d', i_roi);
@@ -39,7 +39,7 @@ function plot(obj, i)
         end
 
         % 2. Portrait of ROI    
-        subplot(n_row_subplot, n_col_subplot, tot_subplot - 2*n_col_subplot+1);
+        subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1);
             mask = false(cc.ImageSize);
             mask(cc.PixelIdxList{i_roi}) = true;
             h = imshow(obj.roi_rgb);
@@ -51,19 +51,24 @@ function plot(obj, i)
             
         % 3. avg trace over multiple imaging sessions
         for k = 1:obj.numImaging
-            subplot(n_row_subplot, n_col_subplot, tot_subplot - 2*n_col_subplot+1+k);
-            ax = plot_avg(obj.g(k).rr, i_roi);
+            %subplot(n_row_subplot, n_col_subplot, tot_subplot - 2*n_col_subplot+1+k);
+            subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1+k);
+            
+            ax = plot_avg(obj.g(k).rr, i_roi, 'traceType', 'smoothed');
 %                     ax = findobj(gca, 'Type', 'Line');
 %                     ax.LineWidth = 2.5;
+            % title
             str_session = strsplit(obj.g(k).ex_name, obj.FOV_name);
             str_session = str_session{end};
-            title(str_session, 'FontSize', 16);
-            
-            subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1+k);
-            ax = plot_avg_fil(obj.g(k).rr, i_roi);
-%                     ax = findobj(gca, 'Type', 'Line');
-%                     ax.LineWidth = 2.5;
-            
+            title(str_session, 'FontSize', 15);
+%             str_session = strsplit(str_session, ' ');
+%             title([sprintf('%s ', str_session{1:end-1})], 'FontSize', 15);
+
+              % last row subplots  
+%             subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1+k);
+%             %ax = plot_avg_fil(obj.g(k).rr, i_roi);
+%             ax = plot_avg(obj.g(k).rr, i_roi, 'traceType', 'normalized');
+%             
             
         end
 end

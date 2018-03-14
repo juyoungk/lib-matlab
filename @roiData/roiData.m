@@ -27,7 +27,7 @@ classdef roiData < handle
         roi_trend
         roi_normalized  % dF/F @ dF = filtered - detrended, F = detrended_trace
         f_times         % frame times
-        ignore_sec = 10; % ignore first few secs for filtering.
+        ignore_sec      % ignore first few secs for filtering.
         f_times_fil
         f_times_norm
         
@@ -177,7 +177,7 @@ classdef roiData < handle
                     end
                 end
                 
-                % backgound PMT level in images (vol)
+                % Bg PMT level in images (vol)
                 a = sort(vec(vol(:,:,1))); % inferred from 1st frame
                 N = ceil(size(vol, 1)/10);
                 bg_PMT = mean(a(1:(N*N))) 
@@ -189,8 +189,11 @@ classdef roiData < handle
                     y = y - bg_PMT;                           % bg substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
                 end
+                
+                % ignore data before the 1st stim trigger
+                r.ignore_sec = stim_trigger_times(1);
                     
-                % Avg (smoothed) trace over multiple stim repeats
+                % Avg trace settings
                 if ~isempty(stim_trigger_times) && numel(stim_trigger_times) >=3 && ...
                         isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))
                     
@@ -207,7 +210,7 @@ classdef roiData < handle
                         elseif strfind(r.ex_name, 'movingbar')
                             r.avg_every = 4;
                         elseif strfind(r.ex_name, 'jitter')
-                            
+                            r.avg_every = 2;
                         end
                         
                         % avg trigger times

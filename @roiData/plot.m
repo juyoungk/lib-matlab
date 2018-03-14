@@ -57,6 +57,8 @@ function plot(r)
             if strfind(r.ex_name, 'whitenoise')
                 r.plot_rf(i_roi, 'smoothed');
                 title('Revrse correlation (smoothed trace)');
+                c = colorbar;
+                c.TickLabels = {};
             else
                 ax = plot_avg(r, i_roi);
                 title('Avg response (smoothed) over trials');
@@ -72,6 +74,8 @@ function plot(r)
             if strfind(r.ex_name, 'whitenoise')
                 r.plot_rf(i_roi, 'normalized');
                 title('Revrse correlation (norm. trace)');
+                c = colorbar;
+                c.TickLabels = {};
             else
                 ax = plot_avg_fil(r, i_roi);
                 title('Avg response (filtered) over trials');

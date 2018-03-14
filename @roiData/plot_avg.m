@@ -1,46 +1,70 @@
 function ax = plot_avg(r, id_roi, varargin)
+% plot avg trace or RF (receptuve field)
+% varargin for traceType, not plot options
+
+    p=ParseInput(varargin{:});
+    traceType = p.Results.traceType;
     
     if nargin>1 && numel(id_roi) == 1
-        if isempty(r.avg_trace)
-            ax = [];
-            return;
-        end
         
         % plot single roi avg trace
-        
-        y = r.avg_trace(:,id_roi);
-        %y = r.avg_trace_fil(:,id_roi);
-        
-        y = r.traceForAvgPlot(y);
-        duration = r.avg_trigger_interval;
-        
-        plot(r.a_times, y, 'LineWidth', 1.5, varargin{:}); hold on;
-        ax = gca;  Fontsize = 10; 
-        ax.XLim = [r.a_times(1), r.a_times(end)];
-        ax.XAxis.FontSize = Fontsize;
-        ax.YAxis.FontSize = Fontsize;
-        % XTick positions: independent of phase value
-        ax.XTick = (0:0.5:(r.n_cycle)) * duration;
-%         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
-        xtickformat('%.1f');
-        
-        % additional lines
-        for n = 1:r.n_cycle
-            x = (n-1) * duration;
-            plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-            % middle line
-            if strfind(r.ex_name, 'flash')
-                x = (n-1) * duration + duration/2.;
-                plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-            end
-            % stim trigger lines between avg triggers
-            for k = 1:(r.avg_every-1)
-                x = (n-1) * duration + k * r.stim_trigger_interval;
-                plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-            end
+        if ~r.avg_FLAG
+            % whitenoise rf or jitter
+            
+            ax = plot_rf(r, id_roi, traceType);
 
+        else 
+            if isempty(r.avg_trace)
+                ax = [];
+                error('No avg_trace in roiData object');
+            end
+            
+            % trace type
+            if contains(traceType, 'smoothed')
+                y = r.avg_trace(:, id_roi);
+            elseif contains(traceType, 'filtered')
+                y = r.avg_trace_fil(:, id_roi);
+            elseif contains(traceType, 'normalized')
+                y = r.avg_trace_norm(:, id_roi);    
+            else
+                disp('trace Type should be one of ''normalized'', ''smoothed'' or ''filtered''. ''smoothed'' trace was used');
+                y = r.avg_trace(:, id_roi);
+            end
+            
+            y = r.traceForAvgPlot(y);
+            x = r.a_times;
+
+            duration = r.avg_trigger_interval;
+
+            %plot(x, y, 'LineWidth', 1.5, varargin{:}); hold on;
+            plot(x, y, 'LineWidth', 1.5); hold on;
+            ax = gca;  Fontsize = 10; 
+            ax.XLim = [r.a_times(1), r.a_times(end)];
+            ax.XAxis.FontSize = Fontsize;
+            ax.YAxis.FontSize = Fontsize;
+            % XTick positions: independent of phase value
+            ax.XTick = (0:0.5:(r.n_cycle)) * duration;
+    %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
+            xtickformat('%.1f');
+
+            % additional lines
+            for n = 1:r.n_cycle
+                x = (n-1) * duration;
+                plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                % middle line
+                if strfind(r.ex_name, 'flash')
+                    x = (n-1) * duration + duration/2.;
+                    plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                end
+                % stim trigger lines between avg triggers
+                for k = 1:(r.avg_every-1)
+                    x = (n-1) * duration + k * r.stim_trigger_interval;
+                    plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                end
+
+            end
+            hold off;
         end
-        hold off;
 
     else
     % No id for ROI: plot all trace
@@ -82,7 +106,7 @@ function ax = plot_avg(r, id_roi, varargin)
                     subplot(n_row, n_col, i);
                     rr = roi_array(k);
                     % plot for roi# rr
-                    ax = r.plot_avg(rr);
+                    ax = r.plot_avg(rr, varargin{:});
                     
                     text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 9, 'Color', 'k', ...
                         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
@@ -107,4 +131,21 @@ function ax = plot_avg(r, id_roi, varargin)
         end
     end
             
+end
+
+function p =  ParseInput(varargin)
+    
+    p  = inputParser;   % Create an instance of the inputParser class.
+    
+    p.addParameter('traceType', 'smoothed', @(x) strcmp(x,'normalized') || ...
+        strcmp(x,'filtered') || strcmp(x,'smoothed'));
+    
+%     addParamValue(p,'verbose', true, @(x) islogical(x));
+%     addParamValue(p,'png', false, @(x) islogical(x));
+%     addParamValue(p,'ex_str', [], @(x) ischar(x));
+%     addParamValue(p,'scanZoom', [], @(x) isnumeric(x));
+%     
+    % Call the parse method of the object to read and validate each argument in the schema:
+    p.parse(varargin{:});
+    
 end

@@ -1,5 +1,6 @@
 function [hfig] = imvol(vol, varargin)
 % imshow() with interactive navigation for stack and ROI selection
+% Scale bar for x25 leica obj
 % New figure will be created unless fig or axes handles are not given.
 % input 'vol' should be image or 3-D matrix
 %
@@ -69,10 +70,6 @@ function [hfig] = imvol(vol, varargin)
     vol = scaled(vol);
     [rows, cols, n_frames] = size(vol);
     
-    n_phase_shift = 2;
-    
-    
-    
     % mask variables for ROI removal by user
     mask = false(rows, cols);
     white = false(rows, cols);
@@ -110,9 +107,9 @@ function [hfig] = imvol(vol, varargin)
         Tol = [lower upper];
         MinMax = stretchlim(I,Tol);
         J = imadjust(I, MinMax);
-        if ~isempty(ax)
-            axes(ax);    
-        end
+%         if ~isempty(ax)
+%             axes(ax);    
+%         end
         
         % draw image
         if ~FLAG_roi 
@@ -176,9 +173,17 @@ function [hfig] = imvol(vol, varargin)
         
         % scale bar
         if FLAG_scale_bar && ~isempty(zoom)
-%             hold on
-%             n_pixels =  
-%             
+            fov = get_FOV_size_x25_Leica(zoom);
+            px_per_um = rows/fov;
+            hold on;
+                l_scalebar = 30; % um
+                x0 = ax.XLim(end) * 0.80;
+                y0 = ax.YLim(end) * 0.90;
+                quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
+                text(x0+l_scalebar*px_per_um/2, y0, [num2str(l_scalebar),' um'], 'FontSize', 15, 'Color', 'w', ...
+                'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
+            hold off;
+
 %             line( [100 200], round(0.85*ax.YLim(end)), 'Color', 'w', 'LineWidth', 4);
         end
         
@@ -203,7 +208,7 @@ function [hfig] = imvol(vol, varargin)
                 str3 = sprintf('%d/%d', data.i, data.imax);
             else
                 str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
-                str2 = '''q'' for default contrast. ''SPACE'' for ROI mode.';
+                str2 = '''q'' for default contrast. ''SPACE'' for ROI mode. ''b'' scale bar';
                 str3 = sprintf('%d/%d', data.i, data.imax);
             end
             
@@ -242,6 +247,29 @@ function [hfig] = imvol(vol, varargin)
                 id_add_upper = max(1, id_add_upper - 1); 
             case '0'
                 id_add_upper = min(id_add_upper + 1, n_tols);
+            case 'l' % line profile
+                [cx,cy,c,xi,yi] = improfile;
+                c_section = zeros(length(c), n_frames);
+                for k = 1:n_frames
+                    c_section(:,k) = improfile(vol(:,:,k),xi,yi);
+                end
+                px_per_um = 1024/300;
+                z_step_um = 1; % um
+                a_ratio = px_per_um/z_step_um;
+                img = c_section.';
+                [numrows, numcols] = size(img);
+                C = imresize(img, [a_ratio*numrows, numcols]);
+                make_im_figure(500, 0);
+                myshow(C,0.2); ax = gca; 
+                %scale bar?
+                hold on;
+                l_scalebar = 30; % um
+                x0 = ax.XLim(end) * 0.80;
+                y0 = ax.YLim(end) * 0.90;
+                quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
+                text(x0+l_scalebar*px_per_um/2, y0, [num2str(l_scalebar),' um'], 'FontSize', 15, 'Color', 'w', ...
+                'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
+                hold off;
             case 's'
                 SAVE_png = true;
             case 'b'
@@ -358,6 +386,28 @@ for i = 1:cc.NumObjects
 end
 
 end
+
+function fov = get_FOV_size_x25_Leica(zoom)
+% x25 Leica lens in upright scope running SI 5. [um]
+    % data
+    scanZoom = [];
+    fovSize  = [];
+    
+    % interporlate
+    % fov = 
+    switch zoom
+        case 1
+            fov = 600;
+        case 2
+            fov = 300;
+        case 3
+            fov = 150;
+        otherwise
+            
+    end
+
+end
+
 
 function p =  ParseInput(varargin)
     

@@ -1,25 +1,34 @@
-function plot_rf(r, id_roi, traceType, maxlag, upsampling)
+function ax = plot_rf(r, id_roi, traceType, maxlag, upsampling)
     
     if nargin < 5
-        upsampling = 1;
+        upsampling = 2;
     end
     
     if nargin < 4
-        maxlag = 1.8; %sec
+        maxlag = 1.5; %sec
     end
     
 
     if nargin>1 && numel(id_roi) == 1 && isnumeric(id_roi)
         
         if nargin < 3
-            traceType = 'normalized';
+            traceType = 'smoothed';
         end
         
-        [rf, rf_time] = rf_corr(r, id_roi, traceType, maxlag, upsampling);
+        [rf, rf_time] = rf_corr(r, id_roi, traceType, maxlag, upsampling); % sampled at f_times_norm
         
-        imshow(scaled(rf), 'Colormap', parula); % jet, parula, winter ..
-        %plot(rf_time);
+        %imshow(scaled(rf), 'Colormap', parula); % jet, parula, winter ..
+        imagesc(rf)
+        colormap(gray);
+        ax =gca;
         
+        x_tick_spacing = 0.1; % sec
+        ax.XTick = (x_tick_spacing/r.ifi):(x_tick_spacing/r.ifi):(maxlag/r.ifi);
+        S = sprintf('%.0f*', x_tick_spacing*10*(1:numel(ax.XTick)) ); C = regexp(S, '*', 'split'); % C is cell array.
+        % 
+        ax.XTickLabel = {C{1:end-1}}; 
+        ylabel('space');
+        xlabel('[x100 ms]');
     else
         % plot rf for all rois
         
@@ -104,7 +113,8 @@ function make_figure(x_shift, y_shift)
     
     if nargin < 2
         y_shift = 0;
-    elseif nargin < 1
+    end
+    if nargin < 1
         x_shift = 0;
     end
     

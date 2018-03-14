@@ -26,6 +26,7 @@ function ax = plot_trace_norm(r, id_roi)
         else
             % only start line
             plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+            plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
         end
         hold off
     else
