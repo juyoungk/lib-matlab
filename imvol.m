@@ -126,15 +126,12 @@ function [hfig] = imvol(vol, varargin)
                 bw = bw & (~mask);    % get ROI mask and then subtract it from the image
                 bw = bw | (white);
                 bw = bwareaopen(bw, P_connected); % remove small area
-                bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
                 if FLAG_hole_fill
                     bw = imfill(bw, 'hole');
                 end
+                bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
                 cc = bwconncomp(bw, 8); % 'cc' is updated inside a local function. 
-                % Filled image
-                %regionprops(cc, 'FilledImage');
-                % filter by ecentriccity?
-                %s = regionprops(cc, 'Eccentricity');
+                %s = regionprops(bw, 'Centroid');
             end
 
             % visualization of computed ROI

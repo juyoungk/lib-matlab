@@ -1,17 +1,12 @@
 function plot(obj, i)
-    % plot1: smoothed roi trace of 1st imaging session
-    % plot2: 
+% plot traces and avg or rf responses for given roi#    
     
-    % i_roi input
-        % 1. integer input
-        % 2. figure handle: .UserData.i
-        % 3. no input: all roi plot ?
+% i_roi input
+    % 1. integer input
+        
     if nargin > 1 
         if isnumeric(i)
             i_roi = i;
-%         elseif ishandle(i)
-%             hfig = i;
-%             i_roi = hfig.UserData.i;
         else
             error('ROI index was not given properly. Not integer or figure handle');
         end    
@@ -40,6 +35,7 @@ function plot(obj, i)
 
         % 2. Portrait of ROI    
         subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1);
+        
             mask = false(cc.ImageSize);
             mask(cc.PixelIdxList{i_roi}) = true;
             h = imshow(obj.roi_rgb);
@@ -54,7 +50,7 @@ function plot(obj, i)
             %subplot(n_row_subplot, n_col_subplot, tot_subplot - 2*n_col_subplot+1+k);
             subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1+k);
             
-            ax = plot_avg(obj.g(k).rr, i_roi, 'traceType', 'smoothed');
+            plot_avg(obj.g(k).rr, i_roi, 'traceType', 'normalized');
 %                     ax = findobj(gca, 'Type', 'Line');
 %                     ax.LineWidth = 2.5;
             % title
@@ -77,5 +73,10 @@ function str_ex_name = get_ex_name(tif_filename)
     s_filename = strrep(tif_filename, '_', '  ');    
     s_filename = strrep(s_filename, '00', '');
     loc_name = strfind(s_filename, '.');
-    str_ex_name = s_filename(1:loc_name-1);
+    
+    if isempty(loc_name)
+        str_ex_name = s_filename;
+    else
+        str_ex_name = s_filename(1:(loc_name-1));
+    end
 end

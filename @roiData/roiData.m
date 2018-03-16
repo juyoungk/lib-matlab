@@ -17,15 +17,18 @@ classdef roiData < handle
         %
         stim_whitenoise
         stim_fliptimes     % relative times between whitenoise flip times
+        stim_size          % spatial size [mm]
         
         % 
         numFrames
         numRoi
         roi_trace       % raw trace (bg substracted. only post-processing)
-        roi_smoothed    % smoothed raw trace
+        roi_smoothed    % smoothed raw trace + normalization?
+        roi_smoothed_norm
         roi_filtered    % lowpass filtered
         roi_trend
         roi_normalized  % dF/F @ dF = filtered - detrended, F = detrended_trace
+        roi_mean_f      % mean fluorescnece level during the stimulus
         f_times         % frame times
         ignore_sec      % ignore first few secs for filtering.
         f_times_fil
@@ -46,10 +49,14 @@ classdef roiData < handle
         avg_trigger_times
         avg_trigger_interval
         avg_trace       % avg over (smoothed) trials: (times x roi#): good for 2-D plot
+        avg_trace_smooth_norm
         avg_trace_fil   % avg over (filtered) trials.
         avg_trace_norm  % avg over (normalized) trials.
         avg_times
         a_times     % times for avg plot. Phase shifted.
+        
+        % statistics
+        
         
         % whitenoise responses
         rf              % cell arrays
@@ -96,10 +103,9 @@ classdef roiData < handle
 
             if r.avg_FLAG
                % Align roi traces to stim_times
-               %[roi_aligned, ~] = align_rows_to_events(r.roi_smoothed, r.f_times, r.stim_trigger_times, r.stim_duration);
                [roi_aligned, ~] = align_rows_to_events(r.roi_smoothed, r.f_times, r.avg_trigger_times, r.avg_trigger_interval);
                 % Avg over trials (dim 3)
-                r.avg_trace = mean(roi_aligned, 3); 
+                r.avg_trace = mean(roi_aligned, 3);  
             end
             r.smoothing_size = t;
         end
@@ -121,25 +127,36 @@ classdef roiData < handle
             for i=1:r.numRoi
                     y = r.roi_trace(:,i); % raw data (bg substracted)
                     %
+                    y_smoothed = r.roi_smoothed(:,i); % raw data (bg substracted)
+                    y_smoothed = y_smoothed(r.f_times > t);
+                    %
                     y_filtered = filtfilt(fil_low,   y);       % low-pass filtering
-                    y_filtered = y_filtered(r.f_times > t);    % ignore the first 5 secs
+                    y_filtered = y_filtered(r.f_times > t);    % ignore the first secs
+                    %
                        y_trend = filtfilt(fil_trend, y_filtered); 
+                    
+                    % normalization 
                     y_fil_normalized = ((y_filtered - y_trend)./y_trend)*100;
+                    y_smoothed_norm  = ((y_smoothed - y_trend)./y_trend)*100;
                     
                     %
                     r.roi_filtered(:,i) = y_filtered;                                          % set by filter definition?
-                    r.roi_normalized(:,i) = y_fil_normalized; %
                     r.roi_trend(:,i) = y_trend;
+                    %
+                    r.roi_smoothed_norm(:,i) = y_smoothed_norm;
+                    r.roi_normalized(:,i)    = y_fil_normalized;
             end
             
             if r.avg_FLAG
                % Align roi traces to stim_times
+               [roi_aligned_smooth_norm, ~] = align_rows_to_events(r.roi_smoothed_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
                [roi_aligned_fil, ~] = align_rows_to_events(r.roi_filtered, r.f_times_fil, r.avg_trigger_times, r.avg_trigger_interval);
                [roi_aligned_norm, ~] = align_rows_to_events(r.roi_normalized, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
 
                 % Avg over trials (dim 3)
                 r.avg_trace_fil = mean(roi_aligned_fil, 3); 
                 r.avg_trace_norm = mean(roi_aligned_norm, 3); 
+                r.avg_trace_smooth_norm = mean(roi_aligned_smooth_norm, 3); 
             end
             
         end
@@ -153,6 +170,7 @@ classdef roiData < handle
                 r.numFrames = size(vol, 3);
                 r.roi_trace    = zeros(r.numFrames, r.numRoi);
                 r.roi_smoothed = zeros(r.numFrames, r.numRoi);
+                r.roi_mean_f = zeros(1, r.numRoi);
                 r.rf = cell(1, r.numRoi);
                 
                 if nargin > 2
@@ -180,7 +198,7 @@ classdef roiData < handle
                 % Bg PMT level in images (vol)
                 a = sort(vec(vol(:,:,1))); % inferred from 1st frame
                 N = ceil(size(vol, 1)/10);
-                bg_PMT = mean(a(1:(N*N))) 
+                bg_PMT = mean(a(1:(N*N)));
                     
                 % Extract roi trace from vol.
                 vol_reshaped = reshape(vol, [], r.numFrames);
@@ -188,6 +206,7 @@ classdef roiData < handle
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;                           % bg substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
+                    r.roi_mean_f(i) = mean( y(r.f_times > stim_trigger_times(1) && r.f_times < stim_trigger_times(end)) ); 
                 end
                 
                 % ignore data before the 1st stim trigger

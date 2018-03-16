@@ -5,11 +5,12 @@ classdef fdata < handle
     properties
         FOV_name
         g
+        img_mean    % mean image of all imaging sessions
         numImaging  % # of imaging sessions under same FOV
         %
         cc          % Setting cc will trigger to compute roi data for all imaging sessions
         numRoi
-        roi_channel % ch number will be automatically shared. 
+        roi_channel % PMT ch for ROI. ch# will be automatically shared. 
         roi_rgb     % roi rgb snapshot
         %
         roi_selected 
@@ -45,7 +46,25 @@ classdef fdata < handle
                     g(i) = gdata(tif_filename, h5_filename);
                end
                obj.g = g;
+               
+               % mean image (for available channels)
+               obj.img_mean = cell(1, g(1).n_channels);
+               for ch = obj.g(1).header.channelSave
+                   [row, col] = size(obj.g(i).AI_mean{ch});
+                   obj.img_mean{ch} = zeros(row, col);
+                   for i = 1:obj.numImaging 
+                        obj.img_mean{ch} = obj.img_mean{ch} + obj.g(i).AI_mean{ch};
+                   end
+                   obj.img_mean{ch} = obj.img_mean{ch}/obj.numImaging;
+               end
+               
            end
+        end
+        
+        function imvol(f)
+            for ch = f.g(1).header.channelSave
+                imvol(f.img_mean{ch});
+            end
         end
         
         % Create roi data for all imaging sessions

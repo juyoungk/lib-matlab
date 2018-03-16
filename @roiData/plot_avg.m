@@ -1,4 +1,4 @@
-function ax = plot_avg(r, id_roi, varargin)
+function s = plot_avg(r, id_roi, varargin)
 % plot avg trace or RF (receptuve field)
 % varargin for traceType, not plot options
 
@@ -9,9 +9,9 @@ function ax = plot_avg(r, id_roi, varargin)
         
         % plot single roi avg trace
         if ~r.avg_FLAG
-            % whitenoise rf or jitter
+            % whitenoise rf
             
-            ax = plot_rf(r, id_roi, traceType);
+            plot_rf(r, id_roi, traceType);
 
         else 
             if isempty(r.avg_trace)
@@ -25,7 +25,8 @@ function ax = plot_avg(r, id_roi, varargin)
             elseif contains(traceType, 'filtered')
                 y = r.avg_trace_fil(:, id_roi);
             elseif contains(traceType, 'normalized')
-                y = r.avg_trace_norm(:, id_roi);    
+                %y = r.avg_trace_norm(:, id_roi);    
+                y = r.avg_trace_smooth_norm(:, id_roi);    
             else
                 disp('trace Type should be one of ''normalized'', ''smoothed'' or ''filtered''. ''smoothed'' trace was used');
                 y = r.avg_trace(:, id_roi);
@@ -46,6 +47,13 @@ function ax = plot_avg(r, id_roi, varargin)
             ax.XTick = (0:0.5:(r.n_cycle)) * duration;
     %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
             xtickformat('%.1f');
+            
+            % y-label
+            if contains(traceType, 'normalized')
+                ylabel('dF/F');
+            else
+                ylabel('a.u.');
+            end
 
             % additional lines
             for n = 1:r.n_cycle
@@ -64,6 +72,12 @@ function ax = plot_avg(r, id_roi, varargin)
 
             end
             hold off;
+            
+            %statistics of avg responses
+            s.min = min(y);
+            s.max = max(y);
+            s.df_max = max(y) - min(y);
+            
         end
 
     else
@@ -94,7 +108,7 @@ function ax = plot_avg(r, id_roi, varargin)
         
             % figure info
             pos_new = get(0, 'DefaultFigurePosition');
-            figure('Position', [pos_new(1), 100, pos_new(3)*2.4, pos_new(4)*2]);
+            figure('Position', [pos_new(1), 100, pos_new(3)*2.2, pos_new(4)*1.8]);
             axes('Position', [0  0  1  0.9524], 'Visible', 'off');
             title(r.ex_name);
 
@@ -106,11 +120,11 @@ function ax = plot_avg(r, id_roi, varargin)
                     subplot(n_row, n_col, i);
                     rr = roi_array(k);
                     % plot for roi# rr
-                    ax = r.plot_avg(rr, varargin{:});
-                    
-                    text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 9, 'Color', 'k', ...
-                        'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
-                   
+                    r.plot_avg(rr, varargin{:});
+                        ax = gca;
+                        text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 9, 'Color', 'k', ...
+                            'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
+
                     % bottom-most subplot: x label
                     if any(i == n_cells_per_fig)
                         xlabel('sec');
@@ -127,7 +141,7 @@ function ax = plot_avg(r, id_roi, varargin)
             text(ax.XLim(end), ax.YLim(1), ['exp: ', r.ex_name], 'FontSize', 11, 'Color', 'k', ...
                     'VerticalAlignment', 'top', 'HorizontalAlignment','right');
             %
-            saveas(gcf, [r.ex_name,'_ROI_avg_trace__smoothging',num2str(r.smoothing_size),'_tiled.png']);
+            %saveas(gcf, [r.ex_name,'_ROI_avg_trace__smoothging',num2str(r.smoothing_size),'_tiled.png']);
         end
     end
             
@@ -137,7 +151,7 @@ function p =  ParseInput(varargin)
     
     p  = inputParser;   % Create an instance of the inputParser class.
     
-    p.addParameter('traceType', 'smoothed', @(x) strcmp(x,'normalized') || ...
+    p.addParameter('traceType', 'normalized', @(x) strcmp(x,'normalized') || ...
         strcmp(x,'filtered') || strcmp(x,'smoothed'));
     
 %     addParamValue(p,'verbose', true, @(x) islogical(x));
