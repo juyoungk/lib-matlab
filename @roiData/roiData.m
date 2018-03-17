@@ -206,7 +206,7 @@ classdef roiData < handle
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;                           % bg substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
-                    r.roi_mean_f(i) = mean( y(r.f_times > stim_trigger_times(1) && r.f_times < stim_trigger_times(end)) ); 
+                    r.roi_mean_f(i) = mean( y(r.f_times > stim_trigger_times(1) & r.f_times < stim_trigger_times(end)) ); 
                 end
                 
                 % ignore data before the 1st stim trigger

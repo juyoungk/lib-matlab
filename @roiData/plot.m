@@ -60,7 +60,8 @@ function plot(r)
                 c = colorbar;
                 c.TickLabels = {};
             else
-                ax = plot_avg(r, i_roi);
+                plot_avg(r, i_roi);
+                ax =gca;
                 title('Avg response (smoothed) over trials');
                 if ~isempty(ax)
                     text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...

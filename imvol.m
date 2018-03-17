@@ -1,18 +1,40 @@
 function [hfig] = imvol(vol, varargin)
-% imshow() with interactive navigation for stack and ROI selection
-% Scale bar for x25 leica obj
-% New figure will be created unless fig or axes handles are not given.
-% input 'vol' should be image or 3-D matrix
+% imshow() with interactive keyboard navigation for vol images (or stack)
+% and select ROIs using imbinarize() with adjustable parameters and keyboard interactions. 
+% New figure will be created unless fig or axes handles are given.
 %
-% options:
+% Input: 
+%        vol - 2-D or 3-D matrix (stack)
+%
+% Varargin inputs: (optional)
 %       'roi'    - predefined cc structure for ROI mode
 %       'ex_str' - name string for experiment 
-% output:
+%
+% Output:
 %       hfig - ROI data will be saved in UserData field.
 %               (hfig.UserData.cc)
-    
+%
+% Press 'spacebar' to switch between Modes.
+%
+%    Mode1 - Imaging mode (default).
+%               L /R    arrow keys - previous/next frames in vol images
+%               Up/Down arrow keys - adjust contrast levels
+%               'l' key - Draw line and get Z (or vertical) profile
+%               'b' key - Scale bar for x25 leica obj.
+%               's' key - Save current image as .png
+%               'v' key - Verbose output. Display or hide text notes in imshow
+%
+%    Mode2 - ROI select mode. 'cc' (ROI) strucrue will be saved in Workspace.
+%               L /R    arrow keys - adjust 'sensitivity' in imbinarize(J, 'adaptive')
+%               Up/Down arrow keys - adjust 'connectivity threshold' in bwareaopen(bw, P_connected)
+%               'a' key - add whtie pixels to add ROI.
+%               'd' key - delete ROIs in drawed squre.
+%               'l' key - delete white pixels to split ROIs.
+%
+% (c) 2018 Juyoung Kim 
+
     p = ParseInput(varargin{:});
-    pos = get(0, 'DefaultFigurePosition');
+    %
     s_title = p.Results.title;
     FLAG_txt = p.Results.verbose;
     hfig = p.Results.hfig;
@@ -20,13 +42,12 @@ function [hfig] = imvol(vol, varargin)
     cc = p.Results.roi;
     ex_str = p.Results.ex_str;
     zoom = p.Results.scanZoom;
-    %hfig_sync = p.Results.sync;
     SAVE_png = p.Results.png;
     FLAG_scale_bar = true;
     FLAG_roi = false;
     FLAG_color_segmentation = false;
     FLAG_hole_fill = true;
-    %FLAG_color_segmentation = false;
+  
     vol_inputname = inputname(1);
     
     % str of input variable
@@ -63,7 +84,6 @@ function [hfig] = imvol(vol, varargin)
     hfig.UserData.ex_str = ex_str;
     
     % Set the callback on figure
-    %set(fig, 'KeyPressFcn', @(fig, evnt)keypress(h, evnt))
     set(hfig, 'KeyPressFcn', @keypress)
     
     % Normalization and get frame numbers
@@ -107,10 +127,7 @@ function [hfig] = imvol(vol, varargin)
         Tol = [lower upper];
         MinMax = stretchlim(I,Tol);
         J = imadjust(I, MinMax);
-%         if ~isempty(ax)
-%             axes(ax);    
-%         end
-        
+
         % draw image
         if ~FLAG_roi 
             imshow(J);
@@ -169,13 +186,13 @@ function [hfig] = imvol(vol, varargin)
         title(s_title, 'FontSize', 15, 'Color', 'w');
         
         % scale bar
-        if FLAG_scale_bar && ~isempty(zoom)
+        if FLAG_scale_bar && is_valid_zoom(zoom)
             fov = get_FOV_size_x25_Leica(zoom);
             px_per_um = rows/fov;
             hold on;
                 l_scalebar = 30; % um
                 x0 = ax.XLim(end) * 0.80;
-                y0 = ax.YLim(end) * 0.90;
+                y0 = ax.YLim(end) * 0.94;
                 quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
                 text(x0+l_scalebar*px_per_um/2, y0, [num2str(l_scalebar),' um'], 'FontSize', 15, 'Color', 'w', ...
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
@@ -245,12 +262,13 @@ function [hfig] = imvol(vol, varargin)
             case '0'
                 id_add_upper = min(id_add_upper + 1, n_tols);
             case 'l' % line profile
-                [cx,cy,c,xi,yi] = improfile;
+                [~,~,c,xi,yi] = improfile;
                 c_section = zeros(length(c), n_frames);
                 for k = 1:n_frames
                     c_section(:,k) = improfile(vol(:,:,k),xi,yi);
                 end
-                px_per_um = 1024/300;
+                fov = get_FOV_size_x25_Leica(zoom);
+                px_per_um = rows/fov;
                 z_step_um = 1; % um
                 a_ratio = px_per_um/z_step_um;
                 img = c_section.';
@@ -371,6 +389,51 @@ function [hfig] = imvol(vol, varargin)
     
 end
 
+function scaled = scaled(data)
+% Scale the (2-D) matrix a onto [0, 1] range.
+% For true color image.
+% Min & Max operation will be made over whole elements.
+
+% data conversion if a is an integer array
+a = double(data);
+
+min_subtracted = a - min(a(:));
+scaled = min_subtracted/(max(min_subtracted(:))+0.00001);
+
+end
+
+function q = is_valid_zoom(zoom)
+    if nargin < 1
+        q = false;
+    end
+
+    if zoom >= 1 && zoom <=7
+        q = true;
+    else
+        q = false;
+    end
+end
+
+function make_im_figure(x_shift, y_shift)
+    
+    if nargin < 2
+        y_shift = 0;
+    end
+    
+    if nargin < 1
+        x_shift = 0;
+    end
+    
+    pos = get(0, 'DefaultFigurePosition');
+    hfig = figure('Position', [pos(1) + x_shift, pos(2) + y_shift, pos(3), pos(4)]);
+    
+    hfig.Color = 'none';
+    hfig.PaperPositionMode = 'auto';
+    hfig.InvertHardcopy = 'off';   
+    
+    axes('Position', [0  0  1  0.9524], 'Visible', 'off'); % space for title
+end
+
 function roi_array = conn_to_bwmask(cc)
 % convert cc to bwmask
 
@@ -383,28 +446,6 @@ for i = 1:cc.NumObjects
 end
 
 end
-
-function fov = get_FOV_size_x25_Leica(zoom)
-% x25 Leica lens in upright scope running SI 5. [um]
-    % data
-    scanZoom = [];
-    fovSize  = [];
-    
-    % interporlate
-    % fov = 
-    switch zoom
-        case 1
-            fov = 600;
-        case 2
-            fov = 300;
-        case 3
-            fov = 150;
-        otherwise
-            
-    end
-
-end
-
 
 function p =  ParseInput(varargin)
     
@@ -423,4 +464,43 @@ function p =  ParseInput(varargin)
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});
     
+end
+
+function Xcomp = comp(X, range)
+% Pick a specific range of frames or components of X
+% , which is the last dim of matrix X (usually dim.3 for 2-D images)
+% 
+% if Dim ==2
+%     Xcomp = X(:,range);
+% elseif Dim ==3
+%     Xcomp = X(:,:,range);
+% elseif Dim == 4
+%     Xcomp = X(:,:,:,range);
+% elseif Dim == 5
+%     Xcomp = X(:,:,:,:,range);
+%
+
+Dim = ndims(X);
+d = size(X);
+
+if max(range)>d(end) || min(range)<1
+    disp('Function comp: components (frames) are out of range');
+    Xcomp = [];
+    return;
+end
+
+if Dim ==2 % 2-D matrix
+    Xcomp = X(:,range);
+elseif Dim ==3
+    Xcomp = X(:,:,range);
+elseif Dim == 4
+    Xcomp = X(:,:,:,range);
+elseif Dim == 5
+    Xcomp = X(:,:,:,:,range);
+else
+    Xre = reshape(img,[],size(img,ndims(img)));
+    Xcomp = Xre(:,range);
+    disp('Dim of matrix X @ comp function is more than 5. X was reshaped into 1-D.');
+end
+
 end
