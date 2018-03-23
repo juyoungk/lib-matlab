@@ -12,9 +12,10 @@ X = im2double(reimg);
 % X = X - mean(X(:)); 
 Xscaled = scaled(X);
 
-% PCA: X is n-by-p (p variables, e.g. different spectral points)
+% PCA: X is n-by-p (p variables, e.g. different spectral points) ?
+% (Rows of X correspond to observations and columns to variables.)
 % Coeff matrix is p-by-p. (basis transformation)
-% score = X*coeff
+% score (= X*coeff): Representation in PCA space
 % score to raw data? score*coeff' (inverse of rot mat is a transpose)
 [coeff, score, latent, ts, explained] = pca(X); 
 Xprojected1D = X*coeff; % or score

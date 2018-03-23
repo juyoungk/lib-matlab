@@ -1,19 +1,22 @@
-function plot(r)
+function plot(r, I)
 % Create new figure with interactive keyboard navigation over roi#
+
+    if nargin < 2
+        I = 1:r.numRoi;    
+    end
+    i_roi = 1;
+    imax = numel(I);
 
     hfig = figure('Position', [100 230 1300 840]);
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
     
     cc = r.roi_cc;
-    ev = r.stim_times;
-    interval = r.stim_duration;
     
     % callback
     set(hfig, 'KeyPressFcn', @keypress)
     
     % roi # and max #
-    i_roi = 1;
-    imax = r.numRoi;
+    
     S = sprintf('ROI %d  *', 1:imax); C = regexp(S, '*', 'split'); % C is cell array.
     
     % roi rgb image
@@ -26,28 +29,29 @@ function plot(r)
     
 
     function redraw()
+        k = I(i_roi); % roi index
         mask = false(cc.ImageSize);
         % ex info
         str_smooth_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
         
         % 1. whole trace
         subplot(n_row_subplot, n_col_subplot, [1, n_col_subplot]);
-            plot_trace_raw(r, i_roi);
+            plot_trace_raw(r, k);
 %                 ax = findobj(gca, 'Type', 'Line');
 %                 ax.LineWidth = 0.8;            
         subplot(n_row_subplot, n_col_subplot, [n_col_subplot+1, 2*n_col_subplot]);
-            plot_trace_norm(r, i_roi);
+            plot_trace_norm(r, k);
 %                 ax = findobj(gca, 'Type', 'Line');
 %                 ax.LineWidth = 0.8;            
             
         subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+1);
             %axes('Position', [0  0  1  1], 'Visible', 'off');
-            mask(cc.PixelIdxList{i_roi}) = true;
+            mask(cc.PixelIdxList{k}) = true;
             h = imshow(RGB_label);
             set(h, 'AlphaData', 0.9*mask+0.1);
             
             ax = gca;
-            str1 = sprintf('%d/%d ROI', i_roi, imax);
+            str1 = sprintf('%d/%d ROI', k, r.numRoi);
             text(ax.XLim(end), ax.YLim(1), str1, 'FontSize', 12, 'Color', 'k', ...
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
             
@@ -55,12 +59,12 @@ function plot(r)
         subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+2);
             
             if strfind(r.ex_name, 'whitenoise')
-                r.plot_rf(i_roi, 'smoothed');
+                r.plot_rf(k, 'smoothed');
                 title('Revrse correlation (smoothed trace)');
                 c = colorbar;
                 c.TickLabels = {};
             else
-                plot_avg(r, i_roi);
+                plot_avg(r, k);
                 ax =gca;
                 title('Avg response (smoothed) over trials');
                 if ~isempty(ax)
@@ -73,12 +77,12 @@ function plot(r)
         subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+3);
             
             if strfind(r.ex_name, 'whitenoise')
-                r.plot_rf(i_roi, 'normalized');
+                r.plot_rf(k, 'normalized');
                 title('Revrse correlation (norm. trace)');
                 c = colorbar;
                 c.TickLabels = {};
             else
-                ax = plot_avg_fil(r, i_roi);
+                ax = plot_avg_fil(r, k);
                 title('Avg response (filtered) over trials');
                 if ~isempty(ax)
                     text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
@@ -91,16 +95,38 @@ function plot(r)
     redraw();
     
     function keypress(~, evnt)
-        
-        switch lower(evnt.Key)
+        a = lower(evnt.Key);
+        switch a
             case 'rightarrow'
-                i_roi = min(i_roi + 1, imax); 
+                i_roi = i_roi + 1;
+                if i_roi > imax
+                    i_roi = 1;
+                end
             case 'leftarrow'
-                i_roi = max(1, i_roi - 1);
-                
+                i_roi = i_roi - 1;
+                if i_roi < 1
+                    i_roi = imax;
+                end
+
             otherwise
-                return;
+                n = str2double(a);
+                if (n>=0) & (n<10)
+                    if n == 0; n = 10; end;
+                    if n > r.numCluster
+                        disp('Too large clustering #');
+                        return; 
+                    end
+                    k = I(i_roi);
+                    r.c{n} = [k, r.c{n}];
+                    r.plot_cluster(4, n);
+                    fprintf('New ROI %d is added in cluster %d,\n', k, n);
+                    i_roi = i_roi + 1;
+                    if i_roi > imax
+                        i_roi = 1;
+                    end 
+                end
         end
+        figure(hfig);
         redraw();
     end
 

@@ -1,5 +1,5 @@
-function [idx, cent, sumdist] = mykmeans(X, k)
-% Orginally written for image pixel clustering after PCA alaysis.
+function [idx, cent, sumdist] = mykmeans(X, k, varargin)
+% dist measure for silhouette: 'cosine'
 % X can be n-by-p matrix or image(2D-by-p). P is # of observations (variables).
 % k : k-means cluster
 % cent? k-by-P matrix
@@ -14,21 +14,25 @@ end
 
 Xre = reshape(X,[],size(X,ndims(X)));
 
-[idx, cent, sumdist] = kmeans(Xre,k,'Display','iter','Replicates',5);
+[idx, cent, sumdist] = kmeans(Xre,k,'Display','final','Replicates',5, varargin{:});
 
-figure('Name',['Cluster Numbers: ', num2str(inputname(2))],'NumberTitle','off', ...
+figure('Name',['Cluster Numbers: ', num2str(k)], 'NumberTitle','off', ...
     'position', [1385, 685, 560, 420]);
-[silh,h] = silhouette(Xre,idx);
-h = gca;
-h.Children.EdgeColor = [.8 .8 1];
-xtext = ['Silhouette Value (k = ', num2str(k),')'];
-xlabel(xtext,'FontSize',14);
-ylabel 'Cluster';
 
-plottext = ['Avg. Silhouette Value: ', num2str(mean(silh))];
+% silhouette plot
+[silh, ~] = silhouette(Xre,idx, 'cosine');
+
+    h = gca;
+    h.Children.EdgeColor = [.8 .8 1];
+    xtext = ['Silhouette Value (k = ', num2str(k),')'];
+    xlabel(xtext,'FontSize',14);
+    ylabel 'Cluster';
+
+%plottext = ['Avg. Silhouette Value: ', num2str(mean(silh))];
+plottext = sprintf('Avg. Silhouette Value: %.2f', mean(silh));
 plottext2 = ['Sum distances: ', num2str(sum(sumdist))];
-text(0.50, round(0.93*length(idx)), plottext,'FontSize',15);
-text(0.50, round(0.98*length(idx)), plottext2,'FontSize',15);
+text(0.50, round(0.93*length(idx)), plottext, 'FontSize',13);
+text(0.50, round(0.98*length(idx)), plottext2,'FontSize',13);
 
 % average silhouette values to see if there is any improvement.
 disp(['Average Silhouette Value: ', num2str(mean(silh))]);

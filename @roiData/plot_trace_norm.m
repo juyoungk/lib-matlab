@@ -5,9 +5,9 @@ function ax = plot_trace_norm(r, id_roi)
         % plot single roi trace (smoothed)
         plot(r.f_times_norm, r.roi_normalized(:,id_roi), 'LineWidth', 0.7); hold on
         title('Normalized trace');
-            ylabel('a.u.'); axis auto;
+            ylabel('dF/F [%]'); axis auto;
             ax = gca; 
-            Fontsize = 10;
+            Fontsize = 14;
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis.FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];

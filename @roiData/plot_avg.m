@@ -4,9 +4,19 @@ function s = plot_avg(r, id_roi, varargin)
 
     p=ParseInput(varargin{:});
     traceType = p.Results.traceType;
+    PlotType = p.Results.PlotType;
+    NormByCol = p.Results.NormByCol;
+    w_Line    = p.Results.LineWidth;
+    h_axes    = p.Results.axes;
     
-    if nargin>1 && numel(id_roi) == 1
-        
+    S = sprintf('ROI %d*', 1:r.numRoi); C = regexp(S, '*', 'split'); % C is cell array.
+    
+    if nargin < 2
+        id_roi = 1:r.numRoi; % loop over all rois
+    end
+    
+    %if any([nargin>1 && numel(id_roi) == 1, avg_over_ROIs])
+    if any([numel(id_roi) == 1, ~strcmp(PlotType,'tiled')])    
         % plot single roi avg trace
         if ~r.avg_FLAG
             % whitenoise rf
@@ -15,7 +25,6 @@ function s = plot_avg(r, id_roi, varargin)
 
         else 
             if isempty(r.avg_trace)
-                ax = [];
                 error('No avg_trace in roiData object');
             end
             
@@ -26,20 +35,32 @@ function s = plot_avg(r, id_roi, varargin)
                 y = r.avg_trace_fil(:, id_roi);
             elseif contains(traceType, 'normalized')
                 %y = r.avg_trace_norm(:, id_roi);    
-                y = r.avg_trace_smooth_norm(:, id_roi);    
+                y = r.avg_trace_smooth_norm(:, id_roi);
             else
                 disp('trace Type should be one of ''normalized'', ''smoothed'' or ''filtered''. ''smoothed'' trace was used');
                 y = r.avg_trace(:, id_roi);
+            end
+            
+            if NormByCol
+                y = normc(y);
+            end
+            
+            if strcmp(PlotType,'mean')
+                y = mean(y, 2);
             end
             
             y = r.traceForAvgPlot(y);
             x = r.a_times;
 
             duration = r.avg_trigger_interval;
-
-            %plot(x, y, 'LineWidth', 1.5, varargin{:}); hold on;
-            plot(x, y, 'LineWidth', 1.5); hold on;
-            ax = gca;  Fontsize = 10; 
+            
+            %
+            if isempty(h_axes)
+                plot(x, y, 'LineWidth', w_Line); hold on;
+            else
+                plot(h_axes, x, y, 'LineWidth', w_Line); hold on;
+            end
+            ax = gca;  Fontsize = 10;
             ax.XLim = [r.a_times(1), r.a_times(end)];
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis.FontSize = Fontsize;
@@ -49,10 +70,16 @@ function s = plot_avg(r, id_roi, varargin)
             xtickformat('%.1f');
             
             % y-label
-            if contains(traceType, 'normalized')
+            if contains(traceType, 'normalized') && ~NormByCol
                 ylabel('dF/F');
             else
                 ylabel('a.u.');
+            end
+            
+            % ROI id
+            if numel(id_roi) == 1
+             text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
+                            'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
             end
 
             % additional lines
@@ -83,8 +110,9 @@ function s = plot_avg(r, id_roi, varargin)
     else
     % No id for ROI: plot all trace
         
+        roi_array = id_roi;     % loop over selected rois
+        
         % ex info
-        S = sprintf('ROI %d*', 1:r.numRoi); C = regexp(S, '*', 'split'); % C is cell array.
         str_smooth_info = sprintf('smooth size %d (~%.0f ms bin)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
         str_events_info = sprintf('stim duration: %.1fs', r.stim_duration); 
         str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
@@ -94,13 +122,6 @@ function s = plot_avg(r, id_roi, varargin)
         n_col = 10; % limit num of subplots by fixing n_col
         % Figure params
         n_cells_per_fig = 75;
-        
-        %        
-        if nargin < 2
-            roi_array = 1:r.numRoi; % loop over all rois
-        else
-            roi_array = id_roi;     % loop over selected rois
-        end
         
         k = 1; % index in selected roi group
         while (k <= numel(roi_array))
@@ -121,10 +142,7 @@ function s = plot_avg(r, id_roi, varargin)
                     rr = roi_array(k);
                     % plot for roi# rr
                     r.plot_avg(rr, varargin{:});
-                        ax = gca;
-                        text(ax.XLim(end), ax.YLim(1), C{rr}, 'FontSize', 9, 'Color', 'k', ...
-                            'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
-
+                        
                     % bottom-most subplot: x label
                     if any(i == n_cells_per_fig)
                         xlabel('sec');
@@ -154,10 +172,15 @@ function p =  ParseInput(varargin)
     p.addParameter('traceType', 'normalized', @(x) strcmp(x,'normalized') || ...
         strcmp(x,'filtered') || strcmp(x,'smoothed'));
     
+    p.addParameter('PlotType', 'tiled', @(x) strcmp(x,'tiled') || ...
+        strcmp(x,'all') || strcmp(x,'mean'));
+    
+    p.addParameter('NormByCol', false, @(x) islogical(x));
+    p.addParameter('LineWidth', 1.5, @(x) x>0);
+    p.addParameter('axes', []);
+ 
 %     addParamValue(p,'verbose', true, @(x) islogical(x));
 %     addParamValue(p,'png', false, @(x) islogical(x));
-%     addParamValue(p,'ex_str', [], @(x) ischar(x));
-%     addParamValue(p,'scanZoom', [], @(x) isnumeric(x));
 %     
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});

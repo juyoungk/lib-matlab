@@ -1,37 +1,57 @@
 function [hfig] = imvol(vol, varargin)
-% imshow() with interactive keyboard navigation for vol images (or stack)
-% and select ROIs using imbinarize() with adjustable parameters and keyboard interactions. 
-% New figure will be created unless fig or axes handles are given.
+% IMVOL Display volume images and select ROIs
+%     Display using imshow() with interactive keyboard navigation for volume images (or stack)
+%     Select ROIs using imbinarize() with adjustable parameters and keyboard interactions. 
+%     (New figure will be created unless fig or axes handles are given.)
+% 
+%     Input: 
+%            vol - 2-D or 3-D matrix (stack)
+% 
+%     Varargin inputs: (optional)
+%           'ex_str' - name string for experiment
+%           'roi'    - predefined cc structure for ROI mode. Final ROI will
+%           be differnet depending on your Sensitivity and Connectivity
+%           values. If you want to just repeat the input cc, add 'edit'
+%           option with 'false'. 
 %
-% Input: 
-%        vol - 2-D or 3-D matrix (stack)
+%               Example:
+%                       imvol(vol, 'roi', cc, 'edit', false)
+%               
+%           'edit'   - When it is flase, the BW will not be modified by the mask or added ROIs manually drawn.
+%           'z_step_um' - z-stack spacing between frames. Default is 1 um.
 %
-% Varargin inputs: (optional)
-%       'roi'    - predefined cc structure for ROI mode
-%       'ex_str' - name string for experiment 
+% 
+%     Output:
+%           hfig - ROI mask data will be saved in UserData field ((hfig.UserData.cc) 
+%           as well as in WorkSpace
+%                   
 %
-% Output:
-%       hfig - ROI data will be saved in UserData field.
-%               (hfig.UserData.cc)
-%
-% Press 'spacebar' to switch between Modes.
-%
-%    Mode1 - Imaging mode (default).
-%               L /R    arrow keys - previous/next frames in vol images
-%               Up/Down arrow keys - adjust contrast levels
-%               'l' key - Draw line and get Z (or vertical) profile
-%               'b' key - Scale bar for x25 leica obj.
-%               's' key - Save current image as .png
-%               'v' key - Verbose output. Display or hide text notes in imshow
-%
-%    Mode2 - ROI select mode. 'cc' (ROI) strucrue will be saved in Workspace.
-%               L /R    arrow keys - adjust 'sensitivity' in imbinarize(J, 'adaptive')
-%               Up/Down arrow keys - adjust 'connectivity threshold' in bwareaopen(bw, P_connected)
-%               'a' key - add whtie pixels to add ROI.
-%               'd' key - delete ROIs in drawed squre.
-%               'l' key - delete white pixels to split ROIs.
-%
-% (c) 2018 Juyoung Kim 
+%     Press 'spacebar' to switch between Modes.
+% 
+%        Mode1 - Imaging mode (default).
+%                   L /R    arrow keys - previous/next frames in vol images
+%                   Up/Down arrow keys - adjust contrast levels
+%                   'l' key - Draw line and get Z (or vertical) profile.
+%                             (default z_step = 1 um)
+%                   'b' key - Display scale bar. (Currently for 25x Leica obj).
+%                   's' key - Save current image as PNG
+%                   'v' key - Display/Hide verbose text notes in imshow
+% 
+%        Mode2 - ROI select mode. 'cc' (ROI) strucrue will be saved in Workspace.
+%                   L /R    arrow keys - adjust 'sensitivity' in imbinarize(J, 'adaptive')
+%                   Up/Down arrow keys - adjust 'connectivity threshold' in bwareaopen(bw, P_connected)
+% 
+%                   [keys for modifying ROIs]
+% 
+%                   'a' key - add whtie pixels (ellipse) in order to be detected as ROI.
+%                   'd' key - delete ROIs in drawed squre.
+%                   'l' key - add black pixels along the line to split ROIs.
+% 
+%                   [keys for visualizing ROIs]
+% 
+%                   'c' key - false color visualization for ROIs
+% 
+%     (c) 2018 Juyoung Kim 
 
     p = ParseInput(varargin{:});
     %
@@ -47,6 +67,8 @@ function [hfig] = imvol(vol, varargin)
     FLAG_roi = false;
     FLAG_color_segmentation = false;
     FLAG_hole_fill = true;
+    FLAG_edit = p.Results.edit;
+    z_step_um = p.Results.z_step_um;
   
     vol_inputname = inputname(1);
     
@@ -107,7 +129,7 @@ function [hfig] = imvol(vol, varargin)
     
     % ROI mode parameters
     sensitivity_0 = 0.02; % sensitivity for adaptive binarization
-    P_connected_0 = 75; % depending on magnification (zoom) factor
+    P_connected_0 = 50; % depending on magnification (zoom) factor
     sensitivity = sensitivity_0; 
     P_connected = P_connected_0; 
     
@@ -132,14 +154,18 @@ function [hfig] = imvol(vol, varargin)
         if ~FLAG_roi 
             imshow(J);
         else 
-            % if cc is given
+            % ROI mode
             if ~isempty(p.Results.roi)
+                % if cc is given
                 cc = p.Results.roi;
                 bw = conn_to_bwmask(cc);
                 bw = max(bw, [], 3);
             else
-                % ROI mode
                 bw = imbinarize(J, 'adaptive', 'Sensitivity', sensitivity);
+            end
+            
+            if FLAG_edit
+            % edit ROI. Update bw
                 bw = bw & (~mask);    % get ROI mask and then subtract it from the image
                 bw = bw | (white);
                 bw = bwareaopen(bw, P_connected); % remove small area
@@ -147,9 +173,14 @@ function [hfig] = imvol(vol, varargin)
                     bw = imfill(bw, 'hole');
                 end
                 bw = bw - bwselect(bw, c, r, 8);  % remove mouse-clicked components
-                cc = bwconncomp(bw, 8); % 'cc' is updated inside a local function. 
                 %s = regionprops(bw, 'Centroid');
+                % save for regenrating same pattern
+                    cc.mask  = mask;
+                    cc.white = white;
+                    cc.P_connected = P_connected;
+                    cc.sensitivity = sensitivity;
             end
+            cc = bwconncomp(bw, 8); % 'cc' is updated inside a local function. 
 
             % visualization of computed ROI
             if ~FLAG_color_segmentation
@@ -269,13 +300,13 @@ function [hfig] = imvol(vol, varargin)
                 end
                 fov = get_FOV_size_x25_Leica(zoom);
                 px_per_um = rows/fov;
-                z_step_um = 1; % um
+                
                 a_ratio = px_per_um/z_step_um;
                 img = c_section.';
                 [numrows, numcols] = size(img);
                 C = imresize(img, [a_ratio*numrows, numcols]);
-                make_im_figure(500, 0);
-                myshow(C,0.2); ax = gca; 
+                make_im_figure(500, 0); myshow(C,0.2); 
+                ax = gca; 
                 %scale bar?
                 hold on;
                 l_scalebar = 30; % um
@@ -376,6 +407,7 @@ function [hfig] = imvol(vol, varargin)
                 r = []; c = [];
            
             otherwise
+                uiresume;
                 return;
         end
         
@@ -407,7 +439,7 @@ function q = is_valid_zoom(zoom)
         q = false;
     end
 
-    if zoom >= 1 && zoom <=7
+    if (zoom >= 1) & (zoom <=7)
         q = true;
     else
         q = false;
@@ -434,17 +466,23 @@ function make_im_figure(x_shift, y_shift)
     axes('Position', [0  0  1  0.9524], 'Visible', 'off'); % space for title
 end
 
-function roi_array = conn_to_bwmask(cc)
-% convert cc to bwmask
+function [roi_array, bw_selected] = conn_to_bwmask(cc, id_selected)
+% convert cc to bwmask array and totla bw for selected IDs.
 
-roi_array = false([cc.ImageSize, cc.NumObjects]);
+    if nargin < 2
+        id_selected = 1:cc.NumObjects;
+    end
 
-for i = 1:cc.NumObjects
-    grain = false(cc.ImageSize);
-    grain(cc.PixelIdxList{i}) = true;
-    roi_array(:,:,i) = grain;
-end
+    roi_array = false([cc.ImageSize, cc.NumObjects]);
 
+    for i = 1:cc.NumObjects
+        grain = false(cc.ImageSize);
+        grain(cc.PixelIdxList{i}) = true;
+        roi_array(:,:,i) = grain;
+    end
+    % Total bw for selected IDs
+    bw_selected = max( roi_array(:,:,id_selected), [], 3);
+    
 end
 
 function p =  ParseInput(varargin)
@@ -460,6 +498,8 @@ function p =  ParseInput(varargin)
     addParamValue(p,'png', false, @(x) islogical(x));
     addParamValue(p,'ex_str', [], @(x) ischar(x));
     addParamValue(p,'scanZoom', [], @(x) isnumeric(x));
+    addParamValue(p,'edit', true, @(x) islogical(x));
+    addParamValue(p,'z_step_um', 1, @(x) isnumeric(x));
     
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});

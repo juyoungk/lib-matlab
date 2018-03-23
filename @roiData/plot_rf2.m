@@ -198,6 +198,6 @@ function make_figure(x_shift, y_shift)
     
     pos_new = get(0, 'DefaultFigurePosition');
     %figure('Position', [pos_new(1) + x_shift, 100 + y_shift, 800, 1500]);
-    figure('Position', [300 + x_shift, 100 + y_shift, 800, 1000]);
+    figure('Position', [150 + x_shift, 100 + y_shift, 800, 1000]);
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
 end
