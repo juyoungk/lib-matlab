@@ -22,16 +22,20 @@
         
         s.trace_std_avg = zeros(1, n_cells);
         
+        % How to estimate noise floor of the trace on average?
         for k=1:n_cells
             % sort repeat id by the response strength
             strength = d(1, k, :);
             strength = squeeze(strength);
             [~, id] = sort(strength);
              
-            % sample noiser responses
-            n_th = round(n_repeats/3);
+            % sample noiser half of responses
+            n_th = round(n_repeats/2);
             sampled = trace(:,k,id(1:n_th));
             sampled = squeeze(sampled);
+            
+            % data centering
+            sampled = sampled - mean(sampled, 1);
             
             % std along repeats
             trace_std = std(sampled, 1, 2);

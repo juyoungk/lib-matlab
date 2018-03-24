@@ -94,7 +94,7 @@ function plot2(r, I)
                 y = plot_avg(r, k);
                 hold on
                 y0 = r.stat.smoothed_norm.trace_mean_level(k);
-                y_std = r.stat.smoothed_norm.trace_std_avg(k)/2.;
+                y_std = r.stat.smoothed_norm.trace_std_avg(k)/sqrt(numel(r.avg_trigger_times));
                     plot(ax.XLim, [y0+y_std y0+y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     plot(ax.XLim, [y0-y_std y0-y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                 hold off
@@ -118,15 +118,15 @@ function plot2(r, I)
                 if iscolumn(y)
                     y = y.';
                 end
-                % projection
+                % (weighted?) projection
+                    % Reduced weight below noise floor ?
+                    % y = y * weight;
                 p = y * r.c_mean;
                 i_nonzero = (p~=0);
                 [p_sorted, i_sorted] = sort(p, 'descend');
                 i_sorted(p_sorted ==0) = [];
                 
-                %i_max = i_sorted(1);
-                %[p_max, i_max] = max(p);
-                
+                %
                 bar( x(i_nonzero), p(i_nonzero) );
                 ax = gca; ax.FontSize = 12;
                 title('Projection to clusters');
@@ -136,7 +136,7 @@ function plot2(r, I)
                     'HorizontalAlignment','center');
                 text(i_sorted(2), ax.YLim(1)*0.20, num2str(i_sorted(2)), 'FontSize', 12,...
                     'HorizontalAlignment','center');
-                text(i_sorted(3), ax.YLim(1)*0.20, num2str(i_sorted(3)), 'FontSize', 12,...
+                text(i_sorted(3), ax.YLim(1)*0.20, num2str(i_sorted(3)), 'FontSize', 9,...
                     'HorizontalAlignment','center');
             end
         % mean trace of the suggested cluster 
