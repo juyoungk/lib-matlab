@@ -70,10 +70,13 @@ classdef roiData < handle
         rf              % cell arrays
         
         % clusters for ROIs
-        numCluster = 10;
-        c             % cluster 1~10
-        c_mean
+        dispClusterNum = 10;
+        c             % cluster id array. 0 is unallowcated or noisy group
+        c_mean        % cluster mean for average trace (trace X #clusters ~100). update through plot_cluster
         c_hfig
+        c_note
+        c_stat        % cluster stat. histgram
+        roi_review
         roi_selected
         
         % properties for plot
@@ -196,8 +199,8 @@ classdef roiData < handle
                 [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
                 [       r.avg_trace_norm, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
                 
-                r.stat.stat_smoothed_norm = stat_smoothed_norm;
-                r.stat.stat_filtered_norm = stat_filtered_norm;
+                r.stat.smoothed_norm = stat_smoothed_norm;
+                r.stat.filtered_norm = stat_filtered_norm;
 %                 r.avg_trace_fil = mean(roi_aligned_fil, 3); 
 %                 r.avg_trace_norm        = mean(roi_aligned_filtered_norm, 3); 
 %                 r.avg_trace_smooth_norm = mean(roi_aligned_smoothed_norm, 3);   
@@ -216,8 +219,10 @@ classdef roiData < handle
                 r.roi_trace    = zeros(r.numFrames, r.numRoi);
                 r.roi_smoothed = zeros(r.numFrames, r.numRoi);
                 r.rf = cell(1, r.numRoi);
-                r.c = cell(1, r.numCluster);
+                %r.c = cell(1, r.numCluster);
+                r.c = zeros(1, r.numRoi);
                 r.c_hfig = [];
+                r.roi_review = [];
                 
                 % mean image
                 [row, col, n_frames] = size(vol);
@@ -305,8 +310,12 @@ classdef roiData < handle
                         % times for avg traces
                         n = floor(r.avg_trigger_interval*(1./ifi)); % same as qx in align_rows_to_events function
                         r.avg_times = ((1:n)-0.5)*ifi; 
-                        % times for avg trace plot
+                        % times for plot
                         r.a_times = r.timesForAvgPlot;
+                        % cluster mean of avg traces (max cluster # is
+                        % 100)
+                        r.c_mean = zeros(n, 100);
+                        r.c_note = cell(1, 100);
                 else
                     r.avg_FLAG = false;
                 end
@@ -329,7 +338,6 @@ classdef roiData < handle
 
             end
         end
-        
         
         
         % Function for phase shift and multiply
@@ -360,6 +368,13 @@ classdef roiData < handle
         
         function set.c(r, value)
             r.c = value;
+        end
+        
+        function reset_cluster(r)
+            %[row, col] = size(r.c);
+            r.c = zeros(size(r.c));
+            r.c_mean = zeros(size(r.c_mean));
+            r.c_note = cell(size(r.c_note));
         end
             
         function set.stim_trigger_times(obj, value)

@@ -24,8 +24,8 @@ function plot(r, I)
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
-    n_col_subplot = 3;
-    n_row_subplot = 3;
+    n_col = 3;
+    n_row = 3;
     
 
     function redraw()
@@ -35,16 +35,16 @@ function plot(r, I)
         str_smooth_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
         
         % 1. whole trace
-        subplot(n_row_subplot, n_col_subplot, [1, n_col_subplot]);
+        subplot(n_row, n_col, [1, n_col]);
             plot_trace_raw(r, k);
 %                 ax = findobj(gca, 'Type', 'Line');
 %                 ax.LineWidth = 0.8;            
-        subplot(n_row_subplot, n_col_subplot, [n_col_subplot+1, 2*n_col_subplot]);
+        subplot(n_row, n_col, [n_col+1, 2*n_col]);
             plot_trace_norm(r, k);
 %                 ax = findobj(gca, 'Type', 'Line');
 %                 ax.LineWidth = 0.8;            
             
-        subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+1);
+        subplot(n_row, n_col, 2*n_col+1);
             %axes('Position', [0  0  1  1], 'Visible', 'off');
             mask(cc.PixelIdxList{k}) = true;
             h = imshow(RGB_label);
@@ -56,7 +56,7 @@ function plot(r, I)
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
             
         % 3. roi avg (smoothed) over multiple repeats
-        subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+2);
+        subplot(n_row, n_col, 2*n_col+2);
             
             if strfind(r.ex_name, 'whitenoise')
                 r.plot_rf(k, 'smoothed');
@@ -74,7 +74,7 @@ function plot(r, I)
             end
             
         % 4. roi avg (filtered) over multiple repeats
-        subplot(n_row_subplot, n_col_subplot, 2*n_col_subplot+3);
+        subplot(n_row, n_col, 2*n_col+3);
             
             if strfind(r.ex_name, 'whitenoise')
                 r.plot_rf(k, 'normalized');
@@ -111,15 +111,12 @@ function plot(r, I)
             otherwise
                 n = str2double(a);
                 if (n>=0) & (n<10)
-                    if n == 0; n = 10; end;
-                    if n > r.numCluster
-                        disp('Too large clustering #');
-                        return; 
-                    end
                     k = I(i_roi);
-                    r.c{n} = [k, r.c{n}];
+                    r.c(k) = n;
+                    %r.c{n} = [k, r.c{n}];
                     r.plot_cluster(4, n);
                     fprintf('New ROI %d is added in cluster %d,\n', k, n);
+                    % increase roi index automatically
                     i_roi = i_roi + 1;
                     if i_roi > imax
                         i_roi = 1;

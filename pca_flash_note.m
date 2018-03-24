@@ -2,10 +2,10 @@
 r = g.rr;
 I = 1:r.numRoi;
 %% select ROIs according to its statistical properties 
-r.smoothing_size = 5;
+r.smoothing_size = 7;
 %
 x = r.stat.mean_f;
-y = r.stat.stat_smoothed_norm.std_scaled_avg;
+y = r.stat.smoothed_norm.trace_std_avg;
 %
 figure; scatter(x, y);
 xlabel('mean'); ylabel('avg std to repeated stimulus');
@@ -33,10 +33,11 @@ X = normc(X);
 plot(X(:,id),  'LineWidth', 1.2)
 
 %% PCA (and filtered trace)
+X = r.c_mean(:,1:10);
 X_col_times = X.'; % times as variables
 [coeff, score, latent, ts, explained] = pca(X_col_times);
 
-% PCA filtered X
+%% PCA filtered X
 score_filtered = score;
 score_filtered(:,5:end) = 0;
 Xprojected = score_filtered*coeff';
@@ -51,7 +52,7 @@ figure; plot(coeff(:,1:5), 'LineWidth', 1.2);
 
 
 %% K-means cluster
-num_cluster = 7;
+num_cluster = 8;
 PCA_dim = 5;
 
 % Projected traces onto the fist few PCA dimensions.

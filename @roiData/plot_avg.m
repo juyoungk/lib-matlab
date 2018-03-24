@@ -1,5 +1,12 @@
-function s = plot_avg(r, id_roi, varargin)
+function [trace, s] = plot_avg(r, id_roi, varargin)
 % plot avg trace or RF (receptuve field)
+%
+% OPTION (varargin):
+%       'PLotType' (options for multiple traces)
+%           1. 'tiled' (default)
+%           2. 'all'
+%           3. 'mean'
+%
 % varargin for traceType, not plot options
 
     p=ParseInput(varargin{:});
@@ -48,7 +55,10 @@ function s = plot_avg(r, id_roi, varargin)
             if strcmp(PlotType,'mean')
                 y = mean(y, 2);
             end
+            % output
+            trace = y;
             
+            % Adjust for plot (phase & cycles)
             y = r.traceForAvgPlot(y);
             x = r.a_times;
 
@@ -77,7 +87,7 @@ function s = plot_avg(r, id_roi, varargin)
             end
             
             % ROI id
-            if numel(id_roi) == 1
+            if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
              text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
                             'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
             end
