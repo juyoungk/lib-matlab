@@ -35,7 +35,7 @@ for i = 1:p
                 bar(range,freq,'FaceColor', color(c,:)); hold on;
                 continue;
             end
-            scatter(X(idx==c,j),X(idx==c,i), 4, color(c,:));
+            scatter(X(idx==c,j),X(idx==c,i), 15, color(c,:), 'filled');
             ax = gca;
             ax.Color = 'k'; % background color
             xlabel(['dim ',num2str(j)]);
@@ -48,15 +48,17 @@ for i = 1:p
         
         % center location
         if nVarargs == 2 && i~=j
-                C = varargin{2}; % center locations
-                for c = 1:maxidx % # of clustering (# of colors)
-                    plot(C(c,j), C(c,i),'kd', 'MarkerSize', 11, 'LineWidth', 1.8, 'Color', color(c,:))
-                    text(C(c,j), C(c,i), sprintf('%d', c), 'Color', 'k', ...
-                       'VerticalAlignment', 'middle', 'HorizontalAlignment','center', 'FontSize', 9); 
+                if nargin > 3
+                    C = varargin{2}; % center locations
+                    for c = 1:maxidx % # of clustering (# of colors)
+                        plot(C(c,j), C(c,i),'kd', 'MarkerSize', 11, 'LineWidth', 1.8, 'Color', color(c,:))
+                        text(C(c,j), C(c,i), sprintf('%d', c), 'Color', 'k', ...
+                           'VerticalAlignment', 'middle', 'HorizontalAlignment','center', 'FontSize', 9); 
+                    end
+                    % scatter(C(:,j),C(:,i), 15, color,'x','LineWidth',4);
+                    %legend('Cluster 1','Cluster 2','Centroids','Location','NW')
+                    %title 'Cluster Assignments and Centroids'
                 end
-                % scatter(C(:,j),C(:,i), 15, color,'x','LineWidth',4);
-                %legend('Cluster 1','Cluster 2','Centroids','Location','NW')
-                %title 'Cluster Assignments and Centroids'
         end
         
         hold off

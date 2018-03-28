@@ -180,7 +180,7 @@ function p =  ParseInput(varargin)
     p  = inputParser;   % Create an instance of the inputParser class.
     
     p.addParameter('traceType', 'normalized', @(x) strcmp(x,'normalized') || ...
-        strcmp(x,'filtered') || strcmp(x,'smoothed'));
+        strcmp(x,'filtered') || strcmp(x,'smoothed') || strcmp(x,'projected'));
     
     p.addParameter('PlotType', 'tiled', @(x) strcmp(x,'tiled') || ...
         strcmp(x,'all') || strcmp(x,'mean'));

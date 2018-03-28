@@ -14,7 +14,7 @@ end
 
 Xre = reshape(X,[],size(X,ndims(X)));
 
-[idx, cent, sumdist] = kmeans(Xre,k,'Display','final','Replicates',5, varargin{:});
+[idx, cent, sumdist] = kmeans(Xre, k, 'Display','final','Replicates',5, varargin{:});
 
 figure('Name',['Cluster Numbers: ', num2str(k)], 'NumberTitle','off', ...
     'position', [1385, 685, 560, 420]);

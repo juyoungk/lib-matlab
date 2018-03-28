@@ -14,7 +14,7 @@ in = inpolygon(x, y, xv, yv);
 plot(xv,yv,x(in),y(in),'.r',x(~in),y(~in),'.b')
 %
 I = 1:r.numRoi;
-I = I(in);
+%I = I(in);
 %I = id_selected;
 %% data X & smoothing
 r.smoothing_size = 10;
@@ -33,9 +33,11 @@ X = normc(X);
 plot(X(:,id),  'LineWidth', 1.2)
 
 %% PCA (and filtered trace)
-X = r.c_mean(:,1:10);
+%X = r.c_mean(:,1:10);
+X = r.avg_trace_smooth_norm(:,I);
 X_col_times = X.'; % times as variables
 [coeff, score, latent, ts, explained] = pca(X_col_times);
+% score (= X*coeff): Representation in PCA space
 
 %% PCA filtered X
 score_filtered = score;
@@ -48,12 +50,9 @@ plot(Xprojected(:,id),  'LineWidth', 1.2)
 % PCA basis vectors
 figure; plot(coeff(:,1:5), 'LineWidth', 1.2);
 
-%% score for all ROI trace
-
-
 %% K-means cluster
 num_cluster = 8;
-PCA_dim = 5;
+PCA_dim = 7;
 
 % Projected traces onto the fist few PCA dimensions.
 score_filtered = score;
@@ -61,14 +60,13 @@ score_filtered(:,PCA_dim:end) = 0;
 Xprojected = score_filtered*coeff';
 Xprojected = Xprojected.';
 
-% K-means cluster for selected ids
+        %% K-means cluster for selected ids
+        % X = X(:, I);
+        % Xprojected = Xprojected(:, I); 
+        % [idx, cent, sumdist] = mykmeans(score(I, 1:PCA_dim), num_cluster);
 
-% X = X(:, I);
-% Xprojected = Xprojected(:, I); 
-% [idx, cent, sumdist] = mykmeans(score(I, 1:PCA_dim), num_cluster);
-
-%[c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster, 'dist', 'cos');
-[c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster);
+        %[c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster, 'dist', 'cos');
+        [c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster);
 
         %% H-cluster
         % 1. distant metric
@@ -91,6 +89,10 @@ Xprojected = Xprojected.';
         c_idx = cluster(clustTree,'criterion','distance','cutoff', cutoff_tree);
         num_cluster = numel(unique(c_idx))
 
+%%
+I = 1:r.numRoi;
+c_idx = r.c;
+num_cluster = r.dispClusterNum;
 %%
 X_cluster = cell(1, num_cluster);
 bw = zeros([r.roi_cc.ImageSize, num_cluster]);

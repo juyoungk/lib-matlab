@@ -29,7 +29,6 @@ classdef roiData < handle
         roi_smoothed    % smoothed raw trace + normalization?
         roi_filtered    % lowpass filtered
         roi_trend       % trend for normalization
-        
         roi_smoothed_norm
         roi_filtered_norm % dF/F @ dF = filtered - detrended, F = detrended_trace
         
@@ -63,6 +62,8 @@ classdef roiData < handle
         avg_trace_smooth_norm
         %avg_trace_filter_norm
         avg_trace_norm  % avg over (normalized) trials.
+        avg_projected   % projected trace onto (PCA) space.
+        avg_pca_score
         avg_times   % times for one stim cycle
         a_times     % times for avg plot. Phase shifted.
         
@@ -75,13 +76,13 @@ classdef roiData < handle
         c_mean        % cluster mean for average trace (trace X #clusters ~100). update through plot_cluster
         c_hfig
         c_note
-        c_stat        % cluster stat. histgram
         roi_review
         roi_selected
         
         % properties for plot
         n_cycle
         s_phase % shift phase
+        coeff   % (PCA) basis
     end
  
     properties (Hidden, Access = private)
@@ -107,6 +108,52 @@ classdef roiData < handle
             r.get_stimulus(stim, times);
         end
         
+        function save(r)
+            % struct for save
+            s.cc = r.roi_cc;
+            s.c = r.c;
+            s.c_note = r.c_note;
+            s.roi_review = r.roi_review;
+            save([r.ex_name,'_roi_save'], '-struct', 's');
+        end
+        
+        function load_c(r, c, c_note, roi_review)
+            % load cluster info
+            r.c = c;
+            r.c_note = c_note;
+            r.roi_review = roi_review;
+        end
+        
+        function reset_cluster(r)
+            %[row, col] = size(r.c);
+            r.c = zeros(size(r.c));
+            r.c_mean = zeros(size(r.c_mean));
+            r.c_note = cell(size(r.c_note));
+            r.roi_review = [];
+        end
+        
+        function set.c(r, value)
+            n_prev = numel(find(r.c~=0));
+            r.c = value;
+            n_new = numel(find(r.c~=0));
+            if n_new ~= n_prev
+                r.pca;
+                disp('PCA score has been computed.');
+            end
+        end
+        
+        function swapcluster(r, i, j)
+            note_temp = r.c_note{i};
+            i_idx = (r.c == i);
+            j_idx = (r.c == j);
+            % switch note
+            r.c_note{i} = r.c_note{j};
+            r.c_note{j} = note_temp;
+            % switch index
+            r.c(i_idx) = j;
+            r.c(j_idx) = i;
+        end
+            
         function myshow(r)
             myshow(r.image);
         end
@@ -114,8 +161,6 @@ classdef roiData < handle
         function imvol(r)
             imvol(r.image, 'roi', r.roi_cc, 'edit', false); % can be different depending on threhsold 
         end
-        
-        % just visulaize?
         
         function get_stimulus(r, stims_whitenoise, fliptimes)
             % for whithenoise stim
@@ -141,7 +186,7 @@ classdef roiData < handle
                % Align roi traces to stim_times
                [roi_aligned, ~] = align_rows_to_events(r.roi_smoothed, r.f_times, r.avg_trigger_times, r.avg_trigger_interval);
                 
-               % Avg % Std over trials (dim 3)
+               % Avg & Std over trials (dim 3)
                r.avg_trace    = mean(roi_aligned, 3);
                %r.avg_trace_std = std(roi_aligned, 1, 3);       % normalization weight = 1
                %r.avg_trace_std = r.avg_trace_std./r.avg_trace; % norm by mean. Std as fraction to mean.
@@ -219,10 +264,6 @@ classdef roiData < handle
                 r.roi_trace    = zeros(r.numFrames, r.numRoi);
                 r.roi_smoothed = zeros(r.numFrames, r.numRoi);
                 r.rf = cell(1, r.numRoi);
-                %r.c = cell(1, r.numCluster);
-                r.c = zeros(1, r.numRoi);
-                r.c_hfig = [];
-                r.roi_review = [];
                 
                 % mean image
                 [row, col, n_frames] = size(vol);
@@ -312,10 +353,9 @@ classdef roiData < handle
                         r.avg_times = ((1:n)-0.5)*ifi; 
                         % times for plot
                         r.a_times = r.timesForAvgPlot;
-                        % cluster mean of avg traces (max cluster # is
-                        % 100)
+                        
+                        % cluster mean for avg trace
                         r.c_mean = zeros(n, 100);
-                        r.c_note = cell(1, 100);
                 else
                     r.avg_FLAG = false;
                 end
@@ -325,7 +365,7 @@ classdef roiData < handle
                 r.smoothing_size = 10;
                     % filtered trace
                     %r.update_filtered_trace;
-
+                    
                 % whitenoise stim
                 if nargin > 5
                     r.stim_whitenoise = stim_whitenoise;
@@ -336,6 +376,11 @@ classdef roiData < handle
                     r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
                 end
 
+                % cluster parameters
+                r.c = zeros(1, r.numRoi);
+                r.c_note = cell(1, 100);
+                r.c_hfig = [];
+                r.roi_review = [];
             end
         end
         
@@ -366,17 +411,6 @@ classdef roiData < handle
             tt = tt - obj.s_phase * obj.avg_times(end);
         end
         
-        function set.c(r, value)
-            r.c = value;
-        end
-        
-        function reset_cluster(r)
-            %[row, col] = size(r.c);
-            r.c = zeros(size(r.c));
-            r.c_mean = zeros(size(r.c_mean));
-            r.c_note = cell(size(r.c_note));
-        end
-            
         function set.stim_trigger_times(obj, value)
             obj.stim_trigger_times = value;
             obj.stim_times = value; % old name
