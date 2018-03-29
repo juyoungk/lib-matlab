@@ -31,9 +31,6 @@ X_col_times = X.'; % times as variables
 mycluscatter(score(:, 1:dim), idx, []);
 
 
-% basis and Projected traces
-
-
 
 
 end

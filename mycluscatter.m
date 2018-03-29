@@ -11,14 +11,15 @@ nVarargs = length(varargin);
 
 if nVarargs>=1
     idx = varargin{1};
-    maxidx = max(idx);
     
-    color = jet(maxidx); % color [r g b] value by color(c, :)
-    %color = parula(maxidx);
+    c_list = unique(idx(idx~=0)); 
+    c_list_num = numel(c_list);
+    color = jet(c_list_num); 
+    %color = jet(maxidx); % color [r g b] value by color(c, :)
+    
     
 else % only one cluster (e.g. called by pcaimg)
     idx = ones(n, 1);
-    maxidx = max(idx);
     color = [0 0 1];
 end
 
@@ -28,14 +29,20 @@ for i = 1:p
         if p>1
             subplot(p,p,(i-1)*p+j);
         end
-        for c = 1:maxidx % # of clustering (# of colors)
+        for c = c_list % # of clustering (# of colors)
             if i==j
-                range = linspace(min(X(idx==c,i)),max(X(idx==c,i)),20);
-                freq = histc(X(idx==c,i),range);
-                bar(range,freq,'FaceColor', color(c,:)); hold on;
+                range = linspace(min(X(idx==c,i)),max(X(idx==c,i)), 20);
+                if range(1) == range(end) % only one data in cluster
+                    range = range(1);
+                    freq = 1;
+                else    
+                    freq = histc(X(idx==c,i),range);
+                end
+                bar(range(:),freq,'FaceColor', color(c_list == c, :)); 
+                hold on
                 continue;
             end
-            scatter(X(idx==c,j),X(idx==c,i), 15, color(c,:), 'filled');
+            scatter(X(idx==c,j),X(idx==c,i), 18, color(c_list == c, :), 'filled');
             ax = gca;
             ax.Color = 'k'; % background color
             xlabel(['dim ',num2str(j)]);
@@ -50,8 +57,8 @@ for i = 1:p
         if nVarargs == 2 && i~=j
                 if nargin > 3
                     C = varargin{2}; % center locations
-                    for c = 1:maxidx % # of clustering (# of colors)
-                        plot(C(c,j), C(c,i),'kd', 'MarkerSize', 11, 'LineWidth', 1.8, 'Color', color(c,:))
+                    for c = 1:c_list % # of clustering (# of colors)
+                        plot(C(c,j), C(c,i),'kd', 'MarkerSize', 11, 'LineWidth', 1.8, 'Color', color(c_list == c, :))
                         text(C(c,j), C(c,i), sprintf('%d', c), 'Color', 'k', ...
                            'VerticalAlignment', 'middle', 'HorizontalAlignment','center', 'FontSize', 9); 
                     end

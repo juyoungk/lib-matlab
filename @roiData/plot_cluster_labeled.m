@@ -4,9 +4,12 @@ function bw = plot_cluster_labeled(r)
 bw = zeros([r.roi_cc.ImageSize, r.dispClusterNum]);
 bw_labeled = false(r.roi_cc.ImageSize);
 I = 1:r.numRoi;
-num_cluster = r.dispClusterNum;
+%
+c_list = unique(r.c(r.c~=0));
+%num_cluster = r.dispClusterNum;
+num_cluster = numel(c_list);
 
-for k = 1:num_cluster
+for k = c_list
     
     id_cluster = I(r.c == k);
     

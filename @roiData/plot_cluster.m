@@ -30,6 +30,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         
     elseif max(r.c) > 0
         r.c_hfig = figure('Position', [1430 50 1000 900]);
+        %r.c_hfig = figure('Position', [1430 50 1100 1500]);
         pos = r.c_hfig.Position;
         % Create button group
         bg = uibuttongroup('Visible','off',...
@@ -75,8 +76,15 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         % this is not axes, but uicontrol
         
         roi_clustered = find(c==i);
+            % sort by mean f
+            mean_f = r.stat.mean_f(roi_clustered);
+            [~, i_sorted] = sort(mean_f, 'descend');
+            %std_avg = r.stat.smoothed_norm.trace_std_avg_normc(roi_clustered);
+            %[~, i_sorted] = sort(std_avg);
+        roi_clustered = roi_clustered(i_sorted);
         
         if isempty(roi_clustered)
+            r.c_mean(:,i) = 0;
             continue;
         end
         

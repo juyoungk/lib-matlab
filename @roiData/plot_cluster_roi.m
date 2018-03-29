@@ -1,19 +1,30 @@
-function plot_cluster_roi(r, k)
+function plot_cluster_roi(r, k, k2)
 % Display spatial locations of clustered ROIs
-
+        
+        if nargin < 3
+            k2 = k;
+        end
+    
         I = 1:r.numRoi;
         id_cluster = I(r.c == k);
         
         % BW mask for clustered (selected) ROIs
-        bwmask = cc_to_bwmask(r.roi_cc, id_cluster);
+        bw1 = cc_to_bwmask(r.roi_cc, id_cluster);
         
-        %imshow(bwmask);
+        % Comparison: second cluster as gray
+        if k2 ~= k
+            bw2 = cc_to_bwmask(r.roi_cc, I(r.c == k2));
+            bwmask = bw1 + 0.5 * bw2;
+        else
+            bwmask = bw1;
+        end
+        
         imagesc(bwmask, [0 1]);
         colormap gray; 
         hold on
         
         % Contour
-        visboundaries(bwmask,'Color','r','LineWidth', 0.7); 
+        visboundaries(bw1,'Color','r','LineWidth', 0.7); 
 
         % ROI number display
         s = regionprops(r.roi_cc, 'extrema');

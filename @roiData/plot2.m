@@ -65,26 +65,6 @@ function plot2(r, I, varargin)
 %                 ax = findobj(gca, 'Type', 'Line');
 %                 ax.LineWidth = 0.8;            
 
-        % 2. ROI spatial pattern
-        %subplot(n_row, n_col, [n_col+1, 2*n_col]);
-        axes('Position', [0.05  0.39  0.4  0.36], 'Visible', 'off');
-            if c_given > 0
-               r.plot_cluster_roi(c_given);
-               hold on
-                   s = regionprops(r.roi_cc, 'centroid');
-                   center = s(k).Centroid;
-                   plot(center(1), center(2), 's', 'MarkerSize', 24, 'LineWidth', 1.5, 'Color', 'g')
-            else
-                mask(cc.PixelIdxList{k}) = true;
-                h = imshow(RGB_label);
-                set(h, 'AlphaData', 0.9*mask+0.1);
-
-                ax = gca;
-                str1 = sprintf('%d/%d ROI', k, r.numRoi);
-                text(ax.XLim(end), ax.YLim(1), str1, 'FontSize', 12, 'Color', 'k', ...
-                    'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-            end
-
         % 3.Projected scores onto (PCA) space dims
         axes('Position', [0.53  0.39  0.4  0.36], 'Visible', 'off');
             
@@ -204,15 +184,39 @@ function plot2(r, I, varargin)
                 text(ax.XLim(end), ax.YLim(end), ['C', num2str(c_suggested)], 'FontSize', 15, 'Color', 'k', ...
                                 'VerticalAlignment', 'top', 'HorizontalAlignment','right');
             end
-        
-           
+
         % bottom text 
         %axes('Parent', hfig, 'OuterPosition', [0.1, 0, 0.5, 0.06]); axis off;
         axes('Parent', hfig, 'OuterPosition', [0, 0, 1, 0.06]); axis off;
         ax = gca;
         str = sprintf('Current Cluster #: %d  (Press ''SPACE'' to move to c%d:  %s )', r.c(k), i_sorted(i_c), r.c_note{c_suggested});
         text(ax.XLim(1), ax.YLim(end), str, 'FontSize', 15);
+        
+        % 2. ROI spatial pattern
+        %subplot(n_row, n_col, [n_col+1, 2*n_col]);
+        ax_roi = axes('Position', [0.05  0.39  0.4  0.36], 'Visible', 'off');
+            if c_given > 0
+               r.plot_cluster_roi(c_given, c_suggested);
+               hold on
+                   s = regionprops(r.roi_cc, 'centroid');
+                   center = s(k).Centroid;
+                   plot(center(1), center(2), 's', 'MarkerSize', 24, 'LineWidth', 1.5, 'Color', 'y')
+                   str1 = sprintf(' C%d (n=%d)', c_given, sum(r.c==c_given));
+                   text(ax_roi.XLim(1), ax_roi.YLim(1)+5, str1, 'FontSize', 12, 'Color', 'w', ...
+                    'VerticalAlignment', 'top', 'HorizontalAlignment','left');
+                   text(ax_roi.XLim(end), ax_roi.YLim(1)+5, ['ROI ',num2str(k),' '], 'FontSize', 12, 'Color', 'w', ...
+                    'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+               hold off
+            else
+                mask(cc.PixelIdxList{k}) = true;
+                h = imshow(RGB_label);
+                set(h, 'AlphaData', 0.9*mask+0.1);
 
+                ax = gca;
+                str1 = sprintf('%d/%d ROI', k, r.numRoi);
+                text(ax.XLim(end), ax.YLim(1), str1, 'FontSize', 12, 'Color', 'k', ...
+                    'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+            end
     end
 
     redraw();
@@ -325,4 +329,22 @@ function p =  ParseInput(varargin)
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});
     
+end
+
+function [bw_selected, bw_array] = cc_to_bwmask(cc, id_selected)
+% convert cc to bwmask array and totla bw for selected IDs.
+
+    if nargin < 2
+        id_selected = 1:cc.NumObjects;
+    end
+
+    bw_array = false([cc.ImageSize, cc.NumObjects]);
+
+    for i = 1:cc.NumObjects
+        grain = false(cc.ImageSize);
+        grain(cc.PixelIdxList{i}) = true;
+        bw_array(:,:,i) = grain;
+    end
+    % Total bw for selected IDs
+    bw_selected = max( bw_array(:,:,id_selected), [], 3);
 end

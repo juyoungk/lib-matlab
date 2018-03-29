@@ -2,13 +2,21 @@
 r = g.rr;
 I = 1:r.numRoi;
 %% select ROIs according to its statistical properties 
-r.smoothing_size = 7;
+%r.smoothing_size = 10;
 %
+I = 1:r.numRoi;
+I = I(r.c~=0);
 x = r.stat.mean_f;
 y = r.stat.smoothed_norm.trace_std_avg;
 %
 figure; scatter(x, y);
 xlabel('mean'); ylabel('avg std to repeated stimulus');
+
+%% Clustered ROI only 
+figure; scatter(x(r.c~=0), y(r.c~=0), [], r.c(r.c~=0));
+xlabel('mean'); ylabel('avg std to repeated stimulus');
+
+%%
 [xv, yv] = getPolygon;
 in = inpolygon(x, y, xv, yv);
 plot(xv,yv,x(in),y(in),'.r',x(~in),y(~in),'.b')

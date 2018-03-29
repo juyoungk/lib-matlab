@@ -63,7 +63,7 @@ classdef roiData < handle
         %avg_trace_filter_norm
         avg_trace_norm  % avg over (normalized) trials.
         avg_projected   % projected trace onto (PCA) space.
-        avg_pca_score
+        avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
         a_times     % times for avg plot. Phase shifted.
         
