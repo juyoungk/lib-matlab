@@ -71,7 +71,8 @@ classdef gdata < handle
                     if strfind(g.ex_name, 'stack')
                         J = imvol(g.AI{i}, 'scanZoom', g.header.scanZoomFactor);
                     else
-                        J = imvol(g.AI_mean{i}, 'scanZoom', g.header.scanZoomFactor);
+                        s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', g.ex_name, g.header.channelSave(i), g.header.scanZoomFactor);
+                        J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', false);
                     end
                 end
             end
@@ -82,19 +83,19 @@ classdef gdata < handle
                 
                 if strfind(g.ex_name, 'flash')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 3.5;
+                    g.min_interval_secs = 3.5
                 elseif strfind(g.ex_name, 'movingbar')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 1.2;
+                    g.min_interval_secs = 1.2
                 elseif strfind(g.ex_name, 'jitter')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 1;
+                    g.min_interval_secs = 1
                 elseif strfind(g.ex_name, 'whitenoise')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 0.25;
+                    g.min_interval_secs = 0.25
                 else
                     g.pd_threshold = 0.8;
-                    g.min_interval_secs = 0.5;
+                    g.min_interval_secs = 0.5
                 end
             end
         
@@ -121,8 +122,8 @@ classdef gdata < handle
                     ch = input(['Imaging PMT channel # (Available: ', num2str(obj.header.channelSave),') ? ']);
                 end
                 obj.roi_channel = ch;
-                
                 obj.cc = cc;
+                
                 % compute roiData objects
                 if ~isempty(cc)
                     for i=1:obj.numStimulus
@@ -337,7 +338,8 @@ classdef gdata < handle
                             g.numStimulus = k;
                         end
                     end   % if h5 file exists.
-
+                     
+                    g.cc = []; % initialize cc struct
                     end
                 end
 

@@ -2,11 +2,14 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
 % plot avg trace or RF (receptuve field)
 %
 % OPTION (varargin):
-%       'PLotType' (options for multiple traces)
-%           1. 'tiled' (default)
-%           2. 'all'
-%           3. 'mean'
+%       'PlotType' (options for multiple traces)
+%           1. as 'tiled' (default)
+%           2. as 'all'
+%           3. as 'mean'
 %
+%       'DrawPlot' - whether it acturally draws the plot. One can plot
+%       afterward using output 'trace'.
+%    
 % varargin for traceType, not plot options
 
     p=ParseInput(varargin{:});
@@ -15,6 +18,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     NormByCol = p.Results.NormByCol;
     w_Line    = p.Results.LineWidth;
     h_axes    = p.Results.axes;
+    DrawPlot = p.Results.DrawPlot;
     
     S = sprintf('ROI %d*', 1:r.numRoi); C = regexp(S, '*', 'split'); % C is cell array.
     
@@ -55,66 +59,75 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             if strcmp(PlotType,'mean')
                 y = mean(y, 2);
             end
-            % output
+            
+            % Output1 : trace
             trace = y;
+            % Output2 : stat
+            s.min = min(y, [], 1);
+            s.max = max(y, [], 1);
+            s.df_max = s.max - s.min;
             
-            % Adjust for plot (phase & cycles)
-            y = r.traceForAvgPlot(y);
-            x = r.a_times;
+            %% Plot
+            if DrawPlot
+                % Adjust for plot (phase & cycles)
+                y = r.traceForAvgPlot(y);
+                x = r.a_times;
 
-            duration = r.avg_trigger_interval;
-            
-            %
-            if isempty(h_axes)
-                plot(x, y, 'LineWidth', w_Line); hold on;
-            else
-                plot(h_axes, x, y, 'LineWidth', w_Line); hold on;
-            end
-            ax = gca;  Fontsize = 10;
-            ax.XLim = [r.a_times(1), r.a_times(end)];
-            ax.XAxis.FontSize = Fontsize;
-            ax.YAxis.FontSize = Fontsize;
-            % XTick positions: independent of phase value
-            ax.XTick = (0:0.5:(r.n_cycle)) * duration;
-    %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
-            xtickformat('%.1f');
-            
-            % y-label
-            if contains(traceType, 'normalized') && ~NormByCol
-                ylabel('dF/F');
-            else
-                ylabel('a.u.');
-            end
-            
-            % ROI id
-            if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
-             text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
-                            'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
-            end
+                duration = r.avg_trigger_interval;
 
-            % additional lines
-            for n = 1:r.n_cycle
-                x = (n-1) * duration;
-                plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-                % middle line
-                if strfind(r.ex_name, 'flash')
-                    x = (n-1) * duration + duration/2.;
-                    plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-                end
-                % stim trigger lines between avg triggers
-                for k = 1:(r.avg_every-1)
-                    x = (n-1) * duration + k * r.stim_trigger_interval;
-                    plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                %
+                if isempty(h_axes)
+                    plot(x, y, 'LineWidth', w_Line); hold on;
+                else
+                    plot(h_axes, x, y, 'LineWidth', w_Line); hold on;
                 end
 
+                ax = gca;  Fontsize = 10;
+                ax.XLim = [r.a_times(1), r.a_times(end)];
+                ax.XAxis.FontSize = Fontsize;
+                ax.YAxis.FontSize = Fontsize;
+                % XTick positions: independent of phase value
+                ax.XTick = (0:0.5:(r.n_cycle)) * duration;
+        %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
+                xtickformat('%.1f');
+
+                % y-label
+                if contains(traceType, 'normalized') && ~NormByCol
+                    ylabel('dF/F');
+                else
+                    ylabel('a.u.');
+                end
+
+                % ROI id
+                if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
+                 text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
+                                'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
+                end
+                % cluster id
+                c_id = unique(r.c(id_roi));
+                if c_id~=0
+                    text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
+                                'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
+                end
+
+                % additional lines
+                for n = 1:r.n_cycle
+                    x = (n-1) * duration;
+                    plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                    % middle line
+                    if strfind(r.ex_name, 'flash')
+                        x = (n-1) * duration + duration/2.;
+                        plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                    end
+                    % stim trigger lines between avg triggers
+                    for k = 1:(r.avg_every-1)
+                        x = (n-1) * duration + k * r.stim_trigger_interval;
+                        plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                    end
+                end
+                hold off;
             end
-            hold off;
-            
-            %statistics of avg responses
-            s.min = min(y);
-            s.max = max(y);
-            s.df_max = max(y) - min(y);
-            
+
         end
 
     else
@@ -128,10 +141,10 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
                 
         % subplot params
-        n_row = 8;
-        n_col = 10; % limit num of subplots by fixing n_col
+        n_row = 7;
+        n_col = 13; % limit num of subplots by fixing n_col
         % Figure params
-        n_cells_per_fig = 75;
+        n_cells_per_fig = 85;
         
         k = 1; % index in selected roi group
         while (k <= numel(roi_array))
@@ -139,7 +152,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         
             % figure info
             pos_new = get(0, 'DefaultFigurePosition');
-            figure('Position', [pos_new(1), 100, pos_new(3)*2.2, pos_new(4)*1.8]);
+            figure('Position', [pos_new(1), 100, pos_new(3)*2.2, pos_new(4)*1.4]);
             axes('Position', [0  0  1  0.9524], 'Visible', 'off');
             title(r.ex_name);
 
@@ -186,6 +199,7 @@ function p =  ParseInput(varargin)
         strcmp(x,'all') || strcmp(x,'mean'));
     
     p.addParameter('NormByCol', false, @(x) islogical(x));
+    p.addParameter('DrawPlot', true, @(x) islogical(x));
     p.addParameter('LineWidth', 1.5, @(x) x>0);
     p.addParameter('axes', []);
  

@@ -5,6 +5,10 @@ if nargin <2
     dim = 4;
 end
 
+% if nargin <2
+%     c_list = unique(r.c(r.c~=0));
+% end
+
 % ROIs for PCA basis
 idx = 1:r.numRoi;
 
@@ -16,16 +20,24 @@ else
    idx = r.c(r.c~=0);
 end
 
+% 
+% % traces
+% X = r.avg_trace_smooth_norm(:,I);
+% X = normc(X);
+% X_col_times = X.'; % times as variables
+% 
+% 
+% % PCA analysis
+% [coeff, score, latent, ts, explained] = pca(X_col_times);
+% %score = r.avg_pca_score(r.c~=0, :);
+% % 
+% X = r.avg_trace_smooth_norm(:,I);
+% score = X.' * coeff;
+% 
 
-% traces
-X = r.avg_trace_smooth_norm(:,I);
-X = normc(X);
-X_col_times = X.'; % times as variables
-
-
-% PCA analysis
-[coeff, score, latent, ts, explained] = pca(X_col_times);
-
+%
+r.pca;
+score = r.avg_pca_score(I, :);
 
 % scatter plot in PCA space
 mycluscatter(score(:, 1:dim), idx, []);

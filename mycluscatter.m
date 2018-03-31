@@ -11,17 +11,15 @@ nVarargs = length(varargin);
 
 if nVarargs>=1
     idx = varargin{1};
-    
-    c_list = unique(idx(idx~=0)); 
-    c_list_num = numel(c_list);
-    color = jet(c_list_num); 
-    %color = jet(maxidx); % color [r g b] value by color(c, :)
-    
-    
 else % only one cluster (e.g. called by pcaimg)
     idx = ones(n, 1);
-    color = [0 0 1];
+    %color = [0 0 1];
 end
+
+c_list = unique(idx(idx~=0)); 
+c_list_num = numel(c_list);
+color = jet(c_list_num); 
+%color = jet(maxidx); % color [r g b] value by color(c, :)
 
 figure('position', [1200, 400, 900, 800]);
 for i = 1:p

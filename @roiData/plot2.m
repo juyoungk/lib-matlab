@@ -1,5 +1,5 @@
 function plot2(r, I, varargin)
-% PLOT version 2. For clustering analysis.
+% PLOT version 2. For clustering analysis and projection to PCA.
 % Axes instead of subplot. Histogram of pdist to clustered groups
 % Create new figure with interactive keyboard navigation over roi#
     
@@ -78,8 +78,8 @@ function plot2(r, I, varargin)
                     scatter(X(r.c==c, i),X(r.c==c, j), 15, color(c_list==c,:));
                         ax = gca;
                         ax.Color = 'k'; % background color
-                        xlabel(['PCA ', num2str(i)]);
-                        ylabel(['PCA ', num2str(j)]);
+                        xlabel(['PCA ', num2str(i)], 'FontSize', 12);
+                        ylabel(['PCA ', num2str(j)], 'FontSize', 12);
                         grid on
                         hold on
                 end
@@ -196,7 +196,7 @@ function plot2(r, I, varargin)
         %subplot(n_row, n_col, [n_col+1, 2*n_col]);
         ax_roi = axes('Position', [0.05  0.39  0.4  0.36], 'Visible', 'off');
             if c_given > 0
-               r.plot_cluster_roi(c_given, c_suggested);
+               r.plot_cluster_roi(c_given, 'compare', c_suggested, 'imageType', 'bw');
                hold on
                    s = regionprops(r.roi_cc, 'centroid');
                    center = s(k).Centroid;

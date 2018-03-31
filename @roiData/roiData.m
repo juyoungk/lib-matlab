@@ -12,7 +12,9 @@ classdef roiData < handle
         % given input
         ex_name
         image       % mean image (snapshot) of the vol
-        roi_cc
+        header      % imaging condition
+        %
+        roi_cc      % roi information (struct 'cc')
         ifi         % inter-frame interval of vol (data)
         stim_trigger_times    % absolute times when stims triggered.
         stim_trigger_interval
