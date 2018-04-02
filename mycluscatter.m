@@ -1,24 +1,33 @@
 function mycluscatter(X, varargin)
 % X should be n-by-p matrix. 
+% 1st input in varargin should be cluster (group) index.
 % If X is image matrix, X should be "reshaped" before use.
 % mycluscatter(X): scatter plot with histogram (called by pcaimg)
 %
 % mycluscatter(X, idx, center): idx is n-by-1 matrix, a result of
 % clustering
 
-nVarargs = length(varargin);
-[n, p] = size(X); % p variables
+p=ParseInput(varargin{:});
+    idx = p.Results.Cluster;
+c_label = p.Results.Label;
+      C = p.Results.Center;
 
-if nVarargs>=1
-    idx = varargin{1};
-else % only one cluster (e.g. called by pcaimg)
+nVarargs = length(varargin);
+[n, p] = size(X); % p variables      
+      
+if isempty(idx)
     idx = ones(n, 1);
-    %color = [0 0 1];
 end
 
-c_list = unique(idx(idx~=0)); 
+if isempty(c_label)
+    c_label = cell(1, p);
+end
+
+%
+c_list = unique(idx); 
 c_list_num = numel(c_list);
-color = jet(c_list_num); 
+color = jet(c_list_num);
+c_0 = [0.4 0.4 0.4];
 %color = jet(maxidx); % color [r g b] value by color(c, :)
 
 figure('position', [1200, 400, 900, 800]);
@@ -29,22 +38,50 @@ for i = 1:p
         end
         for c = c_list % # of clustering (# of colors)
             if i==j
-                range = linspace(min(X(idx==c,i)),max(X(idx==c,i)), 20);
+                range = linspace(min(X(idx==c,i)),max(X(idx==c,i)), 8);
                 if range(1) == range(end) % only one data in cluster
                     range = range(1);
                     freq = 1;
                 else    
                     freq = histc(X(idx==c,i),range);
                 end
-                bar(range(:),freq,'FaceColor', color(c_list == c, :)); 
+                if c == 0
+                    %bar(range(:),freq,'FaceColor', c_0); 
+                else    
+                    bar(range(:),freq,'FaceColor', color(c_list == c, :)); 
+                end
+                % xlabel only
+                if isempty(c_label{j})
+                    xlabel(['dim ',num2str(j)]);
+                else
+                    xlabel(c_label{j});
+                end
+
                 hold on
                 continue;
             end
-            scatter(X(idx==c,j),X(idx==c,i), 18, color(c_list == c, :), 'filled');
+            
+            if c == 0
+                scatter(X(idx==c,j),X(idx==c,i), 12, c_0);
+            else
+                scatter(X(idx==c,j),X(idx==c,i), 18, color(c_list == c, :), 'filled');
+            end
             ax = gca;
             ax.Color = 'k'; % background color
-            xlabel(['dim ',num2str(j)]);
-            ylabel(['dim ',num2str(i)]);
+            
+            
+            if isempty(c_label{j})
+                xlabel(['dim ',num2str(j)]);
+            else
+                xlabel(c_label{j});
+            end
+            
+            if isempty(c_label{i})
+                ylabel(['dim ',num2str(i)]);
+            else
+                ylabel(c_label{i});
+            end
+            
             grid on
             %plot(X(idx==c,j),X(idx==c,i),'o.','Color',color(c,:),'MarkerSize',9);
             %plot(X(idx==c,j),X(idx==c,i),'o.');
@@ -52,9 +89,9 @@ for i = 1:p
         end
         
         % center location
-        if nVarargs == 2 && i~=j
+        if ~isempty(C) && i~=j
                 if nargin > 3
-                    C = varargin{2}; % center locations
+                    %
                     for c = 1:c_list % # of clustering (# of colors)
                         plot(C(c,j), C(c,i),'kd', 'MarkerSize', 11, 'LineWidth', 1.8, 'Color', color(c_list == c, :))
                         text(C(c,j), C(c,i), sprintf('%d', c), 'Color', 'k', ...
@@ -75,4 +112,17 @@ end
 %title 'Cluster Assignments and Centroids'
 hold off
 
+end
+
+function p =  ParseInput(varargin)
+    
+    p  = inputParser;   % Create an instance of the inputParser class.
+    
+    p.addParameter('Label', {}, @(x) iscell(x));
+    p.addParameter('Center', [], @(x) ismatrix(x));
+    p.addParameter('Cluster', [], @(x) isvector(x));
+      
+    % Call the parse method of the object to read and validate each argument in the schema:
+    p.parse(varargin{:});
+    
 end

@@ -1,7 +1,10 @@
-    function [trace_mean, s] = stat_over_repeats(trace)
+    function [avg_trace, s] = stat_over_repeats(trace)
     % Avg trace. Scaling by its max. Statistics of noisy responses (Std)   
     %
     % input - 3D matrix [n_samples, n_cells, n_repeats]
+    %
+    % output - s.avg_mean
+    %          s.avg_amp  (amplitude. max-min)
     %
     % How reliablely is the response pattern over multiple repeats?    
     % Amplitude might be changing over time even though the cell is
@@ -10,11 +13,16 @@
         [n_samples, n_cells, n_repeats] = size(trace);
 
         % avg trace
-        trace_mean = mean(trace, 3);
+        avg_trace = mean(trace, 3);
         
-        s.trace_mean_level = mean(squeeze(trace_mean), 1);
+        % stat of avg trace
+        s.avg_mean = mean(squeeze(avg_trace), 1);
+        s.avg_amp = max(squeeze(avg_trace), [], 1) - min(squeeze(avg_trace), [], 1);
         
-        % sort by max-min differnece
+        % estimate basal signal level by histogram
+        
+        
+        % sort repeated traces by max-min (amplitude) differnece
         % max-min of each trace
         M = max(trace, [], 1);
         m = min(trace, [], 1);

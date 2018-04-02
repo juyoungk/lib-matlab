@@ -242,16 +242,12 @@ classdef roiData < handle
                [roi_aligned_filtered_norm, ~] = align_rows_to_events(r.roi_filtered_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
 
                 % Avg. & Stat. over trials (dim 3)
-                [r.avg_trace_fil,  stat_fil]      = stat_over_repeats(roi_aligned_fil); 
+                [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil); 
                 [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
                 [       r.avg_trace_norm, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
                 
                 r.stat.smoothed_norm = stat_smoothed_norm;
                 r.stat.filtered_norm = stat_filtered_norm;
-%                 r.avg_trace_fil = mean(roi_aligned_fil, 3); 
-%                 r.avg_trace_norm        = mean(roi_aligned_filtered_norm, 3); 
-%                 r.avg_trace_smooth_norm = mean(roi_aligned_smoothed_norm, 3);   
-                
             end
             
         end

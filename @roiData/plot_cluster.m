@@ -14,12 +14,18 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
     
     if nargin < 2
         i_cluster = 1:r.dispClusterNum;
+    elseif min(i_cluster == 0) > 0
+        % i_cluster = 0 case : summary mode
+        i_cluster = 1:r.dispClusterNum;
+        n_trace = 0;
     else
+        % i_cluster as input
         i_cluster(i_cluster ==0) = []; % exclude 0 (noise) cluster
         if numel(i_cluster) > 50
             error('Too many clusters (> 50) was given to plot_cluster.');
         end
     end
+    
     % array for row position for each cluster?
     
     %
@@ -153,21 +159,16 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
                     'VerticalAlignment', 'top', 'HorizontalAlignment','center');
                 
            j = 4;
-           % responsiveness as histogram
-               ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
+           % signal stat
+           % responsiveness vs mean f
+           % See if specific cluster has distinively high dF (~spiking)
+                ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
                
-%                s.df_max 
-%                
-%                range = linspace(min(X(idx==c,i)),max(X(idx==c,i)), 20);
-%                 if range(1) == range(end) % only one data in cluster
-%                     range = range(1);
-%                     freq = 1;
-%                 else    
-%                     freq = histc(X(idx==c,i),range);
-%                 end
-%                 bar(range(:),freq,'FaceColor', color(c_list == c, :)); 
-%                
-                
+                scatter(r.stat.mean_f(roi_clustered), r.stat.smoothed_norm.avg_amp(roi_clustered), 8);
+                %ax.Color = 'k'; % background color
+                xlabel(['mean f']);
+                ylabel('dF amplitude');
+
            continue;
        end
             
