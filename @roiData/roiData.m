@@ -13,6 +13,7 @@ classdef roiData < handle
         ex_name
         image       % mean image (snapshot) of the vol
         header      % imaging condition
+        disp        % stimulus disp params
         %
         roi_cc      % roi information (struct 'cc')
         ifi         % inter-frame interval of vol (data)
@@ -105,6 +106,7 @@ classdef roiData < handle
                 dirpath = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim';
             end
             
+            % stim id for whitenoise? 
             stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
             times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
             r.get_stimulus(stim, times);
@@ -360,7 +362,7 @@ classdef roiData < handle
                 
                 % default smoothing or smoothed traces
                 r.smoothing_method = 'movmean';
-                r.smoothing_size = 10;
+                r.smoothing_size = 5;
                     % filtered trace
                     %r.update_filtered_trace;
                     
@@ -372,6 +374,7 @@ classdef roiData < handle
                     r.load_h5;
                     % stim size?
                     r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
+                    %r.stim_size = 
                 end
 
                 % cluster parameters
