@@ -19,7 +19,7 @@ nargoutchk(0,2)
 % Specify the location of the git executable.
 %gitexepath = 'C:\path\to\GIT-2.7.0\bin\git.exe';
 
-gitexepath = ['"C:\Program Files\Git\mingw64\bin\git.exe"'];
+gitexepath = ['"C:\Program Files\Git\cmd\git.exe"'];
 % gitdir = 'C:\Program Files\Git\cmd\';
 % gitexepath = [gitdir,'git.exe'];
 
