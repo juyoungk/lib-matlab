@@ -7,12 +7,11 @@ gitexepath = ['C:\Program Files\Git\mingw64\bin\git.exe'];
 commit_msg = input('Commit message? ', 's');
 
 git('add -A');
-git(['commit  -am "', commit_msg, '"']);
-git push;
+git(['commit  -am "
 
-% eval('!git add -A')
-% eval(['!git commit -am "', commit_msg, '"'])
-% eval('!git push')
+eval('!git add -A')
+eval(['!git commit -am "', commit_msg, '"'])
+eval('!git push')
 
 end
 
