@@ -2,7 +2,12 @@ function push_git(varargin)
 
 p = ParseInput(varargin{:});
 
+gitexepath = ['C:\Program Files\Git\mingw64\bin\git.exe'];
+
 commit_msg = input('Commit message? ', 's');
+
+git('add -A');
+
 
 eval('!git add -A')
 eval(['!git commit -am "', commit_msg, '"'])
