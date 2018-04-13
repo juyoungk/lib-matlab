@@ -9,10 +9,29 @@ function move_conex_xyz_stage(src, evt)
     
     % Check ref positions 
     % top (285A) and bottom (CONEX) units.
-    pos_top_ref = [1.5242e+03 641.9000 -1.1977e+03];% MEA R-side align
-    pos_top_ref = [27 10 8.3800e+03]; %MEA R-side 5x zoom align 0215 2018
-    pos_bot_ref = [7.228, 12.946, 22.76];           % 0214 2018 4x obj
-    z_offset_vstim = 0.150 + 0.150; % [mm]
+    
+    % Top ref positions will be same if
+    % 1. MEA location
+    % 2. Laser align
+    % 3. Top unit PMT installations (weight and angle vary)
+    % are same
+    % 920 vs 1070 focus difference < 3 um (to Green PMT)
+
+    % align 0409 2018 (920 nm)
+    pos_top_ref = [114.7000 -4.4000 7.7387e+03];
+    
+    
+    % align 4x obj (0411 2018)
+    pos_bot_ref = [6.556, 13.028, 22.8];            % 0411 2018 4x obj. 
+    %Z for UV = 22.6, for Blue = 23.01 
+    
+    % For RED PMT: 
+    % adjust bot position for red PMT setting
+        pos_bot_ref(1) = pos_bot_ref(1) - 0.14;
+        pos_bot_ref(2) = pos_bot_ref(2) + 0.05;
+
+    % offset between 2p and VS focal planes
+    z_offset_vstim = 0.150 + 0.100; % [mm]
     
     % open serial ports
     s1 = conex_serial_init('COM6');

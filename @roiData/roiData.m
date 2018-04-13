@@ -314,7 +314,7 @@ classdef roiData < handle
                     
                 % Avg trace settings
                 if ~isempty(stim_trigger_times) && numel(stim_trigger_times) >=3 && ...
-                        isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))
+                        isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'run')) && isempty(strfind(r.ex_name, 'runme'))
                     
                     r.avg_FLAG = true;
                     
@@ -330,7 +330,10 @@ classdef roiData < handle
                             r.avg_every = 4;
                         elseif strfind(r.ex_name, 'jitter')
                             r.avg_every = 2;
+                        elseif strfind(r.ex_name, 'typing')
+                            r.avg_every = 12;
                         end
+                        disp(['Avg over every ', num2str(r.avg_every), ' stim times.']);
                         
                         % avg trigger times
                         if r.avg_every > 1 
@@ -347,6 +350,7 @@ classdef roiData < handle
                             disp('Only one trigger event for averaging over responses to (repeated) stims');
                             r.avg_trigger_interval = 10
                         end
+                        disp(['Avg trigger interval is ', num2str(r.avg_trigger_interval), ' secs.']);
                         
                         % times for avg traces
                         n = floor(r.avg_trigger_interval*(1./ifi)); % same as qx in align_rows_to_events function

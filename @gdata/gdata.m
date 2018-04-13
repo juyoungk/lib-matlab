@@ -17,6 +17,7 @@ classdef gdata < handle
             AI
             AI_mean  % mean up to 1000 frames
             ifi
+            nframes  % per channel (e.g. PMT)
             header
             metadata % raw header file
             
@@ -29,8 +30,8 @@ classdef gdata < handle
             % pd events info
             pd_AI_name = 'photodiode';
             pd_threshold = 0.4;
-            min_interval_secs = 3.5;
-            ignore_secs = 5;
+            min_interval_secs = 0.8;
+            ignore_secs = 5;    %
             pd_trace
             pd_events
             
@@ -48,10 +49,21 @@ classdef gdata < handle
     end   
 
     methods
-            function display_scalebar(g)
-                mag = h.scanZoomFactor;
+            function imdrift(g, ch)
+                % See if the cells were drift over imaging session
+                % 1000 frames more case
+                n = min(2000, g.nframes); 
+ 
+                if nargin > 1
+                    AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
+                    AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
+                    imshowpair(AI_mean_early, AI_mean_late);
+                else
+                    for ch=g.header.channelSave
+                        g.imdrift(g, ch);
+                    end
+                end
             end
-
             function J = myshow(g, ch)
                 if nargin > 1
                     J = myshow(g.AI_mean{ch});
@@ -226,8 +238,9 @@ classdef gdata < handle
                         ch = vol(:,:,id_ch==j); % de-interleave frames
                         g.AI{h.channelSave(j)} = ch;
 
-                        % mean of first 1000 frames
+                        % mean of first 1000 frames (for 512x512 pixels)
                         [row, col, ch_frames] = size(ch);
+                        g.nframes = ch_frames;
                         n_frames_snap = min(ch_frames, round(512*512*1000/row/col));
                         ch_mean = mean(ch(:,:,1:n_frames_snap), 3);
                         g.AI_mean{h.channelSave(j)} = ch_mean;
@@ -353,7 +366,7 @@ classdef gdata < handle
             pos     = get(0, 'DefaultFigurePosition');
             width = 745;
             %pos_new = [10 950 width width*1.05];
-            pos_new = [210 600 width width*1.05];
+            pos_new = [160 500 width width*1.05];
             set(0, 'DefaultFigurePosition', pos_new);
         end
     end
