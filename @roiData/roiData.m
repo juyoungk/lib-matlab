@@ -18,7 +18,7 @@ classdef roiData < handle
         roi_cc      % roi information (struct 'cc')
         ifi         % inter-frame interval of vol (data)
         stim_trigger_times    % absolute times when stims triggered.
-        stim_trigger_interval
+        stim_trigger_interval % if triggers are non-uniform, do not use it.
         stim_end
         %
         stim_whitenoise
@@ -56,11 +56,11 @@ classdef roiData < handle
         % avg trace timed at stim_times
         avg_FLAG
         avg_every
-        avg_trigger_times
+        avg_trigger_times   % times for aligning between trials
+        avg_stim_times  % stim times within one avg trace
         avg_trigger_interval
         avg_trace       % avg over (smoothed) trials: (times x roi#): good for 2-D plot
         avg_trace_std   % std over trials
-        
         avg_trace_fil   % avg over (filtered) trials.
         avg_trace_smooth_norm
         %avg_trace_filter_norm
@@ -85,6 +85,7 @@ classdef roiData < handle
         % properties for plot
         n_cycle
         s_phase % shift phase
+        t_range = [-100, 100] % avg plot range bound. secs.
         coeff   % (PCA) basis
     end
  
@@ -285,7 +286,7 @@ classdef roiData < handle
                     
                     % stim trigger interval & end time
                     if numel(stim_trigger_times)>1
-                        r.stim_trigger_interval = stim_trigger_times(2)  - stim_trigger_times(1);
+                        r.stim_trigger_interval = stim_trigger_times(end)  - stim_trigger_times(end-1); % for uniform stim triggers
                         r.stim_end = stim_trigger_times(end) + r.stim_trigger_interval;
                     else
                         % total recording time after the trigger.
@@ -323,15 +324,22 @@ classdef roiData < handle
                         r.n_cycle = 1;
                         r.s_phase = 0;
                         
-                        if strfind(r.ex_name, 'flash')
+                        if strfind(r.ex_name, 'typing')
+                            r.avg_every = 12;
+                            if strfind(r.ex_name, 'flash')
+                                r.avg_every = 3;
+                            end
+                            % copy the trace in (-) times.
+                            r.n_cycle =2;
+                            r.s_phase =1;
+                            r.t_range =[-0.8, 100];
+                        elseif strfind(r.ex_name, 'flash')
                             r.n_cycle = 2;
                             r.s_phase = 0.25;
                         elseif strfind(r.ex_name, 'movingbar')
                             r.avg_every = 4;
                         elseif strfind(r.ex_name, 'jitter')
                             r.avg_every = 2;
-                        elseif strfind(r.ex_name, 'typing')
-                            r.avg_every = 12;
                         end
                         disp(['Avg over every ', num2str(r.avg_every), ' stim times.']);
                         
@@ -342,6 +350,9 @@ classdef roiData < handle
                         else
                             r.avg_trigger_times = r.stim_trigger_times;
                         end
+                        
+                        % stim events within one avg
+                        r.avg_stim_times = r.stim_trigger_times(1:r.avg_every+1) - r.stim_trigger_times(1);
                         
                         % avg trigger interval
                         if numel(r.avg_trigger_times) > 1
@@ -354,11 +365,12 @@ classdef roiData < handle
                         
                         % times for avg traces
                         n = floor(r.avg_trigger_interval*(1./ifi)); % same as qx in align_rows_to_events function
-                        r.avg_times = ((1:n)-0.5)*ifi; 
+                        r.avg_times = ((1:n)-0.5)*ifi;
+                        
                         % times for plot
                         r.a_times = r.timesForAvgPlot;
                         
-                        % cluster mean for avg trace
+                        % cluster mean for avg trace (100 clusters max)
                         r.c_mean = zeros(n, 100);
                 else
                     r.avg_FLAG = false;
@@ -404,6 +416,7 @@ classdef roiData < handle
                 yy = circshift(y, round( obj.s_phase * row ) );
                 yy = repmat(yy, [obj.n_cycle, 1]);
             end
+            
         end
  
         function tt = timesForAvgPlot(obj)

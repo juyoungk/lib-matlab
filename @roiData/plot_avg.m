@@ -20,6 +20,9 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     h_axes    = p.Results.axes;
     DrawPlot = p.Results.DrawPlot;
     
+    % data index inside a time range
+    idx = (r.a_times > r.t_range(1)) & (r.a_times < r.t_range(2));
+    
     S = sprintf('ROI %d*', 1:r.numRoi); C = regexp(S, '*', 'split'); % C is cell array.
     
     if nargin < 2
@@ -71,8 +74,9 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             if DrawPlot
                 % Adjust for plot (phase & cycles)
                 y = r.traceForAvgPlot(y);
-                x = r.a_times;
-
+                y = y(idx);
+                x = r.a_times(idx);
+                
                 duration = r.avg_trigger_interval;
 
                 %
@@ -83,7 +87,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 end
 
                 ax = gca;  Fontsize = 10;
-                ax.XLim = [r.a_times(1), r.a_times(end)];
+                ax.XLim = [x(1), x(end)];
                 ax.XAxis.FontSize = Fontsize;
                 ax.YAxis.FontSize = Fontsize;
                 % XTick positions: independent of phase value
@@ -120,10 +124,17 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     end
                     % stim trigger lines between avg triggers
-                    for k = 1:(r.avg_every-1)
-                        x = (n-1) * duration + k * r.stim_trigger_interval;
-                        plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-                    end
+                    for k = 1:(r.avg_every)
+                        if k ~= 1
+                            x = (n-1) * duration + r.avg_stim_times(k);
+                            plot([x x], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                        end
+                        % middle lines between stim triggers
+                        if strfind(r.ex_name, 'typing')
+                            x = (n-1) * duration + r.avg_stim_times(k) + 0.5*(r.avg_stim_times(k+1)-r.avg_stim_times(k));
+                            plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                        end
+                    end  
                 end
                 hold off;
             end

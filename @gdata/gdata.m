@@ -57,10 +57,11 @@ classdef gdata < handle
                 if nargin > 1
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
+                    figure; 
                     imshowpair(AI_mean_early, AI_mean_late);
                 else
-                    for ch=g.header.channelSave
-                        g.imdrift(g, ch);
+                    for PMT_ch=g.header.channelSave
+                        imdrift(g, PMT_ch);
                     end
                 end
             end
@@ -353,6 +354,8 @@ classdef gdata < handle
                     end   % if h5 file exists.
                      
                     g.cc = []; % initialize cc struct
+                    % drift?
+                    g.imdrift;
                     end
                 end
 
@@ -384,6 +387,7 @@ function [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, str)
 end
 
 function str_ex_name = get_ex_name(tif_filename)
+    s_filename = tif_filename;
     s_filename = strrep(tif_filename, '_', '  ');    
     s_filename = strrep(s_filename, '00', '');
     loc_name = strfind(s_filename, '.');

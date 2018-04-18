@@ -59,7 +59,6 @@ if contains(plotType, 'avg')
 end
 
 
-
 end
 
 function p =  ParseInput(varargin)
