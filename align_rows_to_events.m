@@ -10,7 +10,7 @@ function [y_aligned, qx] = align_rows_to_events(y, x, events, duration)
     % events   - array of times
     % duration - for which you want to copy after the event
 % Output:
-    % y_aligned - (n_cells, n_sampling, n_events) matrix 
+    % y_aligned - (n_cells, n_sampling(e.g. time), n_events) matrix 
 
 if size(x) < 2
     error('Timestamps(x) is too short. Not enough data.');
@@ -38,7 +38,9 @@ for i=1:length(events)
 
     %qx = x(idx);
     if (id+n_sampling-1) > n_times
-        error('Event +duration goes over the recorded signal');
+        disp('ERROR: Event +duration goes over the recorded signal. ');
+        disp([num2str(i-1), ' repeats were aligned relative to event times. (supposed to be ', num2str(length(events)),' repeats)']);
+        break; 
     end
     
     qy = y(id:id+n_sampling-1,:);

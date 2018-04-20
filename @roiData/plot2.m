@@ -115,7 +115,8 @@ function plot2(r, I, varargin)
                 y = plot_avg(r, k);
                 y = normc(y);
                 hold on
-                y0 = r.stat.smoothed_norm.trace_mean_level(k);
+                %y0 = r.stat.smoothed_norm.trace_mean_level(k);
+                y0 = r.stat.smoothed_norm.avg_mean(k);
                 y_std = r.stat.smoothed_norm.trace_std_avg(k)/sqrt(numel(r.avg_trigger_times));
                     plot(ax.XLim, [y0+y_std y0+y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     plot(ax.XLim, [y0-y_std y0-y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
@@ -158,8 +159,8 @@ function plot2(r, I, varargin)
                     'HorizontalAlignment','center');
                 text(i_sorted(2), ax.YLim(1)*0.20, num2str(i_sorted(2)), 'FontSize', 12,...
                     'HorizontalAlignment','center');
-                text(i_sorted(3), ax.YLim(1)*0.20, num2str(i_sorted(3)), 'FontSize', 10,...
-                    'HorizontalAlignment','center');
+%                 text(i_sorted(3), ax.YLim(1)*0.20, num2str(i_sorted(3)), 'FontSize', 10,...
+%                     'HorizontalAlignment','center');
             end
             
         % mean trace of the suggested cluster 

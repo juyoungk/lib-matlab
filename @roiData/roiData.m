@@ -45,12 +45,13 @@ classdef roiData < handle
         stat
         
         % smoothing params
-        smoothing_method
-        smoothing_size
+        smoothing_method = 'movmean';
+        smoothing_size  
+        smoothing_size_init = 5;
                 
         % filter params
         cutoff_period = 10; % secs. for high-pass filtering
-        w_filter_low = 0.5 
+        w_filter_low  = 0.5 
         w_filter_high = 0.05; % in terms of norm. (or Nyquist) freq. 
         
         % avg trace timed at stim_times
@@ -83,8 +84,8 @@ classdef roiData < handle
         roi_selected
         
         % properties for plot
-        n_cycle
-        s_phase % shift phase
+        n_cycle = 1
+        s_phase = 0 % shift phase
         t_range = [-100, 100] % avg plot range bound. secs.
         coeff   % (PCA) basis
     end
@@ -176,7 +177,6 @@ classdef roiData < handle
         function set.smoothing_size(r, t)
             r.smoothing_size = t;
             r.update_smoothed_trace;
-            r.update_filtered_trace;
         end
         
         function update_smoothed_trace(r)
@@ -193,15 +193,23 @@ classdef roiData < handle
                 
                % Avg & Std over trials (dim 3)
                r.avg_trace    = mean(roi_aligned, 3);
+               
+               % normalization by its min?
+               
+               
                %r.avg_trace_std = std(roi_aligned, 1, 3);       % normalization weight = 1
                %r.avg_trace_std = r.avg_trace_std./r.avg_trace; % norm by mean. Std as fraction to mean.
                
                % stat over one trial duration
                %r.stat.mean_std_over_repeats = mean(r.avg_trace_std, 1);
             end
+            % filtered_trace
+            r.update_filtered_trace;
         end
         
-        function update_filtered_trace(r) 
+        function update_filtered_trace(r)
+        % update_smoothed_trace should be performed in advance. 
+            % calculating filters
             fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
             fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .002, 'StopbandFrequency', .008, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
             %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
@@ -224,9 +232,9 @@ classdef roiData < handle
                     y_filtered = filtfilt(fil_low,   y);       % low-pass filtering
                     y_filtered = y_filtered(r.f_times > t);    % ignore the first secs
                     %
-                       y_trend = filtfilt(fil_trend, y_filtered); 
+                    y_trend = filtfilt(fil_trend, y_filtered); 
                     
-                    % normalization 
+                    % normalization
                     y_smoothed_norm = ((y_smoothed - y_trend)./y_trend)*100;
                     y_filtered_norm = ((y_filtered - y_trend)./y_trend)*100;
                     
@@ -240,7 +248,7 @@ classdef roiData < handle
             
             if r.avg_FLAG
                % Align roi traces to stim_times
-               [roi_aligned_fil, ~] = align_rows_to_events(r.roi_filtered, r.f_times_fil, r.avg_trigger_times, r.avg_trigger_interval);
+               [roi_aligned_fil, ~]           = align_rows_to_events(r.roi_filtered, r.f_times_fil, r.avg_trigger_times, r.avg_trigger_interval);
                [roi_aligned_smoothed_norm, ~] = align_rows_to_events(r.roi_smoothed_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
                [roi_aligned_filtered_norm, ~] = align_rows_to_events(r.roi_filtered_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
 
@@ -320,14 +328,14 @@ classdef roiData < handle
                     r.avg_FLAG = true;
                     
                         % params for avg & avg plot
-                        r.avg_every = 1;
                         r.n_cycle = 1;
                         r.s_phase = 0;
+                        r.avg_every = 1;
                         
                         if strfind(r.ex_name, 'typing')
                             r.avg_every = 12;
                             if strfind(r.ex_name, 'flash')
-                                r.avg_every = 3;
+                                r.avg_every = 6;
                             end
                             % copy the trace in (-) times.
                             r.n_cycle =2;
@@ -342,45 +350,19 @@ classdef roiData < handle
                             r.avg_every = 2;
                         end
                         disp(['Avg over every ', num2str(r.avg_every), ' stim times.']);
-                        
-                        % avg trigger times
-                        if r.avg_every > 1 
-                            id_trigger = mod(1:numel(stim_trigger_times), r.avg_every) == 1; % logical array
-                            r.avg_trigger_times = r.stim_trigger_times(id_trigger);
-                        else
-                            r.avg_trigger_times = r.stim_trigger_times;
-                        end
-                        
-                        % stim events within one avg
-                        r.avg_stim_times = r.stim_trigger_times(1:r.avg_every+1) - r.stim_trigger_times(1);
-                        
-                        % avg trigger interval
-                        if numel(r.avg_trigger_times) > 1
-                            r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
-                        else
-                            disp('Only one trigger event for averaging over responses to (repeated) stims');
-                            r.avg_trigger_interval = 10
-                        end
-                        disp(['Avg trigger interval is ', num2str(r.avg_trigger_interval), ' secs.']);
-                        
-                        % times for avg traces
-                        n = floor(r.avg_trigger_interval*(1./ifi)); % same as qx in align_rows_to_events function
-                        r.avg_times = ((1:n)-0.5)*ifi;
-                        
-                        % times for plot
-                        r.a_times = r.timesForAvgPlot;
-                        
+
                         % cluster mean for avg trace (100 clusters max)
-                        r.c_mean = zeros(n, 100);
+                        r.c_mean = zeros(length(r.avg_times), 100);
+                        
+                        % times (x-axis) setting for avg plot
+                        r.a_times = r.timesForAvgPlot;
                 else
                     r.avg_FLAG = false;
                 end
-                
+                  
                 % default smoothing or smoothed traces
-                r.smoothing_method = 'movmean';
-                r.smoothing_size = 5;
-                    % filtered trace
-                    %r.update_filtered_trace;
+                %r.smoothing_method = 'movmean';
+                r.smoothing_size = r.smoothing_size_init;
                     
                 % whitenoise stim
                 if nargin > 5
@@ -401,6 +383,37 @@ classdef roiData < handle
             end
         end
         
+        function set.avg_every(r, n_every)
+                %
+                r.avg_every = n_every;
+                
+                % avg trigger times
+                if r.avg_every > 1 
+                    id_trigger = mod(1:numel(r.stim_trigger_times), r.avg_every) == 1; % logical array
+                    r.avg_trigger_times = r.stim_trigger_times(id_trigger);
+                else
+                    r.avg_trigger_times = r.stim_trigger_times;
+                end
+
+                % stim events within one avg
+                r.avg_stim_times = r.stim_trigger_times(1:r.avg_every+1) - r.stim_trigger_times(1);
+
+                % avg trigger interval
+                if numel(r.avg_trigger_times) > 1
+                    r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
+                else
+                    disp('Only one trigger event for averaging over responses to (repeated) stims');
+                    r.avg_trigger_interval = 10
+                end
+                disp(['Avg trigger interval is ', num2str(r.avg_trigger_interval), ' secs.']);
+
+                % times for avg traces
+                n = floor(r.avg_trigger_interval*(1./r.ifi)); % same as qx in align_rows_to_events function
+                r.avg_times = ((1:n)-0.5)*r.ifi;
+                
+                % times (x-axis) setting for avg plot
+                r.a_times = r.timesForAvgPlot;
+        end
         
         % Function for phase shift and multiply
         function yy = traceForAvgPlot(obj, y)

@@ -31,7 +31,7 @@ classdef gdata < handle
             pd_AI_name = 'photodiode';
             pd_threshold = 0.4;
             min_interval_secs = 0.8;
-            ignore_secs = 5;    %
+            ignore_secs = 2;    %
             pd_trace
             pd_events
             
@@ -52,13 +52,16 @@ classdef gdata < handle
             function imdrift(g, ch)
                 % See if the cells were drift over imaging session
                 % 1000 frames more case
-                n = min(2000, g.nframes); 
+                n = min(2000, g.nframes);
+                fprintf('Total frame numbers; %d. imdrift(): %d frames were compared.', g.nframes, n);
  
                 if nargin > 1
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
-                    figure; 
-                    imshowpair(AI_mean_early, AI_mean_late);
+                    figure('Color', 'none');
+                    ax = axes('Position', [0  0  1  0.9524], 'Visible', 'off');
+                    imshowpair(myshow(AI_mean_early), myshow(AI_mean_late)); % contrast adjust by myshow()
+                    title(ax, 'Is it drifted?', 'FontSize', 15, 'Color', 'w');
                 else
                     for PMT_ch=g.header.channelSave
                         imdrift(g, PMT_ch);
@@ -67,10 +70,10 @@ classdef gdata < handle
             end
             function J = myshow(g, ch)
                 if nargin > 1
-                    J = myshow(g.AI_mean{ch});
+                    myshow(g.AI_mean{ch});
                 else
                     for ch=g.header.channelSave
-                        J = myshow(g.AI_mean{ch});
+                        myshow(g.AI_mean{ch});
                     end
                 end
             end
@@ -85,18 +88,22 @@ classdef gdata < handle
                         J = imvol(g.AI{i}, 'scanZoom', g.header.scanZoomFactor);
                     else
                         s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', g.ex_name, g.header.channelSave(i), g.header.scanZoomFactor);
-                        J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', false);
+                        if isempty(g.cc)
+                            J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
+                        else
+                            J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', false);
+                        end
                     end
                 end
             end
             
             function setting_pd_event_params(g)
                 
-                g.ignore_secs = 5;
+                %g.ignore_secs = 2;
                 
                 if strfind(g.ex_name, 'flash')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 3.5
+                    g.min_interval_secs = 0.8;
                 elseif strfind(g.ex_name, 'movingbar')
                     g.pd_threshold = 0.4;
                     g.min_interval_secs = 1.2
