@@ -19,9 +19,17 @@ nargoutchk(0,2)
 % Specify the location of the git executable.
 %gitexepath = 'C:\path\to\GIT-2.7.0\bin\git.exe';
 
-gitexepath = ['"C:\Program Files\Git\cmd\git.exe"'];
+str = computer;
+switch str
+    case 'MACI64'
+        gitexepath = ['"/usr/bin/git"'];
+    case 'PCWIN64'
+        gitexepath = ['"C:\Program Files\Git\cmd\git.exe"'];
+    otherwise
+        disp('OS should be Mac OS X or PCWIN64');
+end
 % gitdir = 'C:\Program Files\Git\cmd\';
-% gitexepath = [gitdir,'git.exe'];
+% gitexepath = [gitdir,'gits.exe'];
 
 % Construct the git command.
 cmdstr = strjoin([gitexepath, varargin]);

@@ -29,9 +29,9 @@ classdef gdata < handle
             
             % pd events info
             pd_AI_name = 'photodiode';
-            pd_threshold = 0.4;
-            min_interval_secs = 0.8;
-            ignore_secs = 2;    %
+            pd_threshold = 0.4
+            min_interval_secs = 0.8
+            ignore_secs = 2
             pd_trace
             pd_events
             
@@ -91,6 +91,7 @@ classdef gdata < handle
                         if isempty(g.cc)
                             J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
                         else
+                            disp('''cc'' was given to imvol(). No ROI edit mode.');
                             J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', false);
                         end
                     end
@@ -99,26 +100,30 @@ classdef gdata < handle
             
             function setting_pd_event_params(g)
                 
-                %g.ignore_secs = 2;
-                
                 if strfind(g.ex_name, 'flash')
                     g.pd_threshold = 0.4;
                     g.min_interval_secs = 0.8;
                 elseif strfind(g.ex_name, 'movingbar')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 1.2
+                    g.min_interval_secs = 1.2;
                 elseif strfind(g.ex_name, 'jitter')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 1
+                    g.min_interval_secs = 1;
                 elseif strfind(g.ex_name, 'whitenoise')
                     g.pd_threshold = 0.4;
-                    g.min_interval_secs = 0.25
+                    g.min_interval_secs = 0.25;
                 else
                     g.pd_threshold = 0.8;
-                    g.min_interval_secs = 0.5
+                    g.min_interval_secs = 0.5;
                 end
             end
-        
+            
+            function set.min_interval_secs(g, value)
+                % print value
+                disp(['Minimum time interval between stimulus triggers (secs) : ', num2str(value)]);
+                g.min_interval_secs = value;
+            end
+                
             function set.numStimulus(obj, n)
                 if n < 1
                     error('numStimulus should be 1 or larger');
@@ -394,19 +399,19 @@ function [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, str)
 end
 
 function str_ex_name = get_ex_name(tif_filename)
-    s_filename = tif_filename;
+    %s_filename = tif_filename;
     s_filename = strrep(tif_filename, '_', '  ');    
     s_filename = strrep(s_filename, '00', '');
     loc_name = strfind(s_filename, '.');
     
+    % Get rid of '.tif' or '.h5'
     if isempty(loc_name)
         str_ex_name = s_filename;
     else
-        str_ex_name = s_filename(1:(loc_name-1));
+        str_ex_name = s_filename(1:(loc_name(end)-1));
     end
     
-    % ignore last file number
+    % Ignore last file number
     str_by_space = strsplit(str_ex_name, ' ');
     str_ex_name = sprintf('%s ', str_by_space{1:end-1});
-
 end

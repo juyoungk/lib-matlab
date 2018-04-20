@@ -328,14 +328,14 @@ classdef roiData < handle
                     r.avg_FLAG = true;
                     
                         % params for avg & avg plot
+                        avg_every = 1;
                         r.n_cycle = 1;
                         r.s_phase = 0;
-                        r.avg_every = 1;
-                        
+                        % special cases
                         if strfind(r.ex_name, 'typing')
-                            r.avg_every = 12;
+                            avg_every = 12;
                             if strfind(r.ex_name, 'flash')
-                                r.avg_every = 6;
+                                avg_every = 6;
                             end
                             % copy the trace in (-) times.
                             r.n_cycle =2;
@@ -345,11 +345,17 @@ classdef roiData < handle
                             r.n_cycle = 2;
                             r.s_phase = 0.25;
                         elseif strfind(r.ex_name, 'movingbar')
-                            r.avg_every = 4;
+                            avg_every = 4;
                         elseif strfind(r.ex_name, 'jitter')
-                            r.avg_every = 2;
+                            avg_every = 2;
                         end
-                        disp(['Avg over every ', num2str(r.avg_every), ' stim times.']);
+                        n = input(['Avg over every ', num2str(avg_every), ' stim times ? [Y or type N]']);
+                        if isempty(n)
+                            n = avg_every;
+                        end
+                        %disp(['Avg over every ', num2str(avg_every), ' stim times.']);
+                        % set avg_every
+                        r.avg_every = n;
 
                         % cluster mean for avg trace (100 clusters max)
                         r.c_mean = zeros(length(r.avg_times), 100);
