@@ -37,7 +37,7 @@ classdef roiData < handle
         
         roi_mean_f      % mean fluorescnece level during the stimulus
         f_times         % frame times
-        ignore_sec      % ignore first few secs for filtering.
+        ignore_sec      % ignore first few secs for filtering. (default: until 1st trigger)
         f_times_fil
         f_times_norm
         
@@ -100,15 +100,49 @@ classdef roiData < handle
     
     methods
         
+        function  rr = select_data(r, stim_ids)
+            % create new instance
+            rr = r;
+            % id_range: stim trigger times id. (e.g. [2, 3, 4])
+            if stim_ids(1) == 0
+                t_init = 0
+            else
+                t_init = rr.stim_trigger_times( stim_ids(1) )
+            end
+            % Is the ending index the last trigger?
+            if stim_ids(end) >= length(rr.stim_trigger_times)
+                t_end = rr.f_times(end)
+            else 
+                t_end = rr.stim_trigger_times( stim_ids(end)+1 )
+            end
+            
+            % select data for [t_init, t_end]
+            ids = (rr.f_times>t_init) & (rr.f_times<t_end); 
+            rr.roi_trace = r.roi_trace(ids, :);
+            rr.f_times = rr.f_times(ids) - rr.stim_trigger_times(stim_ids(1));           
+            rr.f_times_fil = rr.f_times;
+            rr.f_times_norm = rr.f_times;
+            rr.ignore_sec = 0;
+            
+            % adjust stim trigger times
+            rr.stim_trigger_times = rr.stim_trigger_times(stim_ids) - rr.stim_trigger_times(stim_ids(1)); 
+            
+            % update
+            rr.update_smoothed_trace;
+            rr.update_filtered_trace;
+        end
+        
         function load_h5(r, dirpath)
         % load stim data from 'stimulus.h5' in current directory    
             %h5info('stimulus.h5')
             %h5disp('stimulus.h5')
             if nargin < 2
-                dirpath = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim';
+                dirpath = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim'
             end
             
-            % stim id for whitenoise? 
+            % stim id for whitenoise?
+            h5disp([dirpath, '/stimulus.h5']);
+            % assuption: expt1 is a whitenoise stimulus.
             stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
             times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
             r.get_stimulus(stim, times);
@@ -180,6 +214,9 @@ classdef roiData < handle
         end
         
         function update_smoothed_trace(r)
+            % initialize array
+            r.roi_smoothed = zeros(size(r.roi_trace));
+            
             % smooth trace
             for i=1:r.numRoi
                 y = r.roi_trace(:,i);
@@ -196,7 +233,6 @@ classdef roiData < handle
                
                % normalization by its min?
                
-               
                %r.avg_trace_std = std(roi_aligned, 1, 3);       % normalization weight = 1
                %r.avg_trace_std = r.avg_trace_std./r.avg_trace; % norm by mean. Std as fraction to mean.
                
@@ -211,7 +247,7 @@ classdef roiData < handle
         % update_smoothed_trace should be performed in advance. 
             % calculating filters
             fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-            fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .002, 'StopbandFrequency', .008, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+            fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .001, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
             %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
             
             t = r.ignore_sec; 
@@ -222,7 +258,9 @@ classdef roiData < handle
             r.roi_filtered = zeros(numframes, r.numRoi);
             r.roi_trend = zeros(numframes, r.numRoi);
             r.roi_normalized = zeros(numframes, r.numRoi);
-
+            r.roi_smoothed_norm = zeros(numframes, r.numRoi);
+            r.roi_filtered_norm = zeros(numframes, r.numRoi);
+            
             for i=1:r.numRoi
                     y = r.roi_trace(:,i); % raw data (bg substracted)
                     %
@@ -349,11 +387,10 @@ classdef roiData < handle
                         elseif strfind(r.ex_name, 'jitter')
                             avg_every = 2;
                         end
-                        n = input(['Avg over every ', num2str(avg_every), ' stim times ? [Y or type N]']);
+                        n = input(['Avg over every N stim trigger times? [N =', num2str(avg_every),' ]']);
                         if isempty(n)
                             n = avg_every;
                         end
-                        %disp(['Avg over every ', num2str(avg_every), ' stim times.']);
                         % set avg_every
                         r.avg_every = n;
 
@@ -407,11 +444,17 @@ classdef roiData < handle
                 % avg trigger interval
                 if numel(r.avg_trigger_times) > 1
                     r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
+                    numRepeat = numel(r.avg_trigger_times);
+                    if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_trigger_interval)
+                        numRepeat = numRepeat - 1;
+                    end
                 else
-                    disp('Only one trigger event for averaging over responses to (repeated) stims');
-                    r.avg_trigger_interval = 10
+                    disp('One trigger for average process. Default time interval between trigger set to 10 secs.');
+                    r.avg_trigger_interval = 10;
+                    numRepeat = 1;
                 end
                 disp(['Avg trigger interval is ', num2str(r.avg_trigger_interval), ' secs.']);
+                fprintf('Num of repeats: %d\n', numRepeat);
 
                 % times for avg traces
                 n = floor(r.avg_trigger_interval*(1./r.ifi)); % same as qx in align_rows_to_events function

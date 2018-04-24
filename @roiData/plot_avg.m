@@ -152,10 +152,10 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
                 
         % subplot params
-        n_row = 9;
-        n_col = 9; % limit num of subplots by fixing n_col
+        n_row = 5;
+        n_col = 3; % limit num of subplots by fixing n_col
         % Figure params
-        n_cells_per_fig = 78;
+        n_cells_per_fig = 60;
         
         k = 1; % index in selected roi group
         while (k <= numel(roi_array))

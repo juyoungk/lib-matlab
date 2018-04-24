@@ -135,7 +135,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
             %subplot(n_row, n_col, (i-1)*n_col + j);
             
-            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', false, 'LineWidth', 0.7);
+            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7);
             
             
             %str = sprintf('c%d: all traces (n = %d)', i, numel(roi_clustered));

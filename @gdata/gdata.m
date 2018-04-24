@@ -49,11 +49,11 @@ classdef gdata < handle
     end   
 
     methods
-            function imdrift(g, ch)
+            function vol = imdrift(g, ch)
                 % See if the cells were drift over imaging session
                 % 1000 frames more case
                 n = min(2000, g.nframes);
-                fprintf('Total frame numbers; %d. imdrift(): %d frames were compared.', g.nframes, n);
+                fprintf('Total frame numbers; %d. imdrift(): %d frames were compared.\n', g.nframes, n);
  
                 if nargin > 1
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
@@ -62,13 +62,14 @@ classdef gdata < handle
                     ax = axes('Position', [0  0  1  0.9524], 'Visible', 'off');
                     imshowpair(myshow(AI_mean_early), myshow(AI_mean_late)); % contrast adjust by myshow()
                     title(ax, 'Is it drifted?', 'FontSize', 15, 'Color', 'w');
+                    vol = cat(3, AI_mean_early, AI_mean_late);
                 else
                     for PMT_ch=g.header.channelSave
-                        imdrift(g, PMT_ch);
+                        vol = imdrift(g, PMT_ch);
                     end
                 end
             end
-            function J = myshow(g, ch)
+            function myshow(g, ch)
                 if nargin > 1
                     myshow(g.AI_mean{ch});
                 else
@@ -307,7 +308,7 @@ classdef gdata < handle
                         % event timestamps from pd
                         g.setting_pd_event_params();
                         i_start = g.ignore_secs * header.srate + 1; 
-                        pd_for_events = pd(i_start:end);
+                        pd_for_events = pd(i_start:end);            % after first a few seconds.
                         ev_idx = th_crossing(pd_for_events, g.pd_threshold * max(pd_for_events), g.min_interval_secs * header.srate);
                         ev_idx = ev_idx + i_start -1;
                         ev = times(ev_idx);
@@ -317,10 +318,11 @@ classdef gdata < handle
                         % plot pd % event stamps
                         pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
                         figure; set(gcf, 'Position', pos_plot);
-                        plot(times(i_start:end),pd(i_start:end)); hold on; % it is good to plot pd siganl together    
+                        plot(times(i_start:end), pd(i_start:end)); hold on; % it is good to plot pd siganl together    
                         plot(ev, pd(ev_idx),'bo');
                             legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
                         hold off
+                        disp(['Num of PD (stimulus trigger) events: ', num2str(length(ev_idx))]);
                         
                         % stimulus cluster for multiple events 
                         g.stims = cell(1,10);
@@ -364,10 +366,10 @@ classdef gdata < handle
                             g.numStimulus = k;
                         end
                     end   % if h5 file exists.
-                     
                     g.cc = []; % initialize cc struct
                     % drift?
-                    g.imdrift;
+                    before_after = g.imdrift;
+                    imvol(mean(before_after, 3), 'title', 'first and last 2000 frames');
                     end
                 end
 

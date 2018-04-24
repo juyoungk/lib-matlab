@@ -157,10 +157,14 @@ function plot2(r, I, varargin)
                 % Cluster # for max projection
                 text(i_sorted(1), ax.YLim(1)*0.20, num2str(i_sorted(1)), 'FontSize', 15,...
                     'HorizontalAlignment','center');
-                text(i_sorted(2), ax.YLim(1)*0.20, num2str(i_sorted(2)), 'FontSize', 12,...
-                    'HorizontalAlignment','center');
-%                 text(i_sorted(3), ax.YLim(1)*0.20, num2str(i_sorted(3)), 'FontSize', 10,...
-%                     'HorizontalAlignment','center');
+                if length(i_sorted) > 1
+                    text(i_sorted(2), ax.YLim(1)*0.20, num2str(i_sorted(2)), 'FontSize', 12,...
+                        'HorizontalAlignment','center');
+                end
+                if length(i_sorted) > 2
+                    text(i_sorted(3), ax.YLim(1)*0.20, num2str(i_sorted(3)), 'FontSize', 10,...
+                        'HorizontalAlignment','center');
+                end
             end
             
         % mean trace of the suggested cluster 

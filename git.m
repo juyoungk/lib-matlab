@@ -26,7 +26,7 @@ switch str
     case 'PCWIN64'
         gitexepath = ['"C:\Program Files\Git\cmd\git.exe"'];
     otherwise
-        disp('OS should be Mac OS X or PCWIN64');
+        error('OS should be Mac OS X or PCWIN64');
 end
 % gitdir = 'C:\Program Files\Git\cmd\';
 % gitexepath = [gitdir,'gits.exe'];

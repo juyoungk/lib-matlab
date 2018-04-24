@@ -58,9 +58,10 @@ function plot(r, I)
         % 3. roi avg (smoothed) over multiple repeats
         subplot(n_row, n_col, 2*n_col+2);
             
-            if strfind(r.ex_name, 'whitenoise')
-                r.plot_rf(k, 'smoothed');
-                title('Revrse correlation (smoothed trace)');
+            if contains(r.ex_name, 'whitenoise') || contains(r.ex_name, 'run') 
+                
+%                 r.plot_rf(k, 'smoothed');
+%                 title('Revrse correlation (smoothed trace)');
                 c = colorbar;
                 c.TickLabels = {};
             else
@@ -76,9 +77,9 @@ function plot(r, I)
         % 4. roi avg (filtered) over multiple repeats
         subplot(n_row, n_col, 2*n_col+3);
             
-            if strfind(r.ex_name, 'whitenoise')
-                r.plot_rf(k, 'normalized');
-                title('Revrse correlation (norm. trace)');
+            if contains(r.ex_name, 'whitenoise') || contains(r.ex_name, 'run')
+%                 r.plot_rf(k, 'normalized');
+%                 title('Revrse correlation (norm. trace)');
                 c = colorbar;
                 c.TickLabels = {};
             else

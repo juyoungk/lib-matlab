@@ -13,10 +13,14 @@ p = ParseInput(varargin{:});
 
 % stim size & reshape [ch, frames]
 Dim_stim = ndims(stim);
-if Dim_stim >3
-    disp('stim is dim>3 array. It should be dim 1-3 data');
+if Dim_stim >4
+    disp('stim is dim>4 array. It should be dim 1-3 data');
     rf = [];
     return;
+elseif Dim_stim >3
+    disp('4-dim stim. Choose only [2 3] color channels.');
+    stim = stim(:,:,2:3,:);
+    [Xstim, Ystim, N_color, N_flips] = size(stim);
 elseif Dim_stim ==3
     [Xstim, Ystim, N_flips] = size(stim);
 elseif Dim_stim == 2
