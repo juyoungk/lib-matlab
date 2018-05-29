@@ -52,16 +52,20 @@ classdef gdata < handle
             function vol = imdrift(g, ch)
                 % See if the cells were drift over imaging session
                 % 1000 frames more case
-                n = min(2000, g.nframes);
-                fprintf('Total frame numbers; %d. imdrift(): %d frames were compared.\n', g.nframes, n);
- 
+                
                 if nargin > 1
+                    snapframes = 1000;
+                    n = min(snapframes, g.nframes);
+                    fprintf('Total frame numbers; %d. imdrift(): %d frames were compared. (Green-Magenta falsecolor)\n', g.nframes, n);
+ 
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
+                    %
                     figure('Color', 'none');
                     ax = axes('Position', [0  0  1  0.9524], 'Visible', 'off');
-                    imshowpair(myshow(AI_mean_early), myshow(AI_mean_late)); % contrast adjust by myshow()
-                    title(ax, 'Is it drifted?', 'FontSize', 15, 'Color', 'w');
+                    
+                    imshowpair(myshow(AI_mean_early, 0.2), myshow(AI_mean_late, 0.2)); % contrast adjust by myshow()
+                    title(ax, 'Is it drifted? (Green-Magenta)', 'FontSize', 15, 'Color', 'w');
                     vol = cat(3, AI_mean_early, AI_mean_late);
                 else
                     for PMT_ch=g.header.channelSave
@@ -102,7 +106,7 @@ classdef gdata < handle
             function setting_pd_event_params(g)
                 
                 if strfind(g.ex_name, 'flash')
-                    g.pd_threshold = 0.4;
+                    g.pd_threshold = 0.8;
                     g.min_interval_secs = 0.8;
                 elseif strfind(g.ex_name, 'movingbar')
                     g.pd_threshold = 0.4;
@@ -121,15 +125,15 @@ classdef gdata < handle
             
             function set.min_interval_secs(g, value)
                 % print value
-                disp(['Minimum time interval between stimulus triggers (secs) : ', num2str(value)]);
+                disp(['Min time interval between stim triggers [secs]: ', num2str(value)]);
                 g.min_interval_secs = value;
             end
                 
             function set.numStimulus(obj, n)
                 if n < 1
                     error('numStimulus should be 1 or larger');
-                elseif n > 5
-                    error('>5 stimulus in one recording session? Too many numStimulus.');
+                elseif n > 10
+                    error('>10 stimulus in one recording session? Too many numStimulus.');
                 end
                 % (re)-initialize array of roiDATA
                 r(1, n) = roiData;
@@ -150,7 +154,7 @@ classdef gdata < handle
                 obj.roi_channel = ch;
                 obj.cc = cc;
                 
-                % compute roiData objects
+                % create roiData objects
                 if ~isempty(cc)
                     for i=1:obj.numStimulus
                         if strfind(obj.ex_name, 'whitenoise')
@@ -160,9 +164,11 @@ classdef gdata < handle
                                 %load(filename,'-mat',variables) 
                             % roiDATA object
                             obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
+                            obj.rr(i).header = obj.header;
                             % break;
                         else
                             obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
+                            obj.rr(i).header = obj.header;
                         end
                     end
                 end
@@ -366,10 +372,26 @@ classdef gdata < handle
                             g.numStimulus = k;
                         end
                     end   % if h5 file exists.
-                    g.cc = []; % initialize cc struct
+                    
+                    % load cc struct if exist
+                    cc_filenames = getfilenames(pwd, ['/*',ex_str,'*.mat']);
+                    if ~isempty(cc_filenames)
+                        reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
+                        if isempty(reply); reply = 'Y'; end
+                        if reply == 'Y'
+                            S = load(cc_filenames{1});
+                            g.cc = S.cc;
+                        else
+                            g.cc = [];
+                        end
+                    else
+                        disp(['No .mat file for ''', ex_str, ''' (e.g. ''cc'' structure for ROI segmentation)']);
+                        g.cc = []; % initialize cc struct
+                    end
+                    
                     % drift?
                     before_after = g.imdrift;
-                    imvol(mean(before_after, 3), 'title', 'first and last 2000 frames');
+                    imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
                 end
 

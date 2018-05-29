@@ -1,5 +1,4 @@
 function cc(varargin)
-%
 % Copy Figure to clipboard
 %
 

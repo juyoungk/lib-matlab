@@ -1,7 +1,12 @@
-function roiscan(obj)
+function roiscan(obj, idx)
 % Inspect roi responses under the same FOV
 % Navigate rois in the selected group (j index)
     
+   
+    if nargin < 2
+        idx = obj.roi_selected;
+    end
+
     % interactive plot over selected roi ids
     h = figure('Position', [100 230 1300 1040]);
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
@@ -11,20 +16,15 @@ function roiscan(obj)
 
     % j - roi index in selected group
     j = 1;
-    h.UserData.j = j;
-    h.UserData.roi_selected = obj.roi_selected;
+    jmax = length(idx);
     
     %
-    plot(obj, obj.roi_selected(j));
+    plot(obj, idx(j));
 
     
     function keypress(src, evnt)
     % increase / decrease roi index in selected group
     % should control two indice.
-
-        roi_selected = src.UserData.roi_selected;
-        j = src.UserData.j;  % roi index in selected  
-        jmax = length(roi_selected);
 
         switch lower(evnt.Key)
             case 'rightarrow'
@@ -36,12 +36,10 @@ function roiscan(obj)
             otherwise
                 return;
         end
-
-        src.UserData.j = j;
+ 
         %
-        plot(obj, roi_selected(j));
+        plot(obj, idx(j));
     end
-    
     
 end
 

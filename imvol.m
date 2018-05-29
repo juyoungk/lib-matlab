@@ -217,19 +217,20 @@ function [hfig] = imvol(vol, varargin)
         title(s_title, 'FontSize', 15, 'Color', 'w');
         
         % scale bar
-        if FLAG_scale_bar && is_valid_zoom(zoom)
+        if FLAG_scale_bar %&& is_valid_zoom(zoom)
             fov = get_FOV_size_x25_Leica(zoom);
-            px_per_um = rows/fov;
-            hold on;
-                l_scalebar = 30; % um
-                x0 = ax.XLim(end) * 0.80;
-                y0 = ax.YLim(end) * 0.94;
-                quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
-                text(x0+l_scalebar*px_per_um/2, y0, [num2str(l_scalebar),' um'], 'FontSize', 15, 'Color', 'w', ...
-                'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
-            hold off;
-
-%             line( [100 200], round(0.85*ax.YLim(end)), 'Color', 'w', 'LineWidth', 4);
+            if fov > 0
+                px_per_um = rows/fov;
+                hold on;
+                    l_scalebar = 30; % um
+                    x0 = ax.XLim(end) * 0.80;
+                    y0 = ax.YLim(end) * 0.94;
+                    quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
+                    text(x0+l_scalebar*px_per_um/2, y0, [num2str(l_scalebar),' um'], 'FontSize', 15, 'Color', 'w', ...
+                    'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
+                hold off;
+                %line( [100 200], round(0.85*ax.YLim(end)), 'Color', 'w', 'LineWidth', 4);
+            end
         end
         
         if SAVE_png
@@ -329,10 +330,10 @@ function [hfig] = imvol(vol, varargin)
                 id_tol = 5;
                 id_add_lower = 1;
             otherwise
-                uiresume
+                uiresume(hfig)
                 return;
         end
-
+        uiresume(hfig)
         redraw();
     end
     
@@ -407,13 +408,12 @@ function [hfig] = imvol(vol, varargin)
                 r = []; c = [];
            
             otherwise
-                uiresume;
+                uiresume(hfig)
                 return;
         end
         
+        uiresume(hfig)
         redraw();
-        
-        % update traces?
         
     end
 
@@ -497,7 +497,7 @@ function p =  ParseInput(varargin)
     addParamValue(p,'verbose', true, @(x) islogical(x));
     addParamValue(p,'png', false, @(x) islogical(x));
     addParamValue(p,'ex_str', [], @(x) ischar(x));
-    addParamValue(p,'scanZoom', [], @(x) isnumeric(x));
+    addParamValue(p,'scanZoom', 0, @(x) isnumeric(x));
     addParamValue(p,'edit', true, @(x) islogical(x));
     addParamValue(p,'z_step_um', 1, @(x) isnumeric(x));
     

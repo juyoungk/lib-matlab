@@ -1,18 +1,19 @@
 function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
     
     if nargin < 5
-        upsampling = 2;
+        upsampling = 5; % stimulus upsampling factor
+        
     end
     
     if nargin < 4
-        maxlag = 1.5; %sec
+        maxlag = 1.2; %sec
     end
     
 
     if nargin>1 && numel(id_roi) == 1 && isnumeric(id_roi)
         
         if nargin < 3
-            traceType = 'smoothed';
+            traceType = 'smoothed_norm';
         end
         
         [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling); % sampled at f_times_norm
@@ -35,7 +36,7 @@ function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
         if nargin > 1 && ischar(id_roi)
             traceType = id_roi;
         else
-            traceType = 'smoothed';
+            traceType = 'smoothed_norm';
         end
 
         % ex info
@@ -115,76 +116,76 @@ function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
 
 end
 
-function plot_rf_map(r, rf, s)
-
-    [num_x, num_t] = size(rf);
-    
-    imshow(rf, s.clim, 'Colormap', bluewhitered(64, s.clim)); % jet, parula, winter ..
-        axis on;
-        ax =gca; colorbar('TickLabels', []);
-        
-        time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
-        time_tick_locs = time_tick_label * 0.1 / r.ifi;
-        ax.XTick = time_tick_locs;
-        S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
-        ax.XTickLabel = {time_label{1:end-1}}; 
-        xlabel('[x100 ms]');
-        %
-        x_tick_spacing = 0.5; % [mm]
-        w_bar = r.stim_size/num_x;
-        x_center = num_x/2.;
-        x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
-        x = unique([-x, x]);
-        ax.YTick = x + x_center;
-        S = sprintf('%.1f*', x*w_bar ); C = regexp(S, '*', 'split'); % C is cell array.
-        ax.YTickLabel = {C{1:end-1}};
-        ylabel('[mm]');
-        ax.FontSize = 12;
-end
-
-function plot_rf_slice_t(r, rf, s)
-    [num_x, num_t] = size(rf);
-    plot(s.slice_t, 'LineWidth', 1.5);
-        ax = gca;
-            time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
-            time_tick_locs = time_tick_label * 0.1 / r.ifi;
-            S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
-        ax.XTick = time_tick_locs;
-        ax.XTickLabel = {time_label{1:end-1}};
-        ax.YTick = 0;
-        %ax.YTickLabel = [];
-        ax.FontSize = 12;
-        xlabel('[x100 ms]');
-        ylabel('[a.u.]');
-        grid on
-        ylim([s.min s.max]);
-end
-
-function plot_rf_slice_x(r, rf, s)
-    [num_x, num_t] = size(rf);
-    plot(s.slice_x, 'LineWidth', 1.5);
-        ax = gca;
-
-        x_tick_spacing = 0.3; % [mm]
-
-        w_bar = r.stim_size/num_x;
-        x_center = num_x/2.;
-        x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
-        x = unique([-x, x]);
-        x_tick_locs = x + x_center;
-        S = sprintf('%.1f*', x*w_bar ); C = regexp(S, '*', 'split'); % C is cell array.
-
-        ax.XTick = x_tick_locs;
-        ax.XTickLabel = {C{1:end-1}};
-        ax.YTick = 0;
-        %ax.YTickLabel = [];
-        xlim([-0.1 num_x+0.1]);
-        xlabel('[mm]');
-        ylabel('[a.u.]');
-        grid on
-        ax.FontSize = 12;
-        ylim([s.min s.max]);
-end
+% function plot_rf_map(r, rf, s)
+% 
+%     [num_x, num_t] = size(rf);
+%     
+%     imshow(rf, s.clim, 'Colormap', bluewhitered(64, s.clim)); % jet, parula, winter ..
+%         axis on;
+%         ax =gca; colorbar('TickLabels', []);
+%         
+%         time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
+%         time_tick_locs = time_tick_label * 0.1 / r.ifi;
+%         ax.XTick = time_tick_locs;
+%         S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
+%         ax.XTickLabel = {time_label{1:end-1}}; 
+%         xlabel('[x100 ms]');
+%         %
+%         x_tick_spacing = 0.5; % [mm]
+%         w_bar = r.stim_size/num_x;
+%         x_center = num_x/2.;
+%         x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
+%         x = unique([-x, x]);
+%         ax.YTick = x + x_center;
+%         S = sprintf('%.1f*', x*w_bar ); C = regexp(S, '*', 'split'); % C is cell array.
+%         ax.YTickLabel = {C{1:end-1}};
+%         ylabel('[mm]');
+%         ax.FontSize = 12;
+% end
+% 
+% function plot_rf_slice_t(r, rf, s)
+%     [num_x, num_t] = size(rf);
+%     plot(s.slice_t, 'LineWidth', 1.5);
+%         ax = gca;
+%             time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
+%             time_tick_locs = time_tick_label * 0.1 / r.ifi;
+%             S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
+%         ax.XTick = time_tick_locs;
+%         ax.XTickLabel = {time_label{1:end-1}};
+%         ax.YTick = 0;
+%         %ax.YTickLabel = [];
+%         ax.FontSize = 12;
+%         xlabel('[x100 ms]');
+%         ylabel('[a.u.]');
+%         grid on
+%         ylim([s.min s.max]);
+% end
+% 
+% function plot_rf_slice_x(r, rf, s)
+%     [num_x, num_t] = size(rf);
+%     plot(s.slice_x, 'LineWidth', 1.5);
+%         ax = gca;
+% 
+%         x_tick_spacing = 0.3; % [mm]
+% 
+%         w_bar = r.stim_size/num_x;
+%         x_center = num_x/2.;
+%         x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
+%         x = unique([-x, x]);
+%         x_tick_locs = x + x_center;
+%         S = sprintf('%.1f*', x*w_bar ); C = regexp(S, '*', 'split'); % C is cell array.
+% 
+%         ax.XTick = x_tick_locs;
+%         ax.XTickLabel = {C{1:end-1}};
+%         ax.YTick = 0;
+%         %ax.YTickLabel = [];
+%         xlim([-0.1 num_x+0.1]);
+%         xlabel('[mm]');
+%         ylabel('[a.u.]');
+%         grid on
+%         ax.FontSize = 12;
+%         ylim([s.min s.max]);
+% end
 
 
 function make_figure(x_shift, y_shift)

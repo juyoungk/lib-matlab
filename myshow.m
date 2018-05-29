@@ -13,7 +13,7 @@ Dim = ndims(imgstack);
 nVarargs = numel(varargin);
 
 [ynum, xnum, d3, d4] = size(imgstack);
-text = sprintf('[row  col  d3  d4*d5*..] = [%d  %d  %d  %d]  ',ynum,xnum,d3,d4);
+text = sprintf('[row  col  d3  d4*d5*..] = [%d  %d  %d  %d].  ',ynum,xnum,d3,d4);
 fprintf('%s', text);
 %disp(text);
 
@@ -54,7 +54,7 @@ Tol = [fraction*0.01 1-fraction*0.01];
 
 if fraction ~= 0.5    
     %disp(['Tol  =  ', num2str(Tol)]);
-    fprintf(' Tol = [%.3f  %.3f]\n', Tol(1), Tol(2));
+    fprintf('Tol = [%.3f  %.3f]\n', Tol(1), Tol(2));
 else
     fprintf('\n');
 end

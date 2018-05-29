@@ -11,6 +11,7 @@ function plot(obj, i)
             error('ROI index was not given properly. Not integer or figure handle');
         end    
     end
+
     
     % col # = img session # + ROI portrait
     n_col_subplot = obj.numImaging + 1;
@@ -64,9 +65,9 @@ function plot(obj, i)
 %             subplot(n_row_subplot, n_col_subplot, tot_subplot - n_col_subplot+1+k);
 %             %ax = plot_avg_fil(obj.g(k).rr, i_roi);
 %             ax = plot_avg(obj.g(k).rr, i_roi, 'traceType', 'normalized');
-%             
-            
+
         end
+        
 end
 
 function str_ex_name = get_ex_name(tif_filename)

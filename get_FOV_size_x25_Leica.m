@@ -3,7 +3,7 @@ function fov = get_FOV_size_x25_Leica(zoom)
 % [um]
     
     if nargin < 1
-        zoom = [];
+        zoom = 0;
     end
     
     % data
@@ -12,6 +12,10 @@ function fov = get_FOV_size_x25_Leica(zoom)
     fovSize  = 512 * um_per_px;
     
     % interporlate
-    fov = interp1(scanZoom, fovSize, zoom, 'spline'); 
+    if zoom > 0 
+        fov = interp1(scanZoom, fovSize, zoom, 'spline'); 
+    else
+        fov = 0;
+    end
     
 end

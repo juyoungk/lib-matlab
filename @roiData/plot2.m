@@ -155,8 +155,10 @@ function plot2(r, I, varargin)
                 title('Projection to clusters');
                 
                 % Cluster # for max projection
-                text(i_sorted(1), ax.YLim(1)*0.20, num2str(i_sorted(1)), 'FontSize', 15,...
-                    'HorizontalAlignment','center');
+                if length(i_sorted) > 0
+                    text(i_sorted(1), ax.YLim(1)*0.20, num2str(i_sorted(1)), 'FontSize', 15,...
+                        'HorizontalAlignment','center');
+                end
                 if length(i_sorted) > 1
                     text(i_sorted(2), ax.YLim(1)*0.20, num2str(i_sorted(2)), 'FontSize', 12,...
                         'HorizontalAlignment','center');

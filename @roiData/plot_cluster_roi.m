@@ -1,16 +1,14 @@
 function plot_cluster_roi(r, k, varargin)
-% PLOT_CLUSTER_ROI
-% Display boundaries of clustered ROIs on real image or Black%White
+% PLOT_CLUSTER_ROI Display boundaries of clustered ROIs on real image or Black & White
 % gray scsale
 % inputs:
 %         k - cluster id you want to draw boundaries
 %         
 % varargin options:
 %
-%          "compare"    - 0 (default). No comparison. 
-%                         1-99 or array (e.g. 1:5)
-%           "imageType"    - "image" or "bw"
-%           "label"        - True (defualt) or False 
+%          "compare"    - Cluster id (1-99) or id array (e.g. 1:5) for comparison. if 0, no comparison (default). 
+%          "imageType"  - "image" or "bw"
+%          "label"      - True (defualt) or False 
 %
         p=ParseInput(varargin{:});
         imageType = p.Results.imageType;
@@ -46,7 +44,8 @@ function plot_cluster_roi(r, k, varargin)
         
         % Contour (k cluster only, not k2)
         visboundaries(bw_k,'Color','r','LineWidth', 0.7); 
-
+        
+               
         % ROI number display
         if FLAG_label
             s = regionprops(r.roi_cc, 'extrema');
@@ -60,6 +59,7 @@ function plot_cluster_roi(r, k, varargin)
         end
         hold off
 end
+
 
 function [bw_selected, bw_array] = cc_to_bwmask(cc, id_selected)
 % convert cc to bwmask array and totla bw for selected IDs.

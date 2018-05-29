@@ -1,7 +1,8 @@
 function plot_cluster(r, i_cluster, n_trace, PlotType)
 % Display clustered traces. Smoothed trace will be used by default.
+%
 % n_trace - # of individual traces (4 is default)
-%           0 is specfial mode. Spatial locations will be displayed
+%           0 is specfial mode - Summary Plot mode. Spatial locations will be displayed
 %           instead. 
 
     if nargin < 4
@@ -10,6 +11,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
 
     if nargin < 3
         n_trace = 4;
+        disp('Summary mode if n_trace is 0. (e.g. r.plot_cluster(cluster ids, 0) )');
     end
     
     if nargin < 2
@@ -21,8 +23,8 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
     else
         % i_cluster as input
         i_cluster(i_cluster ==0) = []; % exclude 0 (noise) cluster
-        if numel(i_cluster) > 50
-            error('Too many clusters (> 50) was given to plot_cluster.');
+        if numel(i_cluster) > 30
+            error('Too many clusters (> 30) was given to plot_cluster.');
         end
     end
     
@@ -135,8 +137,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
             %subplot(n_row, n_col, (i-1)*n_col + j);
             
-            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7);
-            
+            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', true);
             
             %str = sprintf('c%d: all traces (n = %d)', i, numel(roi_clustered));
             yticklabels([]);
@@ -147,8 +148,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             pos = ht.Position;
             ht.Position = [ax.XLim(1)+w/2, pos(2), pos(3)];
             
-       
-       % summary plot     
+       % Summary Plot Mode
        if n_trace == 0 % means 'summary' mode
            j = 3;
                ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);

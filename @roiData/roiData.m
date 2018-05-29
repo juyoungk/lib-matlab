@@ -9,11 +9,9 @@ classdef roiData < handle
 %        different ROI.)
 %    
     properties
-        % given input
         ex_name
         image       % mean image (snapshot) of the vol
         header      % imaging condition
-        disp        % stimulus disp params
         %
         roi_cc      % roi information (struct 'cc')
         ifi         % inter-frame interval of vol (data)
@@ -21,18 +19,19 @@ classdef roiData < handle
         stim_trigger_interval % if triggers are non-uniform, do not use it.
         stim_end
         %
-        stim_whitenoise
+        stim_movie
         stim_fliptimes     % relative times between whitenoise flip times
         stim_size          % spatial size [mm]
-        
+        stim_disp          % stimulus disp params
         % 
         numFrames
         numRoi
         roi_trace       % raw trace (bg substracted. only post-processing)
-        roi_smoothed    % smoothed raw trace + normalization?
+        roi_smoothed    % smoothed raw trace
+        roi_smoothed_detrend % trend substracted
+        roi_smoothed_norm    % norm by trend of detrended: dF/F
         roi_filtered    % lowpass filtered
         roi_trend       % trend for normalization
-        roi_smoothed_norm
         roi_filtered_norm % dF/F @ dF = filtered - detrended, F = detrended_trace
         
         roi_mean_f      % mean fluorescnece level during the stimulus
@@ -60,12 +59,12 @@ classdef roiData < handle
         avg_trigger_times   % times for aligning between trials
         avg_stim_times  % stim times within one avg trace
         avg_trigger_interval
-        avg_trace       % avg over (smoothed) trials: (times x roi#): good for 2-D plot
+        avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
         avg_trace_std   % std over trials
         avg_trace_fil   % avg over (filtered) trials.
+        avg_trace_norm  % avg over (normalized) trials.
         avg_trace_smooth_norm
         %avg_trace_filter_norm
-        avg_trace_norm  % avg over (normalized) trials.
         avg_projected   % projected trace onto (PCA) space.
         avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
@@ -96,12 +95,13 @@ classdef roiData < handle
         stim_duration   % stim trigger interval
         s_times         % single trial times
         roi_normalized  % dF/F @ dF = filtered - detrended, F = detrended_trace
+        stim_whitenoise
     end
     
     methods
         
         function  rr = select_data(r, stim_ids)
-            % create new instance
+            % Given stim trigger ids, create new instance of roiDATA
             rr = r;
             % id_range: stim trigger times id. (e.g. [2, 3, 4])
             if stim_ids(1) == 0
@@ -137,12 +137,29 @@ classdef roiData < handle
             %h5info('stimulus.h5')
             %h5disp('stimulus.h5')
             if nargin < 2
-                dirpath = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim'
+                dirpath = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim';
+                disp('Looking for h5 file in ..');
+                disp(['1. ', dirpath]);
+                disp(['2. Current dir = ', pwd]);
+                n = input('Which dir do you want to search stimulus.h5? [1]: ');
+                if isempty(n)
+                    n = 1;
+                end
+                switch n
+                    case 1
+                        dirpath = default;
+                    case 2
+                        dirpath = pwd;
+                    otherwise
+                end
             end
             
             % stim id for whitenoise?
             h5disp([dirpath, '/stimulus.h5']);
-            % assuption: expt1 is a whitenoise stimulus.
+            a = h5info([dirpath,'/stimulus.h5']);
+            a.Groups.Name % display exp names?
+            
+            % Assuption: expt1 is a whitenoise stimulus.
             stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
             times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
             r.get_stimulus(stim, times);
@@ -204,7 +221,7 @@ classdef roiData < handle
         
         function get_stimulus(r, stims_whitenoise, fliptimes)
             % for whithenoise stim
-            r.stim_whitenoise = stims_whitenoise;
+            r.stim_movie = stims_whitenoise;
             r.stim_fliptimes = fliptimes;
         end
         
@@ -230,14 +247,8 @@ classdef roiData < handle
                 
                % Avg & Std over trials (dim 3)
                r.avg_trace    = mean(roi_aligned, 3);
-               
-               % normalization by its min?
-               
-               %r.avg_trace_std = std(roi_aligned, 1, 3);       % normalization weight = 1
-               %r.avg_trace_std = r.avg_trace_std./r.avg_trace; % norm by mean. Std as fraction to mean.
-               
-               % stat over one trial duration
-               %r.stat.mean_std_over_repeats = mean(r.avg_trace_std, 1);
+               % Normalized and Centered trace
+               r.avg_trace_norm = normc(r.avg_trace) -0.5;
             end
             % filtered_trace
             r.update_filtered_trace;
@@ -256,8 +267,10 @@ classdef roiData < handle
             numframes = numel(r.f_times_fil);
             
             r.roi_filtered = zeros(numframes, r.numRoi);
-            r.roi_trend = zeros(numframes, r.numRoi);
+            
             r.roi_normalized = zeros(numframes, r.numRoi);
+            r.roi_trend = zeros(numframes, r.numRoi);
+            r.roi_smoothed_detrend = zeros(numframes, r.numRoi);
             r.roi_smoothed_norm = zeros(numframes, r.numRoi);
             r.roi_filtered_norm = zeros(numframes, r.numRoi);
             
@@ -272,7 +285,8 @@ classdef roiData < handle
                     %
                     y_trend = filtfilt(fil_trend, y_filtered); 
                     
-                    % normalization
+                    % detrend & normalization
+                    y_smoothed_detrend = y_smoothed - y_trend; 
                     y_smoothed_norm = ((y_smoothed - y_trend)./y_trend)*100;
                     y_filtered_norm = ((y_filtered - y_trend)./y_trend)*100;
                     
@@ -280,6 +294,7 @@ classdef roiData < handle
                     r.roi_filtered(:,i) = y_filtered;                                          % set by filter definition?
                     r.roi_trend(:,i) = y_trend;
                     %
+                    r.roi_smoothed_detrend(:,i) = y_smoothed_detrend;
                     r.roi_smoothed_norm(:,i) = y_smoothed_norm;
                     r.roi_filtered_norm(:,i) = y_filtered_norm;
             end
@@ -291,9 +306,9 @@ classdef roiData < handle
                [roi_aligned_filtered_norm, ~] = align_rows_to_events(r.roi_filtered_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
 
                 % Avg. & Stat. over trials (dim 3)
-                [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil); 
+                [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil);
                 [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
-                [       r.avg_trace_norm, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
+                [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
                 
                 r.stat.smoothed_norm = stat_smoothed_norm;
                 r.stat.filtered_norm = stat_filtered_norm;
@@ -302,7 +317,7 @@ classdef roiData < handle
         end
         
         % constructor
-        function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_whitenoise, stim_fliptimes)
+        function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_movie, stim_fliptimes)
             % ifi: inter-frame interval or log-frames-period
             if nargin > 0 % in order to create an array with no input arguments.
                 r.roi_cc = cc;
@@ -352,7 +367,6 @@ classdef roiData < handle
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;       % bg substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
-                    %r.stat.mean_f(i) = mean( y(r.f_times > stim_trigger_times(1) & r.f_times < r.stim_end) ); 
                 end
                 r.stat.mean_f = mean( r.roi_trace(r.f_times > stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);                
              
@@ -387,7 +401,7 @@ classdef roiData < handle
                         elseif strfind(r.ex_name, 'jitter')
                             avg_every = 2;
                         end
-                        n = input(['Avg over every N stim trigger times? [N =', num2str(avg_every),' ]']);
+                        n = input(['Avg over every N stim triggers? [N =', num2str(avg_every),']']);
                         if isempty(n)
                             n = avg_every;
                         end
@@ -409,13 +423,12 @@ classdef roiData < handle
                     
                 % whitenoise stim
                 if nargin > 5
-                    r.stim_whitenoise = stim_whitenoise;
+                    r.stim_movie = stim_movie;
                     r.stim_fliptimes = stim_fliptimes;
                 elseif strfind(r.ex_name, 'whitenoise')
                     r.load_h5;
                     % stim size?
                     r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
-                    %r.stim_size = 
                 end
 
                 % cluster parameters
@@ -509,7 +522,11 @@ classdef roiData < handle
         function set.stim_trigger_interval(obj, value)
             obj.stim_trigger_interval = value;
             obj.stim_duration = value; % old name
-        end 
+        end
+        
+        function value = get.stim_whitenoise(obj)
+            value = obj.stim_movie;
+        end
     end
     
 end % classdef

@@ -19,6 +19,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     w_Line    = p.Results.LineWidth;
     h_axes    = p.Results.axes;
     DrawPlot = p.Results.DrawPlot;
+    Label    = p.Results.Label;
     
     % data index inside a time range
     idx = (r.a_times > r.t_range(1)) & (r.a_times < r.t_range(2));
@@ -74,7 +75,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             if DrawPlot
                 % Adjust for plot (phase & cycles)
                 y = r.traceForAvgPlot(y);
-                y = y(idx);
+                y = y(idx,:);
                 x = r.a_times(idx);
                 
                 duration = r.avg_trigger_interval;
@@ -101,17 +102,19 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 else
                     ylabel('a.u.');
                 end
-
-                % ROI id
-                if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
-                 text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
-                                'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
-                end
-                % cluster id
-                c_id = unique(r.c(id_roi));
-                if c_id~=0
-                    text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
-                                'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
+                
+                if Label == true
+                    % ROI id
+                    if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
+                     text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
+                                    'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
+                    end
+                    % cluster id
+                    c_id = unique(r.c(id_roi));
+                    if c_id~=0
+                        text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
+                                    'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
+                    end
                 end
 
                 % additional lines
@@ -152,10 +155,10 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
                 
         % subplot params
-        n_row = 5;
-        n_col = 3; % limit num of subplots by fixing n_col
+        n_row = 10;
+        n_col = 9; % limit num of subplots by fixing n_col
         % Figure params
-        n_cells_per_fig = 60;
+        n_cells_per_fig = 85;
         
         k = 1; % index in selected roi group
         while (k <= numel(roi_array))
@@ -211,6 +214,7 @@ function p =  ParseInput(varargin)
     
     p.addParameter('NormByCol', false, @(x) islogical(x));
     p.addParameter('DrawPlot', true, @(x) islogical(x));
+    p.addParameter('Label', true, @(x) islogical(x));
     p.addParameter('LineWidth', 1.5, @(x) x>0);
     p.addParameter('axes', []);
  
