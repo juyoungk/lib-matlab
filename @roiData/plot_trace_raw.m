@@ -16,7 +16,8 @@ function ax = plot_trace_raw(r, id_roi)
         
         % stimulus lines
         ev = r.stim_times;
-        if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
+        %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
+        if 1
             for i=1:length(ev)
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line

@@ -13,8 +13,9 @@ function ax = plot_trace_norm(r, id_roi)
             ax.XLim = [0 r.f_times(end)];
         
         % stimulus lines
-        ev = r.stim_times;
-        if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
+        ev = r.stim_times;        
+        %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme')) 
+        if 1 % print all event times always
             for i=1:length(ev)
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line
@@ -24,7 +25,7 @@ function ax = plot_trace_norm(r, id_roi)
                 end
             end
         else
-            % only start line
+            % only start & end line
             plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
             plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
         end

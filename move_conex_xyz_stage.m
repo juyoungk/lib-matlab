@@ -82,7 +82,7 @@ function move_conex_xyz_stage(src, evt)
             fprintf(s2, y_comm);
         end
 
-        if abs(dist(3)) > 2.5
+        if abs(dist(3)) > 3
             % current position?
 %             fprintf(s3, '1TP\n'); z_vstim = str2double(fscanf(s1, '1TP%s\n'));
 %             disp(['Curent Z position: ', num2str(z_vstim)]);

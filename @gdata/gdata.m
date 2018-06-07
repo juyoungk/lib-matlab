@@ -1,9 +1,9 @@
 classdef gdata < handle
-    % class for single experiment session.
-    % single TIF file or multiple TIFs if there are logged into mutiple
-    % files. Confine the filenames using long string.
-    % Assumptions for AI channels:
-    %                   channel number - 4
+% Data class for single experiment session.
+% single TIF file or multiple TIFs if there are logged into mutiple
+% files. Confine the filenames using long string.
+% Assumptions for AI channels:
+%                   channel number - 4
     properties
             % File info
             ex_name
@@ -335,7 +335,7 @@ classdef gdata < handle
                             % count # of odd events
 
                         if n_events <= 1
-                            % one stimulus
+                            % one trigger time
                             g.stims{1} = ev;
                             g.numStimulus = 1;
                         elseif n_events < 5
@@ -381,6 +381,7 @@ classdef gdata < handle
                         if reply == 'Y'
                             S = load(cc_filenames{1});
                             g.cc = S.cc;
+                            disp('ROI (cc) was defined. [Look g.rr]. load_c needs to be implemented.');
                         else
                             g.cc = [];
                         end
