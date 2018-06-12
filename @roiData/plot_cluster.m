@@ -1,5 +1,6 @@
 function plot_cluster(r, i_cluster, n_trace, PlotType)
-% Display clustered traces. Smoothed trace will be used by default.
+% Display clustered traces. Smoothed trace will be used by default. Summary
+% plot mode with n_trace =0.
 %
 % n_trace - # of individual traces (4 is default)
 %           0 is specfial mode - Summary Plot mode. Spatial locations will be displayed
