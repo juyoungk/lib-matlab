@@ -306,7 +306,8 @@ function [hfig] = imvol(vol, varargin)
                 img = c_section.';
                 [numrows, numcols] = size(img);
                 C = imresize(img, [a_ratio*numrows, numcols]);
-                make_im_figure(500, 0); myshow(C,0.2); 
+                make_im_figure(500, 0); 
+                myshow(C, 0.2); 
                 ax = gca; 
                 %scale bar?
                 hold on;

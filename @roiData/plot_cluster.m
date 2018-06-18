@@ -37,7 +37,8 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
     x0 = 0.05;
     y0 = 0.0;
     x_width = (1-x0)/n_col;
-    y_width = (1-y0)/n_row;
+    y_spacing = (1-y0)/n_row;
+    y_width = 0.9 * y_spacing;
      
     % get focus or create new function if it is not empty
     if ishandle(r.c_hfig)
@@ -54,7 +55,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         pos = r.c_hfig.Position;
         % Create button group
         bg = uibuttongroup('Visible','off',...
-                  'Position',[0 0 x0 1],...
+                  'Position', [0 0 x0 1], ...
                   'SelectionChangedFcn',@bselection); % callback fun is defined in the below.
         i_row = 0;    
         for c = i_cluster
@@ -62,7 +63,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             row_location(c) = i_row;
             uicontrol(bg,'Style', 'pushbutton',...
                   'String', num2str(c),...
-                  'Position', [0 ((1-y0)-i_row*y_width)*pos(4) x0*pos(3) y_width*pos(4)],...
+                  'Position', [0 ((1-y0)-i_row*y_spacing)*pos(4) x0*pos(3) y_spacing*pos(4)],...
                   'HandleVisibility','off',...
                   'UserData', c, 'Callback', @pushbutton_callback, 'FontSize', 14);      
         end
@@ -78,7 +79,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
     clu = zeros(1, numAxes);
     for ii = 1:numAxes
         pos = h.Children(ii).OuterPosition;
-        clu(ii) = round((1 - pos(2))/y_width);
+        clu(ii) = round((1 - pos(2))/y_spacing);
         if pos(4) == 1
             % button group. Skip the deletion step
             clu(ii) = -1;
@@ -118,7 +119,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         
         % avg over clustered ROIs
         j = 1; % col number
-        axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
+        axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
         %subplot(n_row, n_col, (i-1)*n_col + j);
             %r.plot_avg(r.c{i}, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.2);
             y = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.2);
@@ -134,11 +135,14 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
 
         % All traces in one axes
         j = 2;
-            %axes('Parent', h, 'OuterPosition', [(j-1)*x_width 1-i*y_width x_width y_width]);
-            axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
             %subplot(n_row, n_col, (i-1)*n_col + j);
             
-            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', true);
+            % OuterPOsition vs Position
+            axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
+            %axes('Parent', h, 'Position', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
+                        
+            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', false); axis off;
+            %[~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', true);
             
             %str = sprintf('c%d: all traces (n = %d)', i, numel(roi_clustered));
             yticklabels([]);
@@ -152,7 +156,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
        % Summary Plot Mode
        if n_trace == 0 % means 'summary' mode
            j = 3;
-               ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
+               ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
                r.plot_cluster_roi(i, 'label', false, 'imageType', 'bw');
                xlabel('ROI locations');
                %ax = gca;
@@ -163,7 +167,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
            % signal stat
            % responsiveness vs mean f
            % See if specific cluster has distinively high dF (~spiking)
-                ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
+                ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
                
                 scatter(r.stat.mean_f(roi_clustered), r.stat.smoothed_norm.avg_amp(roi_clustered), 8);
                 %ax.Color = 'k'; % background color
@@ -179,8 +183,8 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         
         for k=1:n_plot
             j = k + 2;
-            %axes('Parent', h, 'OuterPosition', [(j-1)*x_width 1-i*y_width x_width y_width]);
-            axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_width x_width y_width*0.90]);
+            %axes('Parent', h, 'OuterPosition', [(j-1)*x_width 1-i*y_spacing x_width y_width]);
+            axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
             %subplot(n_row, n_col, (i-1)*n_col + j);
             r.plot_avg(roi_clustered(k), 'LineWidth', 1.2);
            

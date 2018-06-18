@@ -2,6 +2,9 @@ function plot2(r, I, varargin)
 % PLOT version 2. For clustering analysis and projection to PCA.
 % Axes instead of subplot. Histogram of pdist to clustered groups
 % Create new figure with interactive keyboard navigation over roi#
+% 
+% varargin:
+%           'Cluster' - if non-zero cluster id is given, clustered ROIs will be displayed.         
     
     p=ParseInput(varargin{:});
     c_given = p.Results.Cluster;

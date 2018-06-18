@@ -1,5 +1,6 @@
 function plot_cluster_spatial_corr(r, k, varargin)
 % Spatial auto-correlation and cross-correlation between clusters
+% Single plot for given cluster k
 
 M = 30; % n_bins
 L_pixel = size(r.image, 1);

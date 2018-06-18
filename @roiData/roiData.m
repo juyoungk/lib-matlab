@@ -401,7 +401,7 @@ classdef roiData < handle
                         elseif strfind(r.ex_name, 'jitter')
                             avg_every = 2;
                         end
-                        n = input(['Avg over every N stim triggers? [N =', num2str(avg_every),']']);
+                        n = input(['Avg over every N stim triggers [N =', num2str(avg_every),'] ?']);
                         if isempty(n)
                             n = avg_every;
                         end
