@@ -14,7 +14,7 @@ nVarargs = numel(varargin);
 
 [ynum, xnum, d3, d4] = size(imgstack);
 text = sprintf('[row  col  d3  d4*d5*..] = [%d  %d  %d  %d].  ',ynum,xnum,d3,d4);
-fprintf('%s', text);
+%fprintf('%s', text);
 %disp(text);
 
 if ismatrix(imgstack)

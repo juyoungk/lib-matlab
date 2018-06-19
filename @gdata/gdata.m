@@ -56,7 +56,7 @@ classdef gdata < handle
                 if nargin > 1
                     snapframes = 1000;
                     n = min(snapframes, g.nframes);
-                    fprintf('Total frame numbers; %d. imdrift(): %d frames were compared. (Green-Magenta falsecolor)\n', g.nframes, n);
+                    fprintf('Total frame numbers; %d. imdrift(): %d frames were compared. (Green-Magenta false color)\n', g.nframes, n);
  
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);

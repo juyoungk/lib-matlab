@@ -37,7 +37,12 @@ h = get_digit_numbers_to_new_field(h, t, 'motorPosition', []);
 h = get_digit_numbers_to_new_field(h, t, 'motorPositionTarget', []);
 
 if nargin > 1
-    n_frames = size_vol(3);
+    if length(size_vol) < 3
+        disp('vol (data) has no frame dimension.');
+        n_frames = 1
+    else
+        n_frames = size_vol(3);
+    end
     %
     h.n_frames = n_frames;
     h.n_frames_ch = n_frames/h.n_channelSave;

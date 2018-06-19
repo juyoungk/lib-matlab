@@ -11,7 +11,7 @@ function move_conex_xyz_stage(src, evt)
     % top (285A) and bottom (CONEX) units.
     
     % Top ref positions will be same if
-    % 1. MEA location
+    % 1. MEA location (each time might be different.)
     % 2. Laser align
     % 3. Top unit PMT installations (weight and angle vary)
     % are same
@@ -30,12 +30,13 @@ function move_conex_xyz_stage(src, evt)
 
     % VS to MEA 0416
     pos_bot_ref = [5.958, 13.016, 22.8]; % mm
-        % adjust is needed due to camera instead of Green PMT?
-        pos_bot_ref(1) = pos_bot_ref(1) - 0.028;
-        pos_bot_ref(2) = pos_bot_ref(2) + 0.031;
+        
+        % find adjustment through bottom unit (0614. 1070 laser)
+        pos_bot_ref(1) = pos_bot_ref(1) + 0.06;
+        pos_bot_ref(2) = pos_bot_ref(2) + 0.1;
         pos_bot_ref(3) = pos_bot_ref(3) + 0.25;
         
-    
+        
     % align 2P to MEA 0416 201
     % w/ 2 PMTs, 920 laser
     pos_top_ref = [-346.3000 68.4000 7.6760e+03];
@@ -44,13 +45,15 @@ function move_conex_xyz_stage(src, evt)
         % [-350.3000 72.4000 7.6824e+03];
     % adjusted ref position
     pos_top_ref = [-347.3000 69.4000 7.6790e+03];
-    pos_top_ref = [-347.3000 69.4000 6.0019e+03]; % focus change by hitting?    
+    
     % 0419. Switch to 1070 laser.
     %pos_top_ref = [-322.1000 105.8000 6.0019e+03];
     
-        
+    % 0614
+    pos_top_ref = [-347.3000 69.4000 2.75e+03]; % big change in z. why?..
+    
     % offset between 2p and VS focal planes
-    z_offset_vstim = 0.150 + 0.100; % [mm]
+    z_offset_vstim = 0.200; % [mm]
     %z_offset_vstim = 0;
     
     % current pos after focus done.
@@ -82,7 +85,7 @@ function move_conex_xyz_stage(src, evt)
             fprintf(s2, y_comm);
         end
 
-        if abs(dist(3)) > 3
+        if abs(dist(3)) > 3.5
             % current position?
 %             fprintf(s3, '1TP\n'); z_vstim = str2double(fscanf(s1, '1TP%s\n'));
 %             disp(['Curent Z position: ', num2str(z_vstim)]);
