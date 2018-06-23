@@ -6,8 +6,10 @@ function [rf] = corrRF4(rdata, rtime, stim, fliptimes, maxlag, upsampling, varar
 % rdata = ch (row) x time-series (col)
 % delay time 0 to maxlag as increasing col#
 % stim: checker box array sequence (row * col * # frames)
-% upsampling: of stimulus. not
+% upsampling: of stimulus.
 % 0312 2018 Juyoung
+% issue: rdata - vector (always?)
+%        stim  - ch x time    confusing...
 
 p = ParseInput(varargin{:});
 
@@ -67,7 +69,7 @@ sstim = double(sstim);
 
 % % resample stim at recording (or imaging) times
 sstim = interp1(fliptimes, sstim.', rtime); % [N (times), D1, D2, ..] for V (sstim)
-sstim = sstim.';
+%sstim = sstim.';
 
 %# of frames for maxlag duration
 N_maxcorr = round(maxlag/r_ifi);
@@ -84,8 +86,7 @@ sstim = scaled(sstim)-0.5;
 % Ignore first N_maxcorr frames for correlation
 onset_idx = N_maxcorr;
 if N_maxcorr > length(rdata)
-    disp('Length of the data is shorter than the correlation length of your interest');
-    return;
+    error('Length of the data is shorter than the correlation length of your interest');
 end 
 
 % Limit data after onset for correlation 

@@ -29,33 +29,34 @@ function move_conex_xyz_stage(src, evt)
 %             pos_bot_ref(2) = pos_bot_ref(2) + 0.05;
 
     % VS to MEA 0416
-    pos_bot_ref = [5.958, 13.016, 22.8]; % mm
+    pos_bot_ref = [5.958, 13.016, 23.017]; % mm
         
         % find adjustment through bottom unit (0614. 1070 laser)
-        pos_bot_ref(1) = pos_bot_ref(1) + 0.06;
-        pos_bot_ref(2) = pos_bot_ref(2) + 0.1;
-        pos_bot_ref(3) = pos_bot_ref(3) + 0.25;
+        pos_bot_ref(1) = pos_bot_ref(1) + 0.055; % (+) makes VS left
+        pos_bot_ref(2) = pos_bot_ref(2) + 0.12;  % (+) makes VS down
+        pos_bot_ref(3) = pos_bot_ref(3);
         
         
-    % align 2P to MEA 0416 201
-    % w/ 2 PMTs, 920 laser
-    pos_top_ref = [-346.3000 68.4000 7.6760e+03];
-        % Differences between detector configurations
-        % w/ Red PMT + camera: 4 um X,Y shift & 6 um focus shift
-        % [-350.3000 72.4000 7.6824e+03];
-    % adjusted ref position
-    pos_top_ref = [-347.3000 69.4000 7.6790e+03];
-    
-    % 0419. Switch to 1070 laser.
-    %pos_top_ref = [-322.1000 105.8000 6.0019e+03];
-    
-    % 0614
-    pos_top_ref = [-347.3000 69.4000 2.75e+03]; % big change in z. why?..
-    
-    % offset between 2p and VS focal planes
-    z_offset_vstim = 0.200; % [mm]
+    % Align 2P (not VS focus) to MEA 0416 201
+       % w/ 2 PMTs, 920 laser
+        pos_top_ref = [-346.3000 68.4000 7.6760e+03];
+            % Differences between detector configurations
+            % w/ Red PMT + camera: 4 um X,Y shift & 6 um focus shift
+            % [-350.3000 72.4000 7.6824e+03];
+        % adjusted ref position
+        pos_top_ref = [-347.3000 69.4000 7.6790e+03];
+
+        % 0419. Switch to 1070 laser.
+        %pos_top_ref = [-322.1000 105.8000 6.0019e+03];
+
+        % 0620: 1070 laser
+        pos_top_ref = [-347.3000 69.4000 -4.6362e+03]; %
+
+    % offset between 2p and VS focal planes: 
+    % always 150 um below imaging plane(e.g. GCL)
     %z_offset_vstim = 0;
-    
+    z_offset_vstim = 0.150; % [mm] (+) means away from top obj. more distance.
+   
     % current pos after focus done.
     % pos_top = src.hSI.hMotors.motorPosition; % scanimage relative pos
     pos_top = src.hSI.hMotors.motorPositionTarget;
@@ -93,6 +94,7 @@ function move_conex_xyz_stage(src, evt)
             error('CONEX stage: Too large z move attempted');
         else
             z_comm = sprintf('1PA%.3f\n',-dist(3)+pos_bot_ref(3)-z_offset_vstim);
+            disp(['Command move Z by ', num2str(dist(3)), '. Success.']);
             %z_comm = sprintf('1PA%.3f\n',-dist(3)+pos_bot_ref(3));
             fprintf(s3, z_comm);
         end

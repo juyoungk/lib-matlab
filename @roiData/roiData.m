@@ -1,4 +1,4 @@
-classdef roiData < handle
+classdef roiData < matlab.mixin.Copyable
 % Given cc, extract roi-avg traces from vol data.
 % bg remove, bandpass filtering, normalize raw traces.
 % If trigger-times are given, trial-avg will be computed.
@@ -15,8 +15,7 @@ classdef roiData < handle
         %
         roi_cc      % roi information (struct 'cc')
         ifi         % inter-frame interval of vol (data)
-        stim_trigger_times    % absolute times when stims triggered.
-        stim_trigger_interval % if triggers are non-uniform, do not use it.
+        stim_trigger_times    % absolute times when stims (or PD) triggered.
         stim_end
         %
         stim_movie
@@ -90,6 +89,7 @@ classdef roiData < handle
     end
  
     properties (Hidden, Access = private)
+        stim_trigger_interval % if triggers are irregular, meaningless. Do not use it.
         % old names
         stim_times      % PD trigger events
         stim_duration   % stim trigger interval
@@ -102,13 +102,18 @@ classdef roiData < handle
         
         function  rr = select_data(r, stim_ids)
             % Given stim trigger ids, create new instance of roiDATA
-            rr = r;
-            % id_range: stim trigger times id. (e.g. [2, 3, 4])
+            % stim trigger times id. (e.g. [2, 3, 4])
+            % id =0 means from the first data point.
+            rr = copy(r);
+            
+            % Time range
             if stim_ids(1) == 0
-                t_init = 0
+                t_init = 0;
+                disp('Stim trigger id 0: start t = 0.');
             else
-                t_init = rr.stim_trigger_times( stim_ids(1) )
+                t_init = rr.stim_trigger_times( stim_ids(1) );
             end
+            
             % Is the ending index the last trigger?
             if stim_ids(end) >= length(rr.stim_trigger_times)
                 t_end = rr.f_times(end)
@@ -116,20 +121,22 @@ classdef roiData < handle
                 t_end = rr.stim_trigger_times( stim_ids(end)+1 )
             end
             
-            % select data for [t_init, t_end]
-            ids = (rr.f_times>t_init) & (rr.f_times<t_end); 
+            % Select data for [t_init, t_end]
+            ids = (rr.f_times>=t_init) & (rr.f_times<=t_end); 
             rr.roi_trace = r.roi_trace(ids, :);
             rr.f_times = rr.f_times(ids) - rr.stim_trigger_times(stim_ids(1));           
             rr.f_times_fil = rr.f_times;
             rr.f_times_norm = rr.f_times;
             rr.ignore_sec = 0;
+            rr.stim_end = t_end;
             
-            % adjust stim trigger times
-            rr.stim_trigger_times = rr.stim_trigger_times(stim_ids) - rr.stim_trigger_times(stim_ids(1)); 
+            % Select stim trigger times
+            rr.stim_trigger_times = rr.stim_trigger_times(stim_ids); 
+            rr.stim_trigger_times = rr.stim_trigger_times - t_init;
             
             % update
             rr.update_smoothed_trace;
-            rr.update_filtered_trace;
+            %rr.update_filtered_trace;
         end
         
         function load_h5(r, dirpath)
@@ -137,19 +144,23 @@ classdef roiData < handle
             %h5info('stimulus.h5')
             %h5disp('stimulus.h5')
             if nargin < 2
-                dirpath = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim';
                 disp('Looking for h5 file in ..');
-                disp(['1. ', dirpath]);
-                disp(['2. Current dir = ', pwd]);
+                dirpath2 = '/Users/peterfish/Documents/1__Retina_Study/Docs_Code_Stim/Mystim';
+                dirpath3 = 'C:\Users\scanimage\Documents\MATLAB\visual_stimulus\logs\18-06-22';
+                disp(['1. Current dir = ', pwd]);
+                disp(['2. ', dirpath2]);
+                disp(['3. ', dirpath3]);
                 n = input('Which dir do you want to search stimulus.h5? [1]: ');
                 if isempty(n)
                     n = 1;
                 end
                 switch n
                     case 1
-                        dirpath = default;
-                    case 2
                         dirpath = pwd;
+                    case 2
+                        dirpath = dirpath2;
+                    case 3
+                        dirpath = dirpath3;
                     otherwise
                 end
             end
@@ -160,6 +171,7 @@ classdef roiData < handle
             a.Groups.Name % display exp names?
             
             % Assuption: expt1 is a whitenoise stimulus.
+            disp('Assumption: group /expt1/ is a whitenoise stimulus');
             stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
             times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
             r.get_stimulus(stim, times);
@@ -345,15 +357,16 @@ classdef roiData < handle
                     % stim trigger times
                     r.stim_trigger_times = stim_trigger_times;
                     
-                    % stim trigger interval & end time
-                    if numel(stim_trigger_times)>1
-                        r.stim_trigger_interval = stim_trigger_times(end)  - stim_trigger_times(end-1); % for uniform stim triggers
-                        r.stim_end = stim_trigger_times(end) + r.stim_trigger_interval;
-                    else
-                        % total recording time after the trigger.
-                        r.stim_trigger_interval = r.f_times(end) - stim_trigger_times(1);
-                        r.stim_end = r.f_times(end);
-                    end
+                    % stim end time ~ recording end time
+                    r.stim_end = r.f_times(end);                    
+%                     if numel(stim_trigger_times)>1
+%                         r.stim_trigger_interval = stim_trigger_times(end)  - stim_trigger_times(end-1); % for uniform stim triggers
+%                         r.stim_end = stim_trigger_times(end) + r.stim_trigger_interval;
+%                     else
+%                         % total recording time after the trigger.
+%                         r.stim_trigger_interval = r.f_times(end) - stim_trigger_times(1);
+%                         r.stim_end = r.f_times(end);
+%                     end
                 end
                 
                 % Bg PMT level in images (vol)
@@ -368,8 +381,7 @@ classdef roiData < handle
                     y = y - bg_PMT;       % bg substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
                 end
-                r.stat.mean_f = mean( r.roi_trace(r.f_times > stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);                
-             
+                
                 % ignore data before the 1st stim trigger
                 r.ignore_sec = stim_trigger_times(1);
                     
@@ -392,7 +404,7 @@ classdef roiData < handle
                             % copy the trace in (-) times.
                             r.n_cycle =2;
                             r.s_phase =1;
-                            r.t_range =[-0.8, 100];
+                            r.t_range =[-0.9, 100];
                         elseif strfind(r.ex_name, 'flash')
                             r.n_cycle = 2;
                             r.s_phase = 0.25;
@@ -401,11 +413,14 @@ classdef roiData < handle
                         elseif strfind(r.ex_name, 'jitter')
                             avg_every = 2;
                         end
-                        n = input(['Avg over every N stim triggers [N =', num2str(avg_every),'] ?']);
+                        str_input = sprintf('Total PD trigger events: %d.\nAvg over every N triggers? [Default N = %d (%s)]',...
+                            length(r.stim_trigger_times), avg_every, r.ex_name);
+                        n = input(str_input);
                         if isempty(n)
-                            n = avg_every;
+                            n = avg_every; % case default number
                         end
-                        % set avg_every
+                        
+                        % set avg_every (set.avg_every)
                         r.avg_every = n;
 
                         % cluster mean for avg trace (100 clusters max)
@@ -421,7 +436,7 @@ classdef roiData < handle
                 %r.smoothing_method = 'movmean';
                 r.smoothing_size = r.smoothing_size_init;
                     
-                % whitenoise stim
+                % whitenoise stim?
                 if nargin > 5
                     r.stim_movie = stim_movie;
                     r.stim_fliptimes = stim_fliptimes;
@@ -436,6 +451,9 @@ classdef roiData < handle
                 r.c_note = cell(1, 100);
                 r.c_hfig = [];
                 r.roi_review = [];
+                
+                % stat
+                r.stat.mean_f = mean( r.roi_trace(r.f_times > stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);                  
             end
         end
         
@@ -451,29 +469,37 @@ classdef roiData < handle
                     r.avg_trigger_times = r.stim_trigger_times;
                 end
 
-                % stim events within one avg
-                r.avg_stim_times = r.stim_trigger_times(1:r.avg_every+1) - r.stim_trigger_times(1);
-
-                % avg trigger interval
+                % avg trigger interval & stim end
                 if numel(r.avg_trigger_times) > 1
                     r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
-                    numRepeat = numel(r.avg_trigger_times);
+                    disp(['Avg trigger interval: ', num2str(r.avg_trigger_interval), ' secs.']);
+                    
+                    numAvgTrigger = numel(r.avg_trigger_times);
+                     
                     if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_trigger_interval)
-                        numRepeat = numRepeat - 1;
+                        r.stim_end = r.f_times(end);
+                        numRepeat = numAvgTrigger - 1;
+                    else
+                        r.stim_end = r.avg_trigger_times(end) + r.avg_trigger_interval;
+                        numRepeat = numAvgTrigger;
                     end
                 else
                     disp('One trigger for average process. Default time interval between trigger set to 10 secs.');
                     r.avg_trigger_interval = 10;
                     numRepeat = 1;
                 end
-                disp(['Avg trigger interval is ', num2str(r.avg_trigger_interval), ' secs.']);
-                fprintf('Num of repeats: %d\n', numRepeat);
+                fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
+                fprintf('Num of full repeats: %d.\n', numRepeat);
 
+                % stim events within one avg
+                r.avg_stim_times = r.stim_trigger_times(1:r.avg_every+1) - r.stim_trigger_times(1);
+                
                 % times for avg traces
                 n = floor(r.avg_trigger_interval*(1./r.ifi)); % same as qx in align_rows_to_events function
                 r.avg_times = ((1:n)-0.5)*r.ifi;
                 
-                % times (x-axis) setting for avg plot
+                % times (x-axis) setting for avg plot: shifted and
+                % repeated.
                 r.a_times = r.timesForAvgPlot;
         end
         
@@ -519,11 +545,16 @@ classdef roiData < handle
             obj.s_times = value; % old name
         end
         
-        function set.stim_trigger_interval(obj, value)
-            obj.stim_trigger_interval = value;
-            obj.stim_duration = value; % old name
+        function set.avg_trigger_interval(obj, value)
+            obj.avg_trigger_interval = value;
+            obj.stim_trigger_interval = value; % no more use due to irregular trigger interval
+            obj.stim_duration = value; % old name for stim_trigger_interval
         end
         
+%         function set.stim_trigger_interval(obj, value)
+%             obj.stim_trigger_interval = value;           
+%         end
+%         
         function value = get.stim_whitenoise(obj)
             value = obj.stim_movie;
         end

@@ -1,4 +1,5 @@
 function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
+%RF_CORR Reverse correlation with single ROI trace with stimulus (e.g. whitenoise) 
 % traceType = 'normalized', 'raw', 'smoothed'
 % upsampling = 1 or 2 or 5 (default)
 % s: stat of rf.

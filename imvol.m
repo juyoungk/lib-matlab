@@ -128,8 +128,8 @@ function [hfig] = imvol(vol, varargin)
     id_add_upper = 3;
     
     % ROI mode parameters
-    sensitivity_0 = 0.02; % sensitivity for adaptive binarization
-    P_connected_0 = 50; % depending on magnification (zoom) factor
+    sensitivity_0 = 0.06; % sensitivity for adaptive binarization
+    P_connected_0 = 70; % depending on magnification (zoom) factor
     sensitivity = sensitivity_0; 
     P_connected = P_connected_0; 
     

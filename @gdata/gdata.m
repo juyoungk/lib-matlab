@@ -1,9 +1,9 @@
 classdef gdata < handle
 % Data class for single experiment session.
-% single TIF file or multiple TIFs if there are logged into mutiple
+% Open single TIF file or multiple TIFs if there are logged into mutiple
 % files. Confine the filenames using long string.
 % Assumptions for AI channels:
-%                   channel number - 4
+%                   Num of channels - 4
     properties
             % File info
             ex_name
@@ -33,10 +33,11 @@ classdef gdata < handle
             min_interval_secs = 0.8
             ignore_secs = 2
             pd_trace
-            pd_events
             
             % stimulus events
-            stims      % 1~10 stimulus. Times for stim trigger events.
+            pd_events  % trigger times
+            stims      % 1~10 stimulus. Times [sec] for stim trigger events.
+            stims_ids   % clustered pd event ids up to 10 groups.
             intervals  % if it's not empty, the stim was repeated. Probably good to average.
             stim_fliptimes  % trigger events or fliptimes. up to 10 differnet cell arrays
             stim_whitenoise        % whitenoise stim pattern
@@ -92,7 +93,7 @@ classdef gdata < handle
                     if strfind(g.ex_name, 'stack')
                         J = imvol(g.AI{i}, 'scanZoom', g.header.scanZoomFactor);
                     else
-                        s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', g.ex_name, g.header.channelSave(i), g.header.scanZoomFactor);
+                        s_title = sprintf('%s  (AI Ch:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
                         if isempty(g.cc)
                             J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
                         else
@@ -142,6 +143,7 @@ classdef gdata < handle
             end
 
             function set.cc(obj, cc)
+            % will create roiData structure for only one channel. 
                 % channel select
                 if ~isempty(obj.roi_channel)
                     ch = obj.roi_channel;
@@ -154,23 +156,35 @@ classdef gdata < handle
                 obj.roi_channel = ch;
                 obj.cc = cc;
                 
-                % create roiData objects
+                % create roiData objects as many as numStimulus
+                % 1. extract roi traces, 2. split into numStimulus
                 if ~isempty(cc)
-                    for i=1:obj.numStimulus
-                        if strfind(obj.ex_name, 'whitenoise')
-                            % update stim repo
-                            
-                            % import stimulus.h5
-                                %load(filename,'-mat',variables) 
-                            % roiDATA object
-                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
-                            obj.rr(i).header = obj.header;
-                            % break;
-                        else
-                            obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
-                            obj.rr(i).header = obj.header;
+                    r = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.pd_events); % all pd events
+                    r.header = obj.header;
+                    
+                    if obj.numStimulus == 1
+                        obj.rr = r;
+                    elseif obj.numStimulus >1
+                        for i=1:obj.numStimulus
+                            % select the part of the roi traces using event
+                            % ids.
+                            obj.rr(i) = r.select_data( obj.stims_ids{i} );
+
+                            %obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
+                            %obj.rr(i).header = obj.header;
+
+                            % ex specific executions 
+                            if strfind(obj.ex_name, 'whitenoise')
+                                % update stim repo    
+                                % import stimulus.h5
+                                    %load(filename,'-mat',variables) 
+                            else
+
+                            end
                         end
                     end
+                else
+                    disp('The given cc structure is empty. No roiDATA object was assigned.');
                 end
             end
             
@@ -313,45 +327,38 @@ classdef gdata < handle
 
                         % event timestamps from pd
                         g.setting_pd_event_params();
-                        i_start = g.ignore_secs * header.srate + 1; 
+                        i_start = g.ignore_secs * header.srate + 1; % first pd data point index for thresholding.
                         pd_for_events = pd(i_start:end);            % after first a few seconds.
                         ev_idx = th_crossing(pd_for_events, g.pd_threshold * max(pd_for_events), g.min_interval_secs * header.srate);
-                        ev_idx = ev_idx + i_start -1;
+                        ev_idx = ev_idx + i_start - 1;
                         ev = times(ev_idx);
                         g.pd_events = ev;
-                        n_events = numel(ev);
-                        
-                        % plot pd % event stamps
-                        pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
-                        figure; set(gcf, 'Position', pos_plot);
-                        plot(times(i_start:end), pd(i_start:end)); hold on; % it is good to plot pd siganl together    
-                        plot(ev, pd(ev_idx),'bo');
-                            legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
-                        hold off
-                        disp(['Num of PD (stimulus trigger) events: ', num2str(length(ev_idx))]);
+                        n_pd_events = numel(ev);
                         
                         % stimulus cluster for multiple events 
                         g.stims = cell(1,10);
+                        g.stims_ids = cell(1,10);
                             % count # of odd events
 
-                        if n_events <= 1
+                        if n_pd_events <= 1
                             % one trigger time
                             g.stims{1} = ev;
                             g.numStimulus = 1;
-                        elseif n_events < 5
+                        elseif n_pd_events < 4
                             % Regard all different stimulus
-                            for k=1:n_events
-                                g.stims{k} = ev(k);
+                            for k=1:n_pd_events
+                                g.stims{k}     = ev(k);
+                                g.stims_ids{k} = k;
                             end
-                            g.numStimulus = n_events;
+                            g.numStimulus = n_pd_events;
                         else
-                            % n_events >= 5
+                            % n_events >= 4
                             % detect last event of the stimulus:
                             % increase in interval by 20 %
                             ev_interval = ev(2:end) - ev(1:end-1); % indicates the last event for stimulus
                             i_ev = 1;   % current   ev id
                                k = 0;   % current stim id
-                            while i_ev < n_events
+                            while i_ev < n_pd_events
                                 % new stim id
                                 %i_ev;
                                 k = k + 1;
@@ -361,16 +368,32 @@ classdef gdata < handle
 
                                 if isempty(odd_events)
                                     g.stims{k} = ev(i_ev:end);
+                                    g.stims_ids{k} = i_ev:n_pd_events;
                                     g.intervals{k} = ev_interval(i_ev);
                                     break;
                                 end
                                 t_ev = i_ev + odd_events(1) - 1;
                                 g.stims{k} = ev(i_ev:t_ev);
+                                g.stims_ids{k} = i_ev:t_ev;
                                 g.intervals{k} = ev_interval(i_ev);
                                 i_ev = t_ev + 1;
                             end
                             g.numStimulus = k;
                         end
+                        
+                        % plot pd % event stamps
+                        pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
+                        figure; set(gcf, 'Position', pos_plot);
+                        plot(times(i_start:end), pd(i_start:end)); hold on; % PD trace
+                        % PD trigger events
+                        %plot(ev, pd(ev_idx),'bo');                             
+                        for ii = 1:g.numStimulus % color coding for clustered PD events.    
+                            plot( ev(g.stims_ids{ii}), pd(ev_idx(g.stims_ids{ii})), 'o');
+                        end
+                        legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
+                        hold off
+                        disp(['Num of PD (stimulus trigger) events: ', num2str(length(ev_idx))]);
+                        
                     end   % if h5 file exists.
                     
                     % load cc struct if exist
@@ -396,8 +419,23 @@ classdef gdata < handle
                     end
                 end
 
-                % function: callbacks
-                % function: roi
+                function pd_plot(g)
+                    pos = gdata.figure_setting();
+                    n   = g.header.n_channelSave;
+                    i_start = g.ignore_secs * g.h5_header.srate + 1; % first pd data point index for thresholding.
+                    % plot pd % event stamps
+                    pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
+                    figure; set(gcf, 'Position', pos_plot);
+                    plot(g.h5_times(i_start:end), g.pd_trace(i_start:end)); hold on; % PD trace
+                    % PD trigger events
+                    numPDevents = length(g.pd_events);
+                    for ii = 1:g.numStimulus % color coding for clustered PD events.    
+                        plot( g.pd_events(g.stims_ids{ii}), g.pd_threshold, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
+                    end
+                    legend(['Num of events: ', num2str(numPDevents)],'Location','southeast');
+                    hold off
+                    disp(['Num of PD (stimulus trigger) events: ', num2str(numPDevents)]);
+                end
         end
         
     methods(Static)

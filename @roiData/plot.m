@@ -60,8 +60,8 @@ function plot(r, I)
             
             if contains(r.ex_name, 'whitenoise') || contains(r.ex_name, 'run') 
                 
-%                 r.plot_rf(k, 'smoothed');
-%                 title('Revrse correlation (smoothed trace)');
+                r.plot_rf(k, 'smoothed');
+                title('Revrse correlation (smoothed trace)');
                 c = colorbar;
                 c.TickLabels = {};
             else

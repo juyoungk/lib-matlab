@@ -1,4 +1,11 @@
 function plot_rf_slice_t(r, rf, s)
+% inputs:
+%       s - stat of rf. Output of corr_rf function.
+
+%     if nargin < 2
+%         [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling); % sampled at f_times_norm
+%     end
+
     [num_x, num_t] = size(rf);
     plot(s.slice_t, 'LineWidth', 1.5);
         ax = gca;
