@@ -36,6 +36,8 @@ function [hfig] = imvol(vol, varargin)
 %                   'b' key - Display scale bar. (Currently for 25x Leica obj).
 %                   's' key - Save current image as PNG
 %                   'v' key - Display/Hide verbose text notes in imshow
+%                   'g' key - Save image(or stack) as GIF image.
+%                   'p' key - Create projected image. Max and Mean.
 % 
 %        Mode2 - ROI select mode. 'cc' (ROI) strucrue will be saved in Workspace.
 %                   L /R    arrow keys - adjust 'sensitivity' in imbinarize(J, 'adaptive')
@@ -76,6 +78,8 @@ function [hfig] = imvol(vol, varargin)
     if isempty(s_title)
         s_title = vol_inputname;
     end
+    % replace '_' with ' '
+    s_title = strrep(s_title, '_', ' ');
     
     N = ndims(vol);
     if N > 3
@@ -100,6 +104,7 @@ function [hfig] = imvol(vol, varargin)
     hfig.Color = 'none';
     hfig.PaperPositionMode = 'auto';
     hfig.InvertHardcopy = 'off';   
+    pos = hfig.Position;
     axes('Position', [0  0  1  0.9524], 'Visible', 'off');
     
     % ex str in UserData
@@ -150,9 +155,13 @@ function [hfig] = imvol(vol, varargin)
         MinMax = stretchlim(I,Tol);
         J = imadjust(I, MinMax);
 
-        % draw image
+        % draw image or visualization
         if ~FLAG_roi 
             imshow(J);
+            % txt str
+            str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
+            str2 = '''q'' for default contrast. ''SPACE'' for ROI mode. ''b'' scale bar';
+            str3 = sprintf('%d/%d', data.i, data.imax);
         else 
             % ROI mode
             if ~isempty(p.Results.roi)
@@ -205,7 +214,7 @@ function [hfig] = imvol(vol, varargin)
             % update 'cc' whenever ROI mode is activated.
                 % figure handle
                 hfig.UserData.cc = cc;
-                % in workspace 
+                % in workspace
                 v_name = 'cc';
                 assignin('base', v_name, cc);
                 assignin('base', 'mask', mask);
@@ -213,16 +222,23 @@ function [hfig] = imvol(vol, varargin)
                 %
             disp([num2str(cc.NumObjects), ' Objects (ROIs) are selected.']);    
         end
+        
+        % Shared components
+        % Title
         ax = gca;
         title(s_title, 'FontSize', 15, 'Color', 'w');
         
-        % scale bar
+        % Scale bar
         if FLAG_scale_bar %&& is_valid_zoom(zoom)
             fov = get_FOV_size_x25_Leica(zoom);
             if fov > 0
                 px_per_um = rows/fov;
                 hold on;
-                    l_scalebar = 30; % um
+                    if zoom < 2
+                        l_scalebar = 100; % um
+                    else
+                        l_scalebar = 30; % um
+                    end
                     x0 = ax.XLim(end) * 0.80;
                     y0 = ax.YLim(end) * 0.94;
                     quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
@@ -238,7 +254,8 @@ function [hfig] = imvol(vol, varargin)
             filename = strrep(filename, '(', '_');
             filename = strrep(filename, ':', '');
             if ~FLAG_roi
-                saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
+                %saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
+                print([filename,'_',num2str(data.i),'of',num2str(n_frames)], '-dpng', '-r300'); %high res
             else
                 saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'_ROI.png']);
             end
@@ -252,10 +269,10 @@ function [hfig] = imvol(vol, varargin)
                 str1 = sprintf('Sens.=%.2f Pconn.=%.2f.', sensitivity, P_connected);
                 str2 = sprintf('Press ''d'' or ''r'' to remove ROIs. ''q'' for default settings');
                 str3 = sprintf('%d/%d', data.i, data.imax);
-            else
-                str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
-                str2 = '''q'' for default contrast. ''SPACE'' for ROI mode. ''b'' scale bar';
-                str3 = sprintf('%d/%d', data.i, data.imax);
+%             else
+%                 str1 = sprintf('low=%.3f upp=%.3f', lower, upper);
+%                 str2 = '''q'' for default contrast. ''SPACE'' for ROI mode. ''b'' scale bar';
+%                 str3 = sprintf('%d/%d', data.i, data.imax);
             end
             
             % x,y for text. Coordinate for imshow is different from plot
@@ -301,17 +318,16 @@ function [hfig] = imvol(vol, varargin)
                 end
                 fov = get_FOV_size_x25_Leica(zoom);
                 px_per_um = rows/fov;
-                
                 a_ratio = px_per_um/z_step_um;
                 img = c_section.';
                 [numrows, numcols] = size(img);
                 C = imresize(img, [a_ratio*numrows, numcols]);
                 make_im_figure(500, 0); 
-                myshow(C, 0.2); 
+                myshow(C, 0.4);
                 ax = gca; 
                 %scale bar?
                 hold on;
-                l_scalebar = 30; % um
+                l_scalebar = 50; % um
                 x0 = ax.XLim(end) * 0.80;
                 y0 = ax.YLim(end) * 0.90;
                 quiver(x0, y0, l_scalebar*px_per_um, 0, 'ShowArrowHead', 'off', 'Color', 'w', 'LineWidth', 2);
@@ -320,6 +336,46 @@ function [hfig] = imvol(vol, varargin)
                 hold off;
             case 's'
                 SAVE_png = true;
+            case 'g' %save as GIF
+                % conditions
+                FLAG_txt = false;
+                % 
+                filename = [s_title, '.gif'];
+                for k = 1:data.imax
+                    data.i = k;
+                    redraw();
+                    % frame number
+                    if contains(s_title, 'stack')
+                        str3 = sprintf(' Z = %3d um (%3d/%d) ', k*z_step_um, data.i, data.imax);
+                    else  
+                        str3 = sprintf('%d/%d ', data.i, data.imax);
+                    end
+                    text(ax.XLim(1), ax.YLim(1), str3, 'FontSize', 15, 'Color', 'w', ...
+                        'VerticalAlignment', 'top', 'HorizontalAlignment','left');
+                    frame = getframe(hfig); % frame from Handle hfig.
+                    im = frame2im(frame);
+                    [A, map] = rgb2ind(im, 256);
+                    if k == 1 
+                        imwrite(A, map, filename, 'gif', 'LoopCount', Inf, 'DelayTime', 0.2);
+                    else
+                        imwrite(A, map, filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.2);
+                    end
+                end
+                FLAG_txt = true;
+                
+            case 'p' % projection
+                prompt = {'Start layer: ','Last layer: ','Projection type: '};
+                title = 'Projection image';
+                dims = [1 15];
+                definput = { num2str(data.i), num2str(data.i), 'Max'};
+                answer = inputdlg(prompt,title,dims,definput);
+                % check if out-of-range?
+                img = vol(:,:,str2double(answer{1}):str2double(answer{2}));
+                hnew = make_im_figure(pos(3), 0);
+                imvol( max(img, [], 3), 'title', [answer{3}, ' projection (', answer{1},'-',answer{2},')'], 'hfig', hnew, 'scanZoom', zoom);
+                hnew = make_im_figure(2*pos(3)-pos(1), 0);
+                imvol( mean(img, 3), 'title', ['mean', ' projection (', answer{1},'-',answer{2},')'], 'hfig', hnew, 'scanZoom', zoom);
+                
             case 'b'
                 FLAG_scale_bar = ~FLAG_scale_bar;
             case 'space' % ROI mode switch
@@ -447,7 +503,7 @@ function q = is_valid_zoom(zoom)
     end
 end
 
-function make_im_figure(x_shift, y_shift)
+function hfig = make_im_figure(x_shift, y_shift)
     
     if nargin < 2
         y_shift = 0;
