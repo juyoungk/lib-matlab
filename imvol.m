@@ -255,7 +255,7 @@ function [hfig] = imvol(vol, varargin)
             filename = strrep(filename, ':', '');
             if ~FLAG_roi
                 %saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'.png']);
-                print([filename,'_',num2str(data.i),'of',num2str(n_frames)], '-dpng', '-r300'); %high res
+                print([filename,'_',num2str(data.i),'of',num2str(n_frames),'.png'], '-dpng', '-r300'); %high res
             else
                 saveas(hfig, [filename,'_',num2str(data.i),'of',num2str(n_frames),'_ROI.png']);
             end
