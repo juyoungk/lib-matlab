@@ -74,6 +74,7 @@ classdef gdata < handle
                     end
                 end
             end
+            
             function myshow(g, ch)
                 if nargin > 1
                     myshow(g.AI_mean{ch});
@@ -90,10 +91,11 @@ classdef gdata < handle
                 end
                 
                 for i = ch
+                    s_title = sprintf('%s  (AI Ch:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
+                    
                     if strfind(g.ex_name, 'stack')
-                        J = imvol(g.AI{i}, 'scanZoom', g.header.scanZoomFactor);
+                        J = imvol(g.AI{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'z_step_um', g.header.stackZStepSize);
                     else
-                        s_title = sprintf('%s  (AI Ch:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
                         if isempty(g.cc)
                             J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
                         else
@@ -202,6 +204,10 @@ classdef gdata < handle
             % Construct input type1: single tif and single h5 (including path)
             % Construct input type2: single str input as filter in current directory
                 pos = gdata.figure_setting();
+                % cell array for AI channels.
+                g.AI            = cell(g.n_channels, 1); % n_channels is defined at gdata properties.
+                g.AI_mean       = cell(g.n_channels, 1);
+                %g.AI_mean_slice = cell(g.n_channels, 1);
 
                 if nargin > 0     
                     % single string input: string filter in current directory.
@@ -239,12 +245,15 @@ classdef gdata < handle
                                 for i = 1:numel(tif_filenames)
                                     disp('Multiple Tif files logging. Under construction..Sorry.');
                                 end
-                            end                                
+                            end
+                    else
+                        % direct filename input (probably called by fdata)
+                        ex_str = tif_filename; 
                     end
                     name_tif = strsplit(tif_filename, '/');
                     g.tif_filename = name_tif{end};
                     
-                    % import h5 file
+                    % import Tif file
                     SI_data = ScanImageTiffReader(tif_filename);
                     g.metadata = SI_data.metadata;
                     g.ex_name = get_ex_name(g.tif_filename);
@@ -258,9 +267,6 @@ classdef gdata < handle
 
                     % AI channel info
                     g.AI_chSave = h.channelSave;
-                    g.AI            = cell(g.n_channels, 1);
-                    g.AI_mean       = cell(g.n_channels, 1);
-                    %g.AI_mean_slice = cell(g.n_channels, 1);
 
                     % channel de-interleave and save sanpshots
                     n     = h.n_channelSave;
@@ -395,27 +401,27 @@ classdef gdata < handle
                         disp(['Num of PD (stimulus trigger) events: ', num2str(length(ev_idx))]);
                         
                     end   % if h5 file exists.
-                    
-                    % load cc struct if exist
-                    cc_filenames = getfilenames(pwd, ['/*',ex_str,'*.mat']);
-                    if ~isempty(cc_filenames)
-                        reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
-                        if isempty(reply); reply = 'Y'; end
-                        if reply == 'Y'
-                            S = load(cc_filenames{1});
-                            g.cc = S.cc;
-                            disp('ROI (cc) was defined. [Look g.rr]. load_c needs to be implemented.');
+
+                        % load cc struct if exist
+                        cc_filenames = getfilenames(pwd, ['/*',ex_str,'*.mat']);
+                        if ~isempty(cc_filenames)
+                            reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
+                            if isempty(reply); reply = 'Y'; end
+                            if reply == 'Y'
+                                S = load(cc_filenames{1});
+                                g.cc = S.cc;
+                                disp('ROI (cc) was defined. [Look g.rr]. load_c needs to be implemented.');
+                            else
+                                g.cc = [];
+                            end
                         else
-                            g.cc = [];
+                            disp(['No .mat file for ''', ex_str, ''' (e.g. ''cc'' structure for ROI segmentation)']);
+                            g.cc = []; % initialize cc struct
                         end
-                    else
-                        disp(['No .mat file for ''', ex_str, ''' (e.g. ''cc'' structure for ROI segmentation)']);
-                        g.cc = []; % initialize cc struct
-                    end
-                    
-                    % drift?
-                    before_after = g.imdrift;
-                    imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
+
+                        % drift?
+                        before_after = g.imdrift;
+                        imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
                 end
 
@@ -463,8 +469,8 @@ end
 
 function str_ex_name = get_ex_name(tif_filename)
     %s_filename = tif_filename;
-    s_filename = strrep(tif_filename, '_', '  ');    
-    s_filename = strrep(s_filename, '00', '');
+    %s_filename = strrep(tif_filename, '_', '  ');    
+    s_filename = strrep(tif_filename, '00', '');
     loc_name = strfind(s_filename, '.');
     
     % Get rid of '.tif' or '.h5'

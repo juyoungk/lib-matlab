@@ -99,6 +99,36 @@ classdef fdata < handle
             obj.roi_channel = ch;
         end
         
+        % (g)Data concatenate
+        function concatenate(f, s1, s2)
+            % new gdata object id
+            id = f.numImaging + 1;
+            f.g(id) = gdata;
+            
+            % info update
+            f.g(id).ex_name = [f.g(s1).ex_name, ' and ', f.g(s2).ex_name];
+            f.g(id).tif_filename  = [f.g(s1).tif_filename, ' and ', f.g(s2).tif_filename];
+            % condition compare & merge
+            % ifi
+            if f.g(s1).ifi ~= f.g(s2).ifi
+                disp('[@fdata: concatenate imaging sessions] ifi (= logFramePeriod) is differnet for two sessions.'); 
+            else
+                f.g(id).ifi = f.g(s1).ifi;
+            end
+            f.g(id).header  = f.g(s1).header;
+            f.g(id).header.headers = [f.g(s1).header, f.g(s2).header];
+            f.g(id).AI_chSave = f.g(s1).AI_chSave;
+            f.g(id).roi_channel = f.g(s1).roi_channel;
+            
+            % data
+            for ch = f.g(s1).header.channelSave
+                f.g(id).AI{ch} = cat(3, f.g(s1).AI{ch}, f.g(s2).AI{ch});
+            end
+            f.g(id).nframes = size( f.g(id).AI{ f.g(id).AI_chSave(1) }, 3);
+            
+            % stimulus
+            disp('[@fdata: concatenate imaging sessions] merging stim triggers is under development.');
+        end
         
         function imshowpair(obj, s1, s2)
         % compare mean images between imaging sessions

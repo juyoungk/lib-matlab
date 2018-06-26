@@ -1,7 +1,7 @@
 function hfig = makeFigBlack(varargin)
 %
 % Copy Figure to clipboard for black background
-% See also the function 'cc' for just copying the figure to the clipboard
+% See also the function 'ccc' for just copying the figure to the clipboard
 % 
 %
 Fontsize = 18;
