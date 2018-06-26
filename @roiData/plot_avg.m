@@ -117,28 +117,76 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     end
                 end
 
-                % additional lines
-                for n = 1:r.n_cycle
-                    x = (n-1) * duration;
+                %% Additional lines
+                % avg trigger events
+                tt = r.timesForAvgPlot( 0 );
+                for n = 1:length(tt)
+                    x = tt(n);
+                    if x < r.t_range(1) && x > r.t_range(2)
+                        continue;
+                    end
+                    % avg trigger times
                     plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     % middle line
                     if strfind(r.ex_name, 'flash')
                         x = (n-1) * duration + duration/2.;
                         plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     end
-                    % stim trigger lines between avg triggers
-                    for k = 1:(r.avg_every)
-                        if k ~= 1
-                            x = (n-1) * duration + r.avg_stim_times(k);
-                            plot([x x], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
-                        end
-                        % middle lines between stim triggers
-                        if strfind(r.ex_name, 'typing')
-                            x = (n-1) * duration + r.avg_stim_times(k) + 0.5*(r.avg_stim_times(k+1)-r.avg_stim_times(k));
-                            plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
-                        end
-                    end  
                 end
+
+                % within one repeat, stim trigger events
+                tt = r.timesForAvgPlot(r.avg_stim_times(1:end-1));
+                for k = 1:length(tt)
+                    x = tt(k);
+                    if x < r.t_range(1) || x > r.t_range(2)
+                        continue;
+                    end
+                    if k ~= 1
+                        plot([x x], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                    end
+                    kk = mod(k, r.avg_every); % index within one cycle.
+                    if kk == 0; kk = r.avg_every; end;
+                    if ~isempty(r.avg_stim_tags{kk})
+                        text(x, ax.YLim(1), r.avg_stim_tags{kk}, 'FontSize', 9, 'Color', 'k', ...
+                            'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
+                    end
+                    % middle lines between stim triggers
+                    if strfind(r.ex_name, 'typing')
+                        x = x + 0.5*(r.avg_stim_times(kk+1)-r.avg_stim_times(kk));
+                        plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                    end
+                end
+
+                
+%                 for n = 1:r.n_cycle
+%                     x = (n-1) * duration;
+%                     % avg trigger times
+%                     plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+%                     % middle line
+%                     if strfind(r.ex_name, 'flash')
+%                         x = (n-1) * duration + duration/2.;
+%                         plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+%                     end
+%                     % stim trigger lines between avg triggers
+%                     for k = 1:(r.avg_every-1)
+%                         % trigger lines with tags if exists.
+%                         x = (n-1) * duration + r.avg_stim_times(k);
+%                         if k ~= 1
+%                             plot([x x], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+%                         end
+%                         
+%                         if ~isempty(r.avg_stim_tags{k})
+%                             text(x, ax.YLim(1), r.avg_stim_tags{k}, 'FontSize', 9, 'Color', 'k', ...
+%                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
+%                         end
+% 
+%                         % middle lines between stim triggers
+%                         if strfind(r.ex_name, 'typing')
+%                             x = (n-1) * duration + r.avg_stim_times(k) + 0.5*(r.avg_stim_times(k+1)-r.avg_stim_times(k));
+%                             plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+%                         end
+%                     end  
+%                 end
                 hold off;
             end
 
@@ -159,6 +207,11 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         n_col = 9; % limit num of subplots by fixing n_col
         % Figure params
         n_cells_per_fig = 85;
+        
+        if contains(r.ex_name, 'typing')
+            n_col = 3;
+            n_cells_per_fig = 29;
+        end
         
         k = 1; % index in selected roi group
         while (k <= numel(roi_array))

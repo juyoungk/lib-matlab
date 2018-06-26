@@ -56,7 +56,8 @@ classdef roiData < matlab.mixin.Copyable
         avg_FLAG
         avg_every
         avg_trigger_times   % times for aligning between trials
-        avg_stim_times  % stim times within one avg trace
+        avg_stim_times  % stim times within one avg trace [0 duration]
+        avg_stim_tags
         avg_trigger_interval
         avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
         avg_trace_std   % std over trials
@@ -137,6 +138,25 @@ classdef roiData < matlab.mixin.Copyable
             % update
             rr.update_smoothed_trace;
             %rr.update_filtered_trace;
+        end
+        
+        function load_ex(r, ex)
+            % stim as struct array
+            stim = [ex.stim{:}];
+            % name tags as cell array
+            i = 1;
+            k = 1; % current id for stim struct
+            while i <= r.avg_every
+                ids = (1:stim(k).cycle) + (i-1);
+                r.avg_stim_tags(ids) = {stim(k).tag};
+                i = max(ids) + 1;
+                k = k + 1; % next stim tag
+            end
+            if k-1 == length(stim)
+                fprintf('All (N=%d) stim tags were scanned and aligned with num of stim triggers.\n', k);
+            elseif k-1 < length(stim)
+                fprintf('Stim tigger lines are more than # of stim tags.\n');
+            end
         end
         
         function load_h5(r, dirpath)
@@ -398,9 +418,6 @@ classdef roiData < matlab.mixin.Copyable
                         % special cases
                         if strfind(r.ex_name, 'typing')
                             avg_every = 12;
-                            if strfind(r.ex_name, 'flash')
-                                avg_every = 6;
-                            end
                             % copy the trace in (-) times.
                             r.n_cycle =2;
                             r.s_phase =1;
@@ -501,6 +518,9 @@ classdef roiData < matlab.mixin.Copyable
                 % times (x-axis) setting for avg plot: shifted and
                 % repeated.
                 r.a_times = r.timesForAvgPlot;
+                
+                % cell array for tags
+                r.avg_stim_tags = cell(1, n_every);
         end
         
         % Function for phase shift and multiply
@@ -520,10 +540,16 @@ classdef roiData < matlab.mixin.Copyable
             
         end
  
-        function tt = timesForAvgPlot(obj)
-            N = length(obj.avg_times);
+        function tt = timesForAvgPlot(obj, ev_times)
+            % Event times for average plot
+            % if event times are not given, output (tt) is times (x-axis) for avg plot. 
+            if nargin < 2
+                ev_times = obj.avg_times;
+            end
+            
+            N = length(ev_times);
             % extend times
-            tt = repmat(obj.avg_times, [1, obj.n_cycle]);
+            tt = repmat(ev_times, [1, obj.n_cycle]);
             c = meshgrid(0:(obj.n_cycle-1), 1:N);
             tt = tt + (vec(c).')*obj.avg_times(end);
             % phase shift
