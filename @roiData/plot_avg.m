@@ -146,7 +146,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     end
                     kk = mod(k, r.avg_every); % index within one cycle.
                     if kk == 0; kk = r.avg_every; end;
-                    if ~isempty(r.avg_stim_tags{kk})
+                    if ~isempty(r.avg_stim_tags{kk}) && Label
                         text(x, ax.YLim(1), r.avg_stim_tags{kk}, 'FontSize', 9, 'Color', 'k', ...
                             'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
                     end

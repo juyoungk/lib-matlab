@@ -5,6 +5,8 @@ function plot2(r, I, varargin)
 % 
 % varargin:
 %           'Cluster' - if non-zero cluster id is given, clustered ROIs will be displayed.         
+% keys:
+%           'backspace' - Move to noisy cluster (id: 0)
     
     p=ParseInput(varargin{:});
     c_given = p.Results.Cluster;
@@ -24,12 +26,6 @@ function plot2(r, I, varargin)
     if ~ishandle(r.c_hfig)
         r.plot_cluster;
     end
-    
-    % color for clusters;
-    c_list = unique(r.c(r.c~=0)); 
-    c_list_num = numel(c_list);
-    color = jet(c_list_num); 
-    % color index? color(c_list == r.c(k), :)
     
     % Figure 
     hfig = figure('Position', [10 300 800 900]);
@@ -56,6 +52,13 @@ function plot2(r, I, varargin)
         % delete all objects
         delete(hfig.Children);
         
+        % Color setting for clusters;
+        c_list = unique(r.c(r.c~=0)); 
+        c_list_num = numel(c_list);
+        color = jet(c_list_num); 
+        % color index? color(c_list == r.c(k), :)
+
+        
         k = I(i_roi); % roi index. Real index
         mask = false(cc.ImageSize);
         % ex info
@@ -64,48 +67,54 @@ function plot2(r, I, varargin)
         % 1. whole trace
         %subplot(n_row, n_col, [1, n_col]);
         axes('Position', [0.05  0.81  0.9  0.15], 'Visible', 'off');
-            plot_trace_raw(r, k);
-%                 ax = findobj(gca, 'Type', 'Line');
-%                 ax.LineWidth = 0.8;            
+            plot_trace_raw(r, k);       
 
         % 3.Projected scores onto (PCA) space dims
         axes('Position', [0.53  0.39  0.4  0.36], 'Visible', 'off');
-            
-                i = 1; j = 2;
-
+                
+                %
+                i = 1; j = 2; % first 2 scores of PCA
+        
                 % all avg traces
-                X = r.avg_pca_score;
-
-                for c = c_list
-                    % only non-zero cluster data
-                    scatter(X(r.c==c, i),X(r.c==c, j), 15, color(c_list==c,:));
-                        ax = gca;
-                        ax.Color = 'k'; % background color
-                        xlabel(['PCA ', num2str(i)], 'FontSize', 12);
-                        ylabel(['PCA ', num2str(j)], 'FontSize', 12);
-                        grid on
-                        hold on
-                end
-                % un-assigned cluster 0: gray plot
-                c0_color = [0.4 0.4 0.4];
-                scatter(X(r.c==0, i),X(r.c==0, j), 12, c0_color, 'filled');
-
-                % k-index ROI
-                if r.c(k)
-                    % cluster 0 : cluster is not assigned or noisy data.
-                    k_color = color(c_list==r.c(k), :);
-                    k_color = [1 1 1];
+                X = r.avg_pca_score; % can be empty when ..
+                
+                if isempty(X) || size(X, 2) < 2
+                    % X will be empty when only one data is clustered.
+                    % size(X, 2) is (n-1) where n is num of data or traces.
                 else
-                    k_color = c0_color;
-                end
-                %scatter(X(k, i),X(k, j), 18, color(c_list==r.c(k), :), 'filled');
-                plot(X(k, i),X(k, j), 'kd', 'MarkerSize', 13, 'LineWidth', 1.8, 'Color', k_color); 
-                hold off
+                    for c = c_list
+                        % Color scatter plot for non-zero cluster data 
+                        scatter(X(r.c==c, i),X(r.c==c, j), 15, color(c_list==c,:));               
+                            grid on
+                            hold on
+                    end
+                    % un-assigned cluster 0: gray plot
+                    c0_color = [0.4 0.4 0.4];
+                    scatter(X(r.c==0, i),X(r.c==0, j), 12, c0_color, 'filled');
+                    %
+                    ax = gca;
+                    ax.Color = 'k'; % background color
+                    xlabel(['PCA ', num2str(i)], 'FontSize', 12);
+                    ylabel(['PCA ', num2str(j)], 'FontSize', 12);
 
-                cluster_colorbar = label2rgb(vec(1:c_list_num), @jet, 'k');
-                axes('Position', [0.93  0.45  0.05  0.2], 'Visible', 'off');
-                imshow(cluster_colorbar);
-            
+                    % k-index ROI
+                    if r.c(k)
+                        % cluster 0 : cluster is not assigned or noisy data.
+                        k_color = color(c_list==r.c(k), :);
+                        k_color = [1 1 1];
+                    else
+                        k_color = c0_color;
+                    end
+                    %scatter(X(k, i),X(k, j), 18, color(c_list==r.c(k), :), 'filled');
+                    plot(X(k, i),X(k, j), 'kd', 'MarkerSize', 13, 'LineWidth', 1.8, 'Color', k_color); 
+                    hold off
+                    if c_list_num > 0
+                        cluster_colorbar = label2rgb(vec(1:c_list_num), @jet, 'k');
+                        axes('Position', [0.93  0.45  0.05  0.2], 'Visible', 'off');
+                        imshow(cluster_colorbar);
+                    end
+                end
+
         % 4. roi avg (smoothed) trace
         subplot(n_row, n_col, 2*n_col+1);
             
@@ -117,6 +126,7 @@ function plot2(r, I, varargin)
             else
                 y = plot_avg(r, k);
                 y = normc(y);
+                ax =gca;
                 hold on
                 %y0 = r.stat.smoothed_norm.trace_mean_level(k);
                 y0 = r.stat.smoothed_norm.avg_mean(k);
@@ -124,8 +134,6 @@ function plot2(r, I, varargin)
                     plot(ax.XLim, [y0+y_std y0+y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     plot(ax.XLim, [y0-y_std y0-y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                 hold off
-                
-                ax =gca;
                 title('Avg response (smoothed) over trials');
                 if ~isempty(ax)
                     text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
@@ -182,14 +190,16 @@ function plot2(r, I, varargin)
                 c_suggested = i_sorted(i_c);
                 
                 roi_clustered = find(c==c_suggested);
-                r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.4);
+                r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.4, 'Label', false);
                 
                 hold on
                 yy = r.traceForAvgPlot(y);
                 plot(r.a_times, yy, 'LineWidth', 0.7);
-                hold off
                 
+                hold off
+                %axis tight
                 ax = gca;
+                
                 title( {r.c_note{c_suggested} }, 'FontSize', 14);
                 text(ax.XLim(end), ax.YLim(end), ['C', num2str(c_suggested)], 'FontSize', 15, 'Color', 'k', ...
                                 'VerticalAlignment', 'top', 'HorizontalAlignment','right');

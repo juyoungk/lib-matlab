@@ -99,8 +99,8 @@ classdef gdata < handle
                         if isempty(g.cc)
                             J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
                         else
-                            disp('''cc'' was given to imvol(). No ROI edit mode.');
-                            J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', false);
+                            disp('''cc'' was given to imvol().');
+                            J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', true);
                         end
                     end
                 end
@@ -409,8 +409,16 @@ classdef gdata < handle
                             if isempty(reply); reply = 'Y'; end
                             if reply == 'Y'
                                 S = load(cc_filenames{1});
-                                g.cc = S.cc;
-                                disp('ROI (cc) was defined. [Look g.rr]. load_c needs to be implemented.');
+                                % S should have a field name 'cc', 'c',
+                                % 'c_note', 'roi_review'
+                                if isfield(S, 'cc')
+                                    g.cc = S.cc;
+                                    disp('gData: ROI (cc) was defined. [roiDATA g.rr].');
+                                end
+                                if isfield(S, 'c')
+                                    g.rr.load_c(S.c, S.c_note, S.roi_review);
+                                    disp('gData: Cluster data was loaded for g.rr roiDATA.');
+                                end
                             else
                                 g.cc = [];
                             end
@@ -471,16 +479,16 @@ function str_ex_name = get_ex_name(tif_filename)
     %s_filename = tif_filename;
     %s_filename = strrep(tif_filename, '_', '  ');    
     s_filename = strrep(tif_filename, '00', '');
-    loc_name = strfind(s_filename, '.');
+    loc_space = strfind(s_filename, '.');
     
     % Get rid of '.tif' or '.h5'
-    if isempty(loc_name)
+    if isempty(loc_space)
         str_ex_name = s_filename;
     else
-        str_ex_name = s_filename(1:(loc_name(end)-1));
+        str_ex_name = s_filename(1:(loc_space(end)-1));
     end
     
     % Ignore last file number
-    str_by_space = strsplit(str_ex_name, ' ');
-    str_ex_name = sprintf('%s ', str_by_space{1:end-1});
+    %str_by_space = strsplit(str_ex_name, ' ');
+    %str_ex_name = sprintf('%s ', str_by_space{1:end-1});
 end

@@ -25,7 +25,7 @@ classdef roiData < matlab.mixin.Copyable
         % 
         numFrames
         numRoi
-        roi_trace       % raw trace (bg substracted. only post-processing)
+        roi_trace       % raw trace (bg substracted. No other post-processing)
         roi_smoothed    % smoothed raw trace
         roi_smoothed_detrend % trend substracted
         roi_smoothed_norm    % norm by trend of detrended: dF/F
@@ -41,6 +41,7 @@ classdef roiData < matlab.mixin.Copyable
         
         % statistics
         stat
+        p_corr % over repeats ['.smoothed', '.smoothed_norm']
         
         % smoothing params
         smoothing_method = 'movmean';
@@ -52,7 +53,7 @@ classdef roiData < matlab.mixin.Copyable
         w_filter_low  = 0.5 
         w_filter_high = 0.05; % in terms of norm. (or Nyquist) freq. 
         
-        % avg trace timed at stim_times
+        % avg trace timed at avg_trigger_times (always smoothed at least)
         avg_FLAG
         avg_every
         avg_trigger_times   % times for aligning between trials
@@ -75,6 +76,7 @@ classdef roiData < matlab.mixin.Copyable
         
         % clusters for ROIs
         dispClusterNum = 10;
+        totClusterNum = 100;
         c             % cluster id array. 0 is unallowcated or noisy group
         c_mean        % cluster mean for average trace (trace X #clusters ~100). update through plot_cluster
         c_hfig
@@ -102,7 +104,7 @@ classdef roiData < matlab.mixin.Copyable
     methods
         
         function  rr = select_data(r, stim_ids)
-            % Given stim trigger ids, create new instance of roiDATA
+            % Given stim trigger ids (not avg triggers), create new instance of roiDATA
             % stim trigger times id. (e.g. [2, 3, 4])
             % id =0 means from the first data point.
             rr = copy(r);
@@ -117,9 +119,9 @@ classdef roiData < matlab.mixin.Copyable
             
             % Is the ending index the last trigger?
             if stim_ids(end) >= length(rr.stim_trigger_times)
-                t_end = rr.f_times(end)
+                t_end = rr.f_times(end);
             else 
-                t_end = rr.stim_trigger_times( stim_ids(end)+1 )
+                t_end = rr.stim_trigger_times( stim_ids(end)+1 );
             end
             
             % Select data for [t_init, t_end]
@@ -135,6 +137,18 @@ classdef roiData < matlab.mixin.Copyable
             rr.stim_trigger_times = rr.stim_trigger_times(stim_ids); 
             rr.stim_trigger_times = rr.stim_trigger_times - t_init;
             
+            % avg triggers every N stim triggers for new instance?
+            if r.avg_FLAG
+                str_input = sprintf('Total stim trigger events: %d.\nAvg over every N triggers? [Default N = %d (%s)]',...
+                                length(stim_ids), r.avg_every, r.ex_name);
+                n = input(str_input);
+                if isempty(n)
+                    n = r.avg_every; % case default number
+                end
+                % set avg_every (set.avg_every)
+                rr.avg_every = n;
+            end
+            
             % update
             rr.update_smoothed_trace;
             %rr.update_filtered_trace;
@@ -148,12 +162,12 @@ classdef roiData < matlab.mixin.Copyable
             k = 1; % current id for stim struct
             while i <= r.avg_every
                 ids = (1:stim(k).cycle) + (i-1);
-                r.avg_stim_tags(ids) = {stim(k).tag};
+                r.avg_stim_tags(ids(1)) = {stim(k).tag};
                 i = max(ids) + 1;
                 k = k + 1; % next stim tag
             end
             if k-1 == length(stim)
-                fprintf('All (N=%d) stim tags were scanned and aligned with num of stim triggers.\n', k);
+                fprintf('All (N=%d) stim tags were scanned and aligned with num of stim triggers.\n', k-1);
             elseif k-1 < length(stim)
                 fprintf('Stim tigger lines are more than # of stim tags.\n');
             end
@@ -226,6 +240,15 @@ classdef roiData < matlab.mixin.Copyable
             r.c = value;
             n_new = numel(find(r.c~=0));
             if n_new ~= n_prev
+                % c_mean (avg trace) update
+                for i = 1;r.totClusterNum
+                    y = r.avg_trace(:, r.c==i);
+                    y = normc(y);               % Norm by col
+                    y = mean(y, 2);
+                    % Mean substraction and normalization might be needed.
+                    r.c_mean(:,i) = y;
+                end
+                % pca update
                 r.pca;
                 disp('PCA score has been computed.');
             end
@@ -281,6 +304,8 @@ classdef roiData < matlab.mixin.Copyable
                r.avg_trace    = mean(roi_aligned, 3);
                % Normalized and Centered trace
                r.avg_trace_norm = normc(r.avg_trace) -0.5;
+               % Pearson correlation over repeats
+               r.p_corr.smoothed = corr_avg(roi_aligned);
             end
             % filtered_trace
             r.update_filtered_trace;
@@ -323,7 +348,7 @@ classdef roiData < matlab.mixin.Copyable
                     y_filtered_norm = ((y_filtered - y_trend)./y_trend)*100;
                     
                     %
-                    r.roi_filtered(:,i) = y_filtered;                                          % set by filter definition?
+                    r.roi_filtered(:,i) = y_filtered;          % set by filter definition?
                     r.roi_trend(:,i) = y_trend;
                     %
                     r.roi_smoothed_detrend(:,i) = y_smoothed_detrend;
@@ -341,7 +366,10 @@ classdef roiData < matlab.mixin.Copyable
                 [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil);
                 [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
                 [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
-                
+                % Pearson correlation over repeats
+                r.p_corr.smoothed_norm = corr_avg(roi_aligned_smoothed_norm);
+                r.p_corr.filtered_norm = corr_avg(roi_aligned_filtered_norm);
+                %
                 r.stat.smoothed_norm = stat_smoothed_norm;
                 r.stat.filtered_norm = stat_filtered_norm;
             end
@@ -441,10 +469,7 @@ classdef roiData < matlab.mixin.Copyable
                         r.avg_every = n;
 
                         % cluster mean for avg trace (100 clusters max)
-                        r.c_mean = zeros(length(r.avg_times), 100);
-                        
-                        % times (x-axis) setting for avg plot
-                        r.a_times = r.timesForAvgPlot;
+                        r.c_mean = zeros(length(r.avg_times), r.totClusterNum);
                 else
                     r.avg_FLAG = false;
                 end

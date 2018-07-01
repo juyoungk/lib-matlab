@@ -3,7 +3,7 @@ function ax = plot_trace_raw(r, id_roi)
 
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
-        plot(r.f_times, r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
+        plot(r.f_times,     r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
         plot(r.f_times_fil, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
         title([r.ex_name, '- raw trace']);
         %legend('raw trace (bg substracted)', 'F (trend)');
@@ -13,9 +13,9 @@ function ax = plot_trace_raw(r, id_roi)
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis.FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
-        
+            axis tight
         % stimulus lines
-        ev = r.stim_times;
+        ev = r.stim_trigger_times;
         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
         if 1
             for i=1:length(ev)

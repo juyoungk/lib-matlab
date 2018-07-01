@@ -15,10 +15,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         disp('Summary mode if n_trace is 0. (e.g. r.plot_cluster(cluster ids, 0) )');
     end
     
-    if nargin < 2
-        i_cluster = 1:r.dispClusterNum;
-    elseif min(i_cluster == 0) > 0
-        % i_cluster = 0 case : summary mode
+    if nargin < 2 % Summary mode
         i_cluster = 1:r.dispClusterNum;
         n_trace = 0;
     else
@@ -141,8 +138,8 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
             %axes('Parent', h, 'Position', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
                         
-            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', false); axis off;
-            %[~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', true);
+            %[~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', false); axis off;
+            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', true);
             
             %str = sprintf('c%d: all traces (n = %d)', i, numel(roi_clustered));
             yticklabels([]);

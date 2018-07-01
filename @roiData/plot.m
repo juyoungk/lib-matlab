@@ -110,19 +110,19 @@ function plot(r, I)
                 end
 
             otherwise
-                n = str2double(a);
-                if (n>=0) & (n<10)
-                    k = I(i_roi);
-                    r.c(k) = n;
-                    %r.c{n} = [k, r.c{n}];
-                    r.plot_cluster(4, n);
-                    fprintf('New ROI %d is added in cluster %d,\n', k, n);
-                    % increase roi index automatically
-                    i_roi = i_roi + 1;
-                    if i_roi > imax
-                        i_roi = 1;
-                    end 
-                end
+%                 n = str2double(a);
+%                 if (n>=0) & (n<10)
+%                     k = I(i_roi);
+%                     r.c(k) = n;
+%                     %r.c{n} = [k, r.c{n}];
+%                     r.plot_cluster(4, n);
+%                     fprintf('New ROI %d is added in cluster %d,\n', k, n);
+%                     % increase roi index automatically
+%                     i_roi = i_roi + 1;
+%                     if i_roi > imax
+%                         i_roi = 1;
+%                     end 
+%                 end
         end
         figure(hfig);
         redraw();

@@ -1,16 +1,17 @@
 function [y_aligned, qx] = align_rows_to_events(y, x, events, duration)
 %
 % Collect a fixed amount of data right after the events and align relative
-% to the events
-% (roi_traces, f_times, events, duration)
+% to the events. If you want to compute Pearson correlation from the output
+% 'y_aligned', please see the function CORR_AVG.
+%
 % inputs:
     % y - signal of interest (row index ~ time-varying signal, col ~
     % roi#)
-    % x - timed timestamps
-    % events   - array of times
+    % x - timestamps of signal
+    % events   - array of timestamps
     % duration - for which you want to copy after the event
 % Output:
-    % y_aligned - (n_cells, n_sampling(e.g. time), n_events) matrix 
+    % y_aligned - (n_sampling(e.g. time), n_cells, n_events) matrix 
 
 if size(x) < 2
     error('Timestamps(x) is too short. Not enough data.');

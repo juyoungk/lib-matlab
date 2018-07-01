@@ -36,7 +36,7 @@ function [hfig] = imvol(vol, varargin)
 %                   'b' key - Display scale bar. (Currently for 25x Leica obj).
 %                   's' key - Save current image as PNG
 %                   'v' key - Display/Hide verbose text notes in imshow
-%                   'g' key - Save image(or stack) as GIF image.
+%                   'g' key - Save image stack as GIF, MP4 and Tif formats.
 %                   'p' key - Create projected image. Max and Mean.
 % 
 %        Mode2 - ROI select mode. 'cc' (ROI) strucrue will be saved in Workspace.
@@ -323,7 +323,7 @@ function [hfig] = imvol(vol, varargin)
                 [numrows, numcols] = size(img);
                 C = imresize(img, [a_ratio*numrows, numcols]);
                 make_im_figure(500, 0); 
-                myshow(C, 0.4);
+                myshow(C, 0.4);                
                 ax = gca; 
                 %scale bar?
                 hold on;
@@ -334,16 +334,19 @@ function [hfig] = imvol(vol, varargin)
                 text(x0+l_scalebar*px_per_um/2, y0, [num2str(l_scalebar),' um'], 'FontSize', 15, 'Color', 'w', ...
                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','center');
                 hold off;
-            case 's'
+            case 's' % save current snapshot
                 SAVE_png = true;
-            case 'g' %save as GIF
+            case 'g' %save as GIF and MP4
                 % conditions
                 FLAG_txt = false;
+                %
+                v = VideoWriter([s_title, '.mp4'], 'MPEG-4'); 
+                v.FrameRate = 4;
+                open(v);
                 % 
-                filename = [s_title, '.gif'];
                 for k = 1:data.imax
                     data.i = k;
-                    redraw();
+                    redraw(); title('');                  
                     % frame number
                     if contains(s_title, 'stack')
                         str3 = sprintf(' Z = %3d um (%3d/%d) ', k*z_step_um, data.i, data.imax);
@@ -353,22 +356,30 @@ function [hfig] = imvol(vol, varargin)
                     text(ax.XLim(1), ax.YLim(1), str3, 'FontSize', 15, 'Color', 'w', ...
                         'VerticalAlignment', 'top', 'HorizontalAlignment','left');
                     frame = getframe(hfig); % frame from Handle hfig.
+                    
+                    % animated GIF
                     im = frame2im(frame);
                     [A, map] = rgb2ind(im, 256);
                     if k == 1 
-                        imwrite(A, map, filename, 'gif', 'LoopCount', Inf, 'DelayTime', 0.2);
+                        imwrite(A, map, [s_title, '.gif'], 'gif', 'LoopCount', Inf, 'DelayTime', 0.2);
+                        imwrite(im, [s_title, '.tif']);
                     else
-                        imwrite(A, map, filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.2);
+                        imwrite(A, map, [s_title, '.gif'], 'gif', 'WriteMode', 'append', 'DelayTime', 0.2);
+                        imwrite(im, [s_title, '.tif'], 'WriteMode', 'append');
                     end
+                    
+                    % 
+                    writeVideo(v, frame);
                 end
+                close(v);
                 FLAG_txt = true;
                 
             case 'p' % projection
                 prompt = {'Start layer: ','Last layer: ','Projection type: '};
-                title = 'Projection image';
+                d_title = 'Projection image';
                 dims = [1 15];
                 definput = { num2str(data.i), num2str(data.i), 'Max'};
-                answer = inputdlg(prompt,title,dims,definput);
+                answer = inputdlg(prompt,d_title,dims,definput);
                 % check if out-of-range?
                 img = vol(:,:,str2double(answer{1}):str2double(answer{2}));
                 hnew = make_im_figure(pos(3), 0);
