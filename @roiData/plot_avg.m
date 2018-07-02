@@ -92,7 +92,8 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 ax.XAxis.FontSize = Fontsize;
                 ax.YAxis.FontSize = Fontsize;
                 % XTick positions: independent of phase value
-                ax.XTick = (0:0.5:(r.n_cycle)) * duration;
+                %ax.XTick = (0:0.5:(r.n_cycle)) * duration;
+                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
         %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
                 xtickformat('%.1f');
 
@@ -106,8 +107,8 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 if Label == true
                     % ROI id
                     if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
-                     text(ax.XLim(end), ax.YLim(1), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
-                                    'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');                   
+                     text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
+                                    'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');                   
                     end
                     % cluster id
                     c_id = unique(r.c(id_roi));
@@ -125,7 +126,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     if x < r.t_range(1) && x > r.t_range(2)
                         continue;
                     end
-                    % avg trigger times
+                    % Lines for avg trigger times
                     plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     % middle line
                     if strfind(r.ex_name, 'flash')
@@ -135,7 +136,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 end
 
                 % within one repeat, stim trigger events
-                tt = r.timesForAvgPlot(r.avg_stim_times(1:end-1));
+                tt = r.timesForAvgPlot(r.avg_stim_times(1:end));
                 for k = 1:length(tt)
                     x = tt(k);
                     if x < r.t_range(1) || x > r.t_range(2)
@@ -144,6 +145,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     if k ~= 1
                         plot([x x], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
                     end
+                    
                     kk = mod(k, r.avg_every); % index within one cycle.
                     if kk == 0; kk = r.avg_every; end;
                     if ~isempty(r.avg_stim_tags{kk}) && Label
@@ -152,12 +154,22 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     end
                     % middle lines between stim triggers
                     if strfind(r.ex_name, 'typing')
-                        x = x + 0.5*(r.avg_stim_times(kk+1)-r.avg_stim_times(kk));
-                        plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                            if ~isempty(r.avg_stim_tags{kk}) &&...
+                                    (contains(r.avg_stim_tags{kk}, 'Black') ||...
+                                    contains(r.avg_stim_tags{kk}, 'Mov'))
+                                % no middle lines
+                            else 
+                                if kk == r.avg_every
+                                    next_stim = r.avg_trigger_interval;
+                                else
+                                    next_stim = r.avg_stim_times(kk+1);
+                                end
+                                x = x + 0.5*(next_stim-r.avg_stim_times(kk));
+                                plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                            end
                     end
                 end
 
-                
 %                 for n = 1:r.n_cycle
 %                     x = (n-1) * duration;
 %                     % avg trigger times

@@ -5,6 +5,7 @@ function [coeff, score] = pca(r, I)
     % all ROI traces
     if nargin < 2
         I = 1:r.numRoi;
+        I = I(r.p_corr.smoothed_norm > 0.1);
     end
     
     % you can use only clustered traces for PCA basis compuataion.        

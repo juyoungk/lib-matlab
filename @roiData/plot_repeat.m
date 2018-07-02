@@ -1,7 +1,10 @@
-function plot_repeat(r, I, varargin)
-% PLOT version 'repeat'. Axes instead of subplot. 
+function ids = plot_repeat(r, I, varargin)
+% PLOT version 'repeat'.
 % Limited number of plots per figure. Keyboard navigation for next set of
-% ROIs. Print summry for correlation coefficients.?
+% ROIs.
+%
+% output:
+%           'ids' - array of ROI index (filtered by correlation)
 %
 % varargin:
 %           'Cluster' - if non-zero cluster id is given, clustered ROIs will be displayed.         
@@ -15,6 +18,13 @@ function plot_repeat(r, I, varargin)
         I = I(r.p_corr.smoothed_norm > p);
         fprintf('[plot_repeat] %d ROIs are seleted with a condition of p > %.2f.\n', numel(I), p);
     end
+    if length(I) == 1 && I < 1 % I as p upper limit
+        p = I;
+        I = 1:r.numRoi;    
+        I = I(r.p_corr.smoothed_norm > p);
+        fprintf('[plot_repeat] %d ROIs are seleted with a condition of p > %.2f.\n', numel(I), p);
+    end
+    ids = I;
     n_ROI = numel(I);
     S = sprintf('ROI %d  *', I); C = regexp(S, '*', 'split'); % C is cell array.
     
@@ -57,7 +67,7 @@ function plot_repeat(r, I, varargin)
         % delete all objects
         delete(hfig.Children);
                
-        for i = 1:n_plots_per_fig % position index within a plot
+        for i = 1:n_plots_per_fig % loop over position id
             
             i_cell = (i_fig - 1) * n_plots_per_fig + i;
             if i_cell > n_ROI
@@ -66,13 +76,12 @@ function plot_repeat(r, I, varargin)
             k = I(i_cell); % real ROI index
             
             % x y position given cell id
-            
             x_ax = m/2. + (J_plot(i)-1) * w_ax;
             y_ax = m/2. + (I_plot(i)-1) * h_ax;
 
             % 1. Mean (& std) trace
-            axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.9*w_ax  0.9*h_ax_mean], 'Visible', 'off');
-                r.plot_avg(k, 'traceType', 'smoothed');
+            axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.8*w_ax  0.9*h_ax_mean], 'Visible', 'off');
+                r.plot_avg(k, 'traceType', 'normalized');
                 title('Mean response');
 
             % 2. All traces (smoothed)
@@ -84,7 +93,7 @@ function plot_repeat(r, I, varargin)
             h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_trace;
 
             for ii = 1:n_trace
-                axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.9*w_ax,  h_ax_one_trace], 'Visible', 'off');
+                axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
                 plot(r.avg_times, y_aligned(:,ii), 'LineWidth', 1.2);
                 axis tight
                 axis off

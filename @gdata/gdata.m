@@ -70,9 +70,60 @@ classdef gdata < handle
                     vol = cat(3, AI_mean_early, AI_mean_late);
                 else
                     for PMT_ch=g.header.channelSave
+                        if PMT_ch==4; continue; end;
                         vol = imdrift(g, PMT_ch);
                     end
                 end
+            end
+            
+            function img = imfuse(g, ch)
+                % Create composite image
+                % c_fraction: contrast saturation [%]
+                A = g.AI_mean{4}; % background to gray
+                B = g.AI_mean{1}; % red channel
+                C = g.AI_mean{3}; % green channel
+                %
+                c_fraction = 2;
+                Tol = [c_fraction*0.01 1-c_fraction*0.01];
+                
+                if nargin < 2
+                    ch = g.roi_channel;
+                end
+                %
+                if isempty(A)
+                    img = []; 
+                    return
+                else
+                    A = scaled(A);
+                    MinMax = stretchlim(A, [0.001, 0.999]);
+                    A = imadjust(A, MinMax);
+                end
+                
+                % 
+                if isempty(B)
+                    B = zeros(size(A));
+                else
+                    B = scaled(B);
+                    MinMax = stretchlim(B,Tol);
+                    B = imadjust(B, MinMax);
+                end
+                %
+                if isempty(C)
+                    C = zeros(size(A));
+                else
+                    C = scaled(C);
+                    MinMax = stretchlim(C, Tol);
+                    C = imadjust(C, MinMax);
+                end
+                %
+                if ch == 1
+                    img = cat(3, max(A, B), A, A);
+                elseif ch == 3
+                    img = cat(3, A, max(A, C), A);
+                else
+                    img = cat(3, max(A, B), max(A, C), A);
+                end
+                imshow(img);
             end
             
             function myshow(g, ch)

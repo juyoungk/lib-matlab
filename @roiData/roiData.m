@@ -214,6 +214,7 @@ classdef roiData < matlab.mixin.Copyable
         function save(r)
             % struct for save
             s.cc = r.roi_cc;
+            s.avg_stim_tags = r.avg_stim_tags;
             s.c = r.c;
             s.c_note = r.c_note;
             s.roi_review = r.roi_review;
@@ -271,7 +272,7 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function imvol(r)
-            imvol(r.image, 'roi', r.roi_cc, 'edit', false); % can be different depending on threhsold 
+            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false); % can be different depending on threhsold 
         end
         
         function get_stimulus(r, stims_whitenoise, fliptimes)
@@ -534,7 +535,7 @@ classdef roiData < matlab.mixin.Copyable
                 fprintf('Num of full repeats: %d.\n', numRepeat);
 
                 % stim events within one avg
-                r.avg_stim_times = r.stim_trigger_times(1:r.avg_every+1) - r.stim_trigger_times(1);
+                r.avg_stim_times = r.stim_trigger_times(1:r.avg_every) - r.stim_trigger_times(1);
                 
                 % times for avg traces
                 n = floor(r.avg_trigger_interval*(1./r.ifi)); % same as qx in align_rows_to_events function
