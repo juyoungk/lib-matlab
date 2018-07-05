@@ -39,7 +39,7 @@ disp(['Average Silhouette Value: ', num2str(mean(silh))]);
 
 % scatter plot and image display (should be optional)
 if ndims(X) > 1 && d(end) > 1 % p should be more than one.
-    mycluscatter(Xre, idx, cent);
+    mycluscatter(Xre, 'Cluster', idx);
 end
 
 % if X was a stack of 2-D image, show the index image.

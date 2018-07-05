@@ -17,9 +17,12 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     PlotType = p.Results.PlotType;
     NormByCol = p.Results.NormByCol;
     w_Line    = p.Results.LineWidth;
+    lineColor = p.Results.Color;
     h_axes    = p.Results.axes;
     DrawPlot = p.Results.DrawPlot;
     Label    = p.Results.Label;
+    
+    argPlot = {};
     
     % data index inside a time range
     idx = (r.a_times > r.t_range(1)) & (r.a_times < r.t_range(2));
@@ -60,7 +63,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 y = normc(y);
             end
             
-            if strcmp(PlotType,'mean')
+            if contains(PlotType,'mean')
                 y = mean(y, 2);
             end
             
@@ -74,17 +77,22 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             %% Plot
             if DrawPlot
                 % Adjust for plot (phase & cycles)
-                y = r.traceForAvgPlot(y);
+                y = r.traceAvgPlot(y);
+                x = r.a_times;
                 y = y(idx,:);
-                x = r.a_times(idx);
+                x = x(idx);
                 
                 duration = r.avg_trigger_interval;
 
+                if contains(PlotType, 'tiled') || contains(PlotType, 'mean')
+                    argPlot = {'Color', lineColor};
+                end
+                
                 %
                 if isempty(h_axes)
-                    plot(x, y, 'LineWidth', w_Line); hold on;
+                    plot(x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
                 else
-                    plot(h_axes, x, y, 'LineWidth', w_Line); hold on;
+                    plot(h_axes, x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
                 end
 
                 ax = gca;  Fontsize = 10;
@@ -127,11 +135,10 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         continue;
                     end
                     % Lines for avg trigger times
-                    plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                    plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     % middle line
                     if strfind(r.ex_name, 'flash')
-                        x = (n-1) * duration + duration/2.;
-                        plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                        plot([x+duration/2. x+duration/2.], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     end
                 end
 
@@ -281,6 +288,7 @@ function p =  ParseInput(varargin)
     p.addParameter('DrawPlot', true, @(x) islogical(x));
     p.addParameter('Label', true, @(x) islogical(x));
     p.addParameter('LineWidth', 1.5, @(x) x>0);
+    p.addParameter('Color', [0 0.4470 0.7410], @(x) isvector(x) || ischar(x));
     p.addParameter('axes', []);
  
 %     addParamValue(p,'verbose', true, @(x) islogical(x));

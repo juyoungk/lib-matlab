@@ -1,4 +1,4 @@
-function hfig = makeFigBlack(varargin)
+function hfig = makeFigBlack(hfig)
 %
 % Copy Figure to clipboard for black background
 % See also the function 'ccc' for just copying the figure to the clipboard
@@ -14,8 +14,6 @@ axis_Linewidth = 2.4;
 % figure handle for current figure
 if nargin <1
     hfig = get(groot,'CurrentFigure');
-else
-    hfig = varargin{1};
 end
 
 % Transparent background for figure
@@ -49,6 +47,7 @@ for i = 1:numel(hd)
     ax.XAxis.LineWidth = axis_Linewidth;
     ax.YAxis.LineWidth = axis_Linewidth;
 end
+
 % colorbar
 hd = findall(hfig, 'type', 'colorbar');
 for i = 1:numel(hd)

@@ -69,7 +69,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_projected   % projected trace onto (PCA) space.
         avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
-        a_times     % times for avg plot. Phase shifted.
+        a_times     % times for avg plot. Full cycles. Phase shifted.
         
         % whitenoise responses
         rf              % cell arrays
@@ -444,6 +444,7 @@ classdef roiData < matlab.mixin.Copyable
                         avg_every = 1;
                         r.n_cycle = 1;
                         r.s_phase = 0;
+                        
                         % special cases
                         if strfind(r.ex_name, 'typing')
                             avg_every = 12;
@@ -455,7 +456,7 @@ classdef roiData < matlab.mixin.Copyable
                             r.n_cycle = 2;
                             r.s_phase = 0.25;
                         elseif strfind(r.ex_name, 'movingbar')
-                            avg_every = 4;
+                            avg_every = 8;
                         elseif strfind(r.ex_name, 'jitter')
                             avg_every = 2;
                         end
@@ -549,8 +550,9 @@ classdef roiData < matlab.mixin.Copyable
                 r.avg_stim_tags = cell(1, n_every);
         end
         
-        % Function for phase shift and multiply
+        % Function for phase shift and multiply for vector
         function yy = traceForAvgPlot(obj, y)
+            % initial & old version.
             [row, col] = size(y);
             if row == 1
                 yy = circshift(y, round( obj.s_phase * col ) );
@@ -559,7 +561,7 @@ classdef roiData < matlab.mixin.Copyable
 %                 yy = circshift(y, round( obj.s_phase * row ) );
 %                 yy = repmat(yy, [obj.n_cycle, 1]);
             else
-                % assume row vector is time series.
+                % assume Dim1 is time series.
                 yy = circshift(y, round( obj.s_phase * row ) );
                 yy = repmat(yy, [obj.n_cycle, 1]);
             end

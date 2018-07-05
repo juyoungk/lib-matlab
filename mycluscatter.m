@@ -36,7 +36,7 @@ for i = 1:p
         if p>1
             subplot(p,p,(i-1)*p+j);
         end
-        for c = c_list % # of clustering (# of colors)
+        for c = 1:c_list_num  %c_list % # of clustering (# of colors)
             if i==j
                 range = linspace(min(X(idx==c,i)),max(X(idx==c,i)), 8);
                 if range(1) == range(end) % only one data in cluster
@@ -62,9 +62,9 @@ for i = 1:p
             end
             
             if c == 0
-                scatter(X(idx==c,j),X(idx==c,i), 12, c_0);
+                scatter(X(idx==c,j),X(idx==c,i), 11, c_0);
             else
-                scatter(X(idx==c,j),X(idx==c,i), 18, color(c_list == c, :), 'filled');
+                scatter(X(idx==c,j),X(idx==c,i), 12, color(c_list == c, :), 'filled');
             end
             ax = gca;
             ax.Color = 'k'; % background color
