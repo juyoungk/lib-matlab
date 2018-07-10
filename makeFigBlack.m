@@ -35,10 +35,20 @@ for i = 1:numel(hd)
     ax.YAxis.FontSize = Fontsize;
     ax.XAxis.Color = color;
     ax.YAxis.Color = color;
+    
     ax.XLabel.Color = color;
     ax.YLabel.Color = color;
+    
+    % Grid
     ax.GridColor = [0.1, 0.1, 0.1];
-
+    
+    % Z-axis
+    ax.ZAxis.FontSize = Fontsize;
+    ax.ZAxis.Color = color;
+    ax.ZLabel.Color = color;
+    ax.ZAxis.LineWidth = axis_Linewidth;
+    
+    % Title
     text = ax.Title.String;
     % text can be cell array. text{1} might be needed.
     % disp(['(text of Title?) ', text{1}]);

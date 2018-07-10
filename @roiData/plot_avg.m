@@ -76,13 +76,20 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             
             %% Plot
             if DrawPlot
+                
+                duration = r.avg_trigger_interval;
+                
+                % Time range will define the n_cycle
+                % default n=2 cycle
+                
+                
                 % Adjust for plot (phase & cycles)
                 y = r.traceAvgPlot(y);
                 x = r.a_times;
                 y = y(idx,:);
                 x = x(idx);
                 
-                duration = r.avg_trigger_interval;
+                
 
                 if contains(PlotType, 'tiled') || contains(PlotType, 'mean')
                     argPlot = {'Color', lineColor};
@@ -127,8 +134,10 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 end
 
                 %% Additional lines
+                % event does not need to shift
                 % avg trigger events
-                tt = r.timesForAvgPlot( 0 );
+                %tt = r.timesForAvgPlot( 0 );
+                tt = ((1:(r.n_cycle))-1)*duration;
                 for n = 1:length(tt)
                     x = tt(n);
                     if x < r.t_range(1) && x > r.t_range(2)
@@ -138,14 +147,13 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     % middle line
                     if strfind(r.ex_name, 'flash')
-                        plot([x+duration/2. x+duration/2.], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                        plot([x+duration/2. x+duration/2.], ax.YLim, ':', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     end
                 end
 
                 % within one repeat, stim trigger events
-                tt = r.timesForAvgPlot(r.avg_stim_times(1:end));
-                for k = 1:length(tt)
-                    x = tt(k);
+                for k = 1:length(r.avg_stim_times)
+                    x = r.avg_stim_times(k);
                     if x < r.t_range(1) || x > r.t_range(2)
                         continue;
                     end

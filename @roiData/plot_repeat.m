@@ -112,7 +112,7 @@ function ids = plot_repeat(r, I, varargin)
                         
                     % individual traces first (ignore 1st trace?!)
                     disp('[Plot_repeat] 1st trace was ignored.');
-                    plot(r.a_times, y_aligned(:,2:end), 'LineWidth', 1.2); 
+                    plot(r.a_times, y_aligned(:,10:19), 'LineWidth', 1.2); 
                     xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                     hold on
                     

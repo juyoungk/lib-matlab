@@ -19,9 +19,14 @@ else
     disp('No appropriate inputs.');
 end
 
-hfig.Color = 'white';
-hfig.PaperPositionMode = 'auto';
+s = input('Fig Color? [NONE or white] ', 's'); 
+if contains(s, 'white')
+    hfig.Color = 'white';
+else
+    hfig.Color = 'none';
+end
 
+hfig.PaperPositionMode = 'auto';
 
 editmenufcn(hfig, 'EditCopyFigure');
 

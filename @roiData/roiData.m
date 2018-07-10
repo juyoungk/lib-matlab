@@ -87,6 +87,7 @@ classdef roiData < matlab.mixin.Copyable
         % properties for plot
         n_cycle = 1
         s_phase = 0 % shift phase
+        c_ragne = [0, 1]; % cycle range
         t_range = [-100, 100] % avg plot range bound. secs.
         coeff   % (PCA) basis
     end
@@ -450,7 +451,8 @@ classdef roiData < matlab.mixin.Copyable
                             avg_every = 12;
                             % copy the trace in (-) times.
                             r.n_cycle =2;
-                            r.s_phase =1;
+                            r.s_phase =1; % shfit one full cycle
+                            r.c_range = [-1, 1];
                             r.t_range =[-0.9, 100];
                         elseif strfind(r.ex_name, 'flash')
                             r.n_cycle = 2;
