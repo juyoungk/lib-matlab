@@ -16,6 +16,7 @@ function fov = get_FOV_size_x25_Leica(zoom)
         fov = interp1(scanZoom, fovSize, zoom, 'spline'); 
     else
         fov = 0;
+        fprintf('Scanning Zoom: %d. Inappropriate zoom factor was given. Current FOV size is %.2f\n', zoom, fov);
     end
     
 end

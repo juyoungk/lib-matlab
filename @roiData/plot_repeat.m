@@ -1,7 +1,7 @@
 function ids = plot_repeat(r, I, varargin)
 % PLOT version 'repeat'.
 % Limited number of plots per figure. Keyboard navigation for next set of
-% ROIs.
+% ROIs. Defualt is to show responses with corr>0.2.
 %
 % output:
 %           'ids' - array of ROI index (filtered by correlation)
@@ -99,7 +99,7 @@ function ids = plot_repeat(r, I, varargin)
 %                 y_aligned = reshape(y_aligned, size(y_aligned, 1), []);
 %             
                 % n_cycle and phase shift (row vectors)
-                y_aligned = circshift(y_aligned, round( r.s_phase * size(y_aligned, 1)), 1); % last param is DIM.
+                y_aligned = circshift(y_aligned, round( r.s_phase * size(y_aligned, 1)), 1); % last param is DIM along which the vector will be shifted.
                 y_aligned = repmat(y_aligned, [r.n_cycle, 1]);               
 
             n_trace = size(y_aligned, 2);
@@ -135,8 +135,8 @@ function ids = plot_repeat(r, I, varargin)
                     for ii = 1:n_trace
                         axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
                         plot(r.a_times, y_aligned(:,ii), 'LineWidth', 1.2);
-                        xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                         axis tight
+                        xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                         axis off
                     end
                     ax = gca;

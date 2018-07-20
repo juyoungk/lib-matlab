@@ -17,7 +17,11 @@ function ax = plot_rf(r, id_roi, traceType, maxlag, upsampling)
         
         [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling); % sampled at f_times_norm
         
-        plot_rf_map(r, rf, s);
+        if size(rf, 1) == 1 % uniform field
+            plot_rf_slice_t(r, rf);
+        else
+            plot_rf_map(r, rf, s);
+        end
         
     else
         % plot rf for all rois

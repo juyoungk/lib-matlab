@@ -199,17 +199,38 @@ classdef roiData < matlab.mixin.Copyable
                     otherwise
                 end
             end
+            filename = fullfile(dirpath, 'stimulus.h5');
             
             % stim id for whitenoise?
-            h5disp([dirpath, '/stimulus.h5']);
-            a = h5info([dirpath,'/stimulus.h5']);
-            a.Groups.Name % display exp names?
+            %h5disp( filename );
             
-            % Assuption: expt1 is a whitenoise stimulus.
-            disp('Assumption: group /expt1/ is a whitenoise stimulus');
-            stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
-            times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
-            r.get_stimulus(stim, times);
+            % How many experiments stored in h5 file?
+            a = h5info( filename );
+            disp('\nh5 file......');
+            N = numel(a.Groups);
+            fprintf('\t\t %d exp group(s) are found.\n', N);
+            
+            % Display & list some attributes
+            for i=1:N
+                disp(' ');
+                h5disp(filename, a.Groups(i).Name);
+            end
+            disp(' ');
+            str = sprintf('Which expt do you want to load ? [1-%d]: ', N);
+            n = input(str);
+            if isnumeric(n) && n <= N
+%                 stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
+%                 times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
+                 stim = h5read(filename, [a.Groups(n).Name,'/stim']);
+                times = h5read(filename, [a.Groups(n).Name,'/timestamps']);
+                r.get_stimulus(stim, times);
+                % additional attributes
+                r.stim_size = h5readatt(filename, '/disp', 'aperturesize_whitenoise_mm');
+                disp('Loading h5 file is successful!'); 
+            else
+                disp('Incorrent input for expt id. Fail to load h5.');
+            end
+            
         end
         
         function save(r)
@@ -452,7 +473,6 @@ classdef roiData < matlab.mixin.Copyable
                             % copy the trace in (-) times.
                             r.n_cycle =2;
                             r.s_phase =1; % shfit one full cycle
-                            r.c_range = [-1, 1];
                             r.t_range =[-0.9, 100];
                         elseif strfind(r.ex_name, 'flash')
                             r.n_cycle = 2;
@@ -487,9 +507,8 @@ classdef roiData < matlab.mixin.Copyable
                     r.stim_movie = stim_movie;
                     r.stim_fliptimes = stim_fliptimes;
                 elseif strfind(r.ex_name, 'whitenoise')
-                    r.load_h5;
-                    % stim size?
-                    r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
+%                     r.load_h5;
+%                     r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
                 end
 
                 % cluster parameters
