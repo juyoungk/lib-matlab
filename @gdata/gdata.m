@@ -218,13 +218,10 @@ classdef gdata < handle
                     if obj.numStimulus == 1
                         obj.rr = r;
                     elseif obj.numStimulus >1
-                        
                         for i=1:obj.numStimulus
                             % select the part of the roi traces using event
                             % ids.
-                            
                             obj.rr(i) = r.select_data( obj.stims_ids{i} );
-                            fprintf('[%d/%d] roiData object is created using stime ids (%s)\n', i, obj.numStimulus, num2str(obj.stims_ids{i}));
 
                             %obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
                             %obj.rr(i).header = obj.header;

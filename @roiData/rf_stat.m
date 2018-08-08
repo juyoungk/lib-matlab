@@ -7,10 +7,6 @@ function s = rf_stat(r, rf, nearby)
         nearby = 1;
     end
     
-    if size(rf, 1) == 1
-        nearby = 0;
-    end
-    
     % condition?
     
     % reshape rf
