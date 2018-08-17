@@ -50,10 +50,32 @@ classdef gdata < handle
     end   
 
     methods
+            function s = getFigTitle(g, ch)
+                % for figure title
+                if nargin < 2
+                    if ~isempty(g.roi_channel)
+                        ch = g.roi_channel;
+                    else
+                        ch = g.header.channelSave(1); % first available channel
+                    end
+                end
+                 % title name
+                 t_filename = strrep(g.tif_filename, '_', '  ');
+                 s = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, ch, g.header.scanZoomFactor);
+            end
+            
+            function filename = getFigFileName(g, ch)
+                s = getFigTitle(g,ch);
+                filename = strrep(s, ' ', '_');
+                filename = strrep(filename, '(', '_');
+                filename = strrep(filename, ':', '');
+            end
+            
             function vol = imdrift(g, ch)
                 % See if the cells were drift over imaging session
                 % 1000 frames more case
-                
+                % Output vol: 2 frames. Before and After. Last available
+                % channel.
                 if nargin > 1
                     snapframes = 1000;
                     n = min(snapframes, g.nframes);
@@ -67,6 +89,7 @@ classdef gdata < handle
                     
                     imshowpair(myshow(AI_mean_early, 0.2), myshow(AI_mean_late, 0.2)); % contrast adjust by myshow()
                     title(ax, 'Is it drifted? (Green-Magenta)', 'FontSize', 15, 'Color', 'w');
+                    print([g.getFigFileName(ch),'.png'], '-dpng', '-r300'); %high res
                     vol = cat(3, AI_mean_early, AI_mean_late);
                 else
                     for PMT_ch=g.header.channelSave
@@ -344,10 +367,6 @@ classdef gdata < handle
                         hf = figure; 
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
                             imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
-                                %saveas(gcf, [str,'_ex',num2str(i),'_ch', num2str(h.channelSave(j)),'.png']);
-                            % scale bar display
-                            %display_scalebar(mag)
-                            %line([100 200],[100 100], 'Color', 'r', 'LineWidth', 3)
                     end
 
                     % h5 file: PD
@@ -480,6 +499,7 @@ classdef gdata < handle
 
                         % drift?
                         before_after = g.imdrift;
+                        % combined image for ROI segmentation.
                         imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
                 end
@@ -503,7 +523,7 @@ classdef gdata < handle
                 end
         end
         
-    methods(Static)
+    methods(Static) % do not require an object of the class
         function pos_new = figure_setting()
             iptsetpref('ImshowInitialMagnification','fit');
             pos     = get(0, 'DefaultFigurePosition');

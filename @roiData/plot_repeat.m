@@ -49,7 +49,7 @@ function ids = plot_repeat(r, I, varargin)
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
-    n_col = 4;
+    n_col = 3;
     n_row = 2;
     n_plots_per_fig = n_col * n_row;
     n_figs = ceil(n_ROI/n_plots_per_fig);

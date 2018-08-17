@@ -87,7 +87,7 @@ classdef roiData < matlab.mixin.Copyable
         % properties for plot
         n_cycle = 1
         s_phase = 0 % shift phase
-        c_ragne = [0, 1]; % cycle range
+        c_range = [0, 1]; % cycle range
         t_range = [-100, 100] % avg plot range bound. secs.
         coeff   % (PCA) basis
     end

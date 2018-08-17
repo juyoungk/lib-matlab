@@ -29,14 +29,17 @@ function move_conex_xyz_stage(src, evt)
 %             pos_bot_ref(2) = pos_bot_ref(2) + 0.05;
 
     % VS to MEA 0416
-    pos_bot_ref = [5.958, 13.016, 23.017]; % mm
-        
+        pos_bot_ref = [5.958, 13.016, 23.017]; % mm
+       
         % find adjustment through bottom unit (0614. 1070 laser)
-        pos_bot_ref(1) = pos_bot_ref(1) + 0.055; % (+) makes VS left
-        pos_bot_ref(2) = pos_bot_ref(2) + 0.12;  % (+) makes VS down
+        pos_bot_ref(1) = pos_bot_ref(1) + 0.053; % (+) makes VS left
+        pos_bot_ref(2) = pos_bot_ref(2) + 0.13;  % (+) makes VS down
         pos_bot_ref(3) = pos_bot_ref(3);
         
+         % 0814 New MEA ref
+        pos_bot_ref = [6.465, 13.0289, 22.600];
         
+    
     % Align 2P (not VS focus) to MEA 0416 201
        % w/ 2 PMTs, 920 laser
         pos_top_ref = [-346.3000 68.4000 7.6760e+03];
@@ -51,11 +54,17 @@ function move_conex_xyz_stage(src, evt)
 
         % 0620: 1070 laser
         pos_top_ref = [-347.3000 69.4000 -4.6362e+03]; %
+        
+        % 0718: 1070 laser (large shift in z) 
+        pos_top_ref = [-347.3000 69.4000 -6.4173e+03];
+        
+        % 0814: 1070 laser
+        pos_top_ref = [112.2000 221.9000 -7.098e+03];
 
     % offset between 2p and VS focal planes: 
     % always 150 um below imaging plane(e.g. GCL)
     %z_offset_vstim = 0;
-    z_offset_vstim = 0.150; % [mm] (+) means away from top obj. more distance.
+    z_offset_vstim = 0.150; % [mm] (+) means below the 2P focal plane. Away from top obj.
    
     % current pos after focus done.
     % pos_top = src.hSI.hMotors.motorPosition; % scanimage relative pos
