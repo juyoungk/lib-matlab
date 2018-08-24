@@ -13,8 +13,9 @@ function ids = plot_repeat(r, I, varargin)
     p=ParseInput(varargin{:});
     PlotType = p.Results.PlotType;
     
+    % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
-        p = 0.2;
+        p = 0.1;
         I = 1:r.numRoi;    
         I = I(r.p_corr.smoothed_norm > p);
         fprintf('[plot_repeat] %d ROIs are seleted with a condition of p > %.2f.\n', numel(I), p);
@@ -49,7 +50,7 @@ function ids = plot_repeat(r, I, varargin)
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
-    n_col = 3;
+    n_col = 1;
     n_row = 2;
     n_plots_per_fig = n_col * n_row;
     n_figs = ceil(n_ROI/n_plots_per_fig);
@@ -76,7 +77,7 @@ function ids = plot_repeat(r, I, varargin)
         % delete all objects
         delete(hfig.Children);
                
-        for i = 1:n_plots_per_fig % loop over position id
+        for i = 1:n_plots_per_fig % loop over axes position(~ cell id) in given single figure
             
             i_cell = (i_fig - 1) * n_plots_per_fig + i;
             if i_cell > n_ROI
@@ -88,20 +89,29 @@ function ids = plot_repeat(r, I, varargin)
             x_ax = m/2. + (J_plot(i)-1) * w_ax;
             y_ax = m/2. + (I_plot(i)-1) * h_ax;
              
-            % All traces (smoothed_norm)
+            % Algin single cell trace. Which trace? smoothed norm
             y = r.roi_smoothed_norm(:, k);
                 [y_aligned, ~] = align_rows_to_events(y, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
-                y_aligned = reshape(y_aligned, size(y_aligned, 1), []);
+                y_aligned = reshape(y_aligned, size(y_aligned, 1), []); % times (row) x repeats (cols) 
 %             
 %             % All traces (smoothed)
 %             y = r.roi_smoothed(:, k);
 %                 [y_aligned, ~] = align_rows_to_events(y, r.f_times, r.avg_trigger_times, r.avg_trigger_interval);
 %                 y_aligned = reshape(y_aligned, size(y_aligned, 1), []);
 %             
-                % n_cycle and phase shift (row vectors)
-                y_aligned = circshift(y_aligned, round( r.s_phase * size(y_aligned, 1)), 1); % last param is DIM.
-                y_aligned = repmat(y_aligned, [r.n_cycle, 1]);               
+            % under test: single liner?
+            [y_aligned, x] = r.traceAvgPlot(y_aligned);
+  
+%                 % n_cycle and phase shift (row vectors)
+%                 y_aligned = circshift(y_aligned, round( r.s_phase * size(y_aligned, 1)), 1); % last param is DIM.
+%                 y_aligned = repmat(y_aligned, [r.n_cycle, 1]); % multiplay along row (1st) dimension.
+% 
+%                 % time range filter for avg trace.
+%                 idx = (r.a_times > r.t_range(1)) & (r.a_times < r.t_range(2));
+%                 x = r.a_times(idx);
+%                 y_aligned = y_aligned(idx,:);
 
+            %
             n_trace = size(y_aligned, 2);
             str = sprintf('corr = %.2f ', r.p_corr.smoothed(k));
                     
@@ -112,7 +122,7 @@ function ids = plot_repeat(r, I, varargin)
                         
                     % individual traces first (ignore 1st trace?!)
                     disp('[Plot_repeat] 1st trace was ignored.');
-                    plot(r.a_times, y_aligned(:,10:19), 'LineWidth', 1.2); 
+                    plot(x, y_aligned, 'LineWidth', 1.2); 
                     xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                     hold on
                     
@@ -126,15 +136,15 @@ function ids = plot_repeat(r, I, varargin)
                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
 
                 else
-                    % Mean
+                    % Mean trace
                     r.plot_avg(k, 'traceType', 'normalized'); 
                     title('Mean response');
                     
                     h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_trace;
-
+                    % individual traces
                     for ii = 1:n_trace
                         axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
-                        plot(r.a_times, y_aligned(:,ii), 'LineWidth', 1.2);
+                        plot(x, y_aligned(:,ii), 'LineWidth', 1.2);
                         xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                         axis tight
                         axis off

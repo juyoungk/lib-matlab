@@ -59,6 +59,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_trigger_times   % times for aligning between trials
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_tags
+        avg_stim_plot   % structure for plot properties of each stim triggers.
         avg_trigger_interval
         avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
         avg_trace_std   % std over trials
@@ -69,7 +70,8 @@ classdef roiData < matlab.mixin.Copyable
         avg_projected   % projected trace onto (PCA) space.
         avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
-        a_times     % times for avg plot. Full cycles. Phase shifted.
+        a_times     % times for avg plot. Full cycles (e.g. 2 cycles). Phase shifted.
+        t_range = [-0.9, 100] % Time filter for avg plot range (last filter). can be arbitrarily time points. [secs]
         
         % whitenoise responses
         rf              % cell arrays
@@ -84,11 +86,10 @@ classdef roiData < matlab.mixin.Copyable
         roi_review
         roi_selected
         
-        % properties for plot
-        n_cycle = 1
-        s_phase = 0 % shift phase
-        c_range = [0, 1]; % cycle range
-        t_range = [-100, 100] % avg plot range bound. secs.
+        % properties for plot of averaged trace: use traceAvgPlot.
+        n_cycle = 2 
+        s_phase = 1 % Shift phase toward negative time direction. 
+        %c_range = [0, 1]; % Cycle range. Not used yet. 
         coeff   % (PCA) basis
     end
  
@@ -156,19 +157,89 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function load_ex(r, ex)
-            % stim as struct array
-            stim = [ex.stim{:}];
+            % Read 'ex' structure and interpret it.
+            % interpret if middle line is preffered for plot for each stim type.
+            if iscell(ex.stim)
+                stim = [ex.stim{:}];
+            else
+                stim = ex.stim;
+            end
             % name tags as cell array
-            i = 1;
-            k = 1; % current id for stim struct
+            i = 1; % id for trigger events
+            k = 1; % id for stim struct
             while i <= r.avg_every
-                ids = (1:stim(k).cycle) + (i-1);
+                if isfield(stim(k),'cycle') && ~isempty(stim(k).cycle)
+                    cycle = stim(k).cycle;
+                else
+                    cycle = 1;
+                end
+                ids = (1:cycle) + (i-1);
                 r.avg_stim_tags(ids(1)) = {stim(k).tag};
                 i = max(ids) + 1;
                 k = k + 1; % next stim tag
             end
             if k-1 == length(stim)
-                fprintf('All (N=%d) stim tags were scanned and aligned with num of stim triggers.\n', k-1);
+                fprintf('All (k=%d) stim tags were scanned and aligned with num of stim triggers.\n', k-1);
+            elseif k-1 < length(stim)
+                fprintf('Stim tigger lines are more than # of stim tags.\n');
+            end
+        end
+        
+        function load_ex2(r, ex)
+            % Version2. Loop over ex.stim.
+            % Read 'ex' structure and interpret it.
+            % interpret if middle line is preffered for plot for each stim type.
+            % repeat number
+            if isfield(ex, 'n_repeats') && ~isempty(ex.n_repeats)
+                if r.avg_every ~= ex.n_repeats
+                    r.avg_every = ex.n_repeats; % property set method 
+                end
+            end
+            
+            if iscell(ex.stim)
+                stim = [ex.stim{:}];
+            else
+                stim = ex.stim;
+            end
+            
+            % name tags as cell array
+            i = 1; % id for trigger events
+            
+            for k = 1:numel(stim)
+                % conditions according to tag name
+                switch stim(k).tag
+                    case 'blank'
+                        r.avg_stim_plot(i).middleline = false;
+                    case ' '
+                        r.avg_stim_plot(i).middleline = false;
+                    otherwise
+                        r.avg_stim_plot(i).middleline = true;
+                end
+                % cycle
+                if isfield(stim(k),'cycle') && ~isempty(stim(k).cycle)
+                    cycle = stim(k).cycle;
+                else
+                    cycle = 1;
+                end
+                
+                % conditions according to phase in 1st cycle.
+                tag_shift = 0;
+                if isfield(stim(k),'phase_1st_cycle') && ~isempty(stim(k).phase_1st_cycle) % constatnt phase over the first cycle.
+                    r.avg_stim_plot(i).middleline = false;
+                    if cycle > 1
+                        tag_shift = 1;
+                    end
+                end
+                % display tag     
+                r.avg_stim_tags(i + tag_shift) = {stim(k).tag};
+                
+                %   
+                i = i + cycle;
+            end
+            
+            
+            if k-1 == length(stim)
+                fprintf('All (k=%d) stim tags were scanned and aligned with num of stim triggers.\n', k-1);
             elseif k-1 < length(stim)
                 fprintf('Stim tigger lines are more than # of stim tags.\n');
             end
@@ -215,7 +286,10 @@ classdef roiData < matlab.mixin.Copyable
         function save(r)
             % struct for save
             s.cc = r.roi_cc;
+            % plot info
             s.avg_stim_tags = r.avg_stim_tags;
+            s.avg_stim_plot = r.avg_stim_plot;
+            % cluster info
             s.c = r.c;
             s.c_note = r.c_note;
             s.roi_review = r.roi_review;
@@ -443,20 +517,20 @@ classdef roiData < matlab.mixin.Copyable
                     
                         % params for avg & avg plot
                         avg_every = 1;
-                        r.n_cycle = 1;
-                        r.s_phase = 0;
+                        r.n_cycle = 2; % doucle cycles 
+                        r.s_phase = 1;
                         
                         % special cases
                         if strfind(r.ex_name, 'typing')
-                            avg_every = 12;
+                            avg_every = 18;
                             % copy the trace in (-) times.
                             r.n_cycle =2;
                             r.s_phase =1; % shfit one full cycle
-                            r.c_range = [-1, 1];
                             r.t_range =[-0.9, 100];
                         elseif strfind(r.ex_name, 'flash')
                             r.n_cycle = 2;
                             r.s_phase = 0.25;
+                            r.t_range =[-100, 100];
                         elseif strfind(r.ex_name, 'movingbar')
                             avg_every = 8;
                         elseif strfind(r.ex_name, 'jitter')
@@ -469,7 +543,7 @@ classdef roiData < matlab.mixin.Copyable
                             n = avg_every; % case default number
                         end
                         
-                        % set avg_every (set.avg_every)
+                        % set avg_every (excute set.avg_every)
                         r.avg_every = n;
 
                         % cluster mean for avg trace (100 clusters max)
@@ -546,10 +620,15 @@ classdef roiData < matlab.mixin.Copyable
                 
                 % times (x-axis) setting for avg plot: shifted and
                 % repeated.
-                r.a_times = r.timesForAvgPlot;
+                r.a_times = r.timesForAvgPlot; % New version will be 'timesAvgPlot'
+                %r.a_times = r.timesAvgPlot;
                 
                 % cell array for tags
                 r.avg_stim_tags = cell(1, n_every);
+                % struct for the plot properties of each stim trigger time
+                r.avg_stim_plot(n_every) = struct('tag', [], 'middleline',[], 'shade', []);
+                    [r.avg_stim_plot(:).middleline] = deal(true);
+                    [r.avg_stim_plot(:).shade] = deal(false);
         end
         
         % Function for phase shift and multiply for vector
@@ -576,7 +655,6 @@ classdef roiData < matlab.mixin.Copyable
             if nargin < 2
                 ev_times = obj.avg_times;
             end
-            
             N = length(ev_times);
             % extend times
             tt = repmat(ev_times, [1, obj.n_cycle]);

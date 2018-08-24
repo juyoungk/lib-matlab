@@ -1,5 +1,5 @@
 function fov = get_FOV_size_x25_Leica(zoom)
-% x25 Leica lens in upright scope in Baccus lab running SI 5. 
+% Field-Of-View of x25 Leica lens in upright scope in Baccus lab running SI 5. 
 % [um]
     
     if nargin < 1

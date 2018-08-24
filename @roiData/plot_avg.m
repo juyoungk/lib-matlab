@@ -24,9 +24,6 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     
     argPlot = {};
     
-    % data index inside a time range
-    idx = (r.a_times > r.t_range(1)) & (r.a_times < r.t_range(2));
-    
     S = sprintf('ROI %d*', 1:r.numRoi); C = regexp(S, '*', 'split'); % C is cell array.
     
     if nargin < 2
@@ -79,18 +76,9 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 
                 duration = r.avg_trigger_interval;
                 
-                % Time range will define the n_cycle
-                % default n=2 cycle
-                
-                
                 % Adjust for plot (phase & cycles)
-                y = r.traceAvgPlot(y);
-                x = r.a_times;
-                y = y(idx,:);
-                x = x(idx);
+                [y, x] = r.traceAvgPlot(y);
                 
-                
-
                 if contains(PlotType, 'tiled') || contains(PlotType, 'mean')
                     argPlot = {'Color', lineColor};
                 end
@@ -152,7 +140,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 end
 
                 % within one repeat, stim trigger events
-                for k = 1:length(r.avg_stim_times)
+                for k = 1:length(r.avg_stim_times) % measured by PD.
                     x = r.avg_stim_times(k);
                     if x < r.t_range(1) || x > r.t_range(2)
                         continue;
@@ -161,7 +149,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         plot([x x], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
                     end
                     
-                    kk = mod(k, r.avg_every); % index within one cycle.
+                    kk = mod(k, r.avg_every); % kk-th stimulus within one repeat.
                     if kk == 0; kk = r.avg_every; end;
                     if ~isempty(r.avg_stim_tags{kk}) && Label
                         text(x, ax.YLim(1), r.avg_stim_tags{kk}, 'FontSize', 9, 'Color', 'k', ...
@@ -171,6 +159,8 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     if strfind(r.ex_name, 'typing')
                             if ~isempty(r.avg_stim_tags{kk}) &&...
                                     (contains(r.avg_stim_tags{kk}, 'Black') ||...
+                                    contains(r.avg_stim_tags{kk}, 'Blank') ||...
+                                    strcmp(r.avg_stim_tags{kk}, ' ') ||...
                                     contains(r.avg_stim_tags{kk}, 'Mov'))
                                 % no middle lines
                             else 
