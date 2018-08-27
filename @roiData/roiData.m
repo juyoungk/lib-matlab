@@ -15,7 +15,9 @@ classdef roiData < matlab.mixin.Copyable
         %
         roi_cc      % roi information (struct 'cc')
         ifi         % inter-frame interval of vol (data)
-        stim_trigger_times    % absolute times when stims (or PD) triggered.
+        stim_trigger_times % absolute times when stims (or PD) were triggered. Fine triggers.
+        sess_trigger_times % Session (or major) trigger times. Useful for splitting data and might be avg_trigger_times. 
+        sess_trigger_ids   % Triggers as ids in stim_trigger_times. Used in select_data().
         stim_end
         %
         stim_movie
@@ -54,12 +56,12 @@ classdef roiData < matlab.mixin.Copyable
         w_filter_high = 0.05; % in terms of norm. (or Nyquist) freq. 
         
         % avg trace timed at avg_trigger_times (always smoothed at least)
-        avg_FLAG
+        avg_FLAG = false
         avg_every
-        avg_trigger_times   % times for aligning between trials
+        avg_trigger_times % Times for aligning between trials. A subset of stim_trigger_times. Might be same as sess_trigger_times
         avg_stim_times  % stim times within one avg trace [0 duration]
-        avg_stim_tags
         avg_stim_plot   % structure for plot properties of each stim triggers.
+            avg_stim_tags
         avg_trigger_interval
         avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
         avg_trace_std   % std over trials
@@ -105,16 +107,55 @@ classdef roiData < matlab.mixin.Copyable
     
     methods
         
-        function  rr = select_data(r, stim_ids)
-            % Given stim trigger ids (not avg triggers), create new instance of roiDATA
+        function  rr = select_data(r, stim_ids, trigger_type)
+            % Given stim trigger ids (not avg repeat triggers), create new instance of roiDATA
             % stim trigger times id. (e.g. [2, 3, 4])
-            % id =0 means from the first data point.
+            % trigger id = 0 means from the first data point.
+            % avg triggers should be a subset of stim ids.
+            if nargin < 3
+                trigger_type = 'sess';
+                disp('trigger_type: session');
+            end
+            
+            if nargin < 2
+                error('Trigger ids (default: session triggers) must be given as a variable (e.g. 6:10).');
+            end
+            
             rr = copy(r);
+            
+            % id 0 case
+            if stim_ids(1) == 0
+                t_init = 0.;
+                disp('Stim trigger id 0: start t = 0.');
+                % exclude id =0
+                stim_ids = stim_ids(2:end);
+            end
+            
+            % trigger type
+            switch trigger_type
+                case 'sess'
+                    init_stim_trigger_id = r.sess_trigger_ids(stim_ids(1)); % session ids.. just here??
+                    if stim_ids(end) == numel(r.sess_trigger_times)
+                        % last session.
+                        end_stim_trigger_id = numel(r.stim_trigger_times);
+                    else
+                        % not last sessoin.
+                        next_session_time = r.sess_trigger_times( stim_ids(end) );
+                        % last stim trigger event in the last session.
+                        whatis_before = (r.stim_trigger_times < next_session_time);
+                        end_stim_trigger_id = sum(whatis_before);
+                    end
+                    stim_ids = init_stim_trigger_id:end_stim_trigger_id;
+                case 'stim'
+                otherwise
+            end
             
             % Time range
             if stim_ids(1) == 0
-                t_init = 0;
+                t_init = 0.;
                 disp('Stim trigger id 0: start t = 0.');
+                % exclude id =0
+                stim_ids = stim_ids(2:end);
             else
                 t_init = rr.stim_trigger_times( stim_ids(1) );
             end
@@ -128,18 +169,18 @@ classdef roiData < matlab.mixin.Copyable
             
             % Select data for [t_init, t_end]
             ids = (rr.f_times>=t_init) & (rr.f_times<=t_end); 
-            rr.roi_trace = r.roi_trace(ids, :);
-            rr.f_times = rr.f_times(ids) - rr.stim_trigger_times(stim_ids(1));           
-            rr.f_times_fil = rr.f_times;
-            rr.f_times_norm = rr.f_times;
-            rr.ignore_sec = 0;
-            rr.stim_end = t_end;
+            rr.roi_trace = rr.roi_trace(ids, :);
+            rr.f_times   = rr.f_times(ids) - t_init; % frame times
+            rr.stim_end = rr.f_times(end);
             
-            % Select stim trigger times
+            % Shift 'stim trigger times'
             rr.stim_trigger_times = rr.stim_trigger_times(stim_ids); 
             rr.stim_trigger_times = rr.stim_trigger_times - t_init;
             
-            % avg triggers every N stim triggers for new instance?
+            % Shift igonre_sec 
+            rr.ignore_sec = rr.stim_trigger_times(1);           
+            
+            % Avg triggers every N stim triggers for new instance?
             if r.avg_FLAG
                 str_input = sprintf('Total stim trigger events: %d.\nAvg over every N triggers? [Default N = %d (%s)]',...
                                 length(stim_ids), r.avg_every, r.ex_name);
@@ -153,11 +194,10 @@ classdef roiData < matlab.mixin.Copyable
             
             % update
             rr.update_smoothed_trace;
-            %rr.update_filtered_trace;
         end
         
-        function load_ex(r, ex)
-            % Read 'ex' structure and interpret it.
+        function load_ex2(r, ex)
+            % Read 'ex' structure and interpret it. Old version.
             % interpret if middle line is preffered for plot for each stim type.
             if iscell(ex.stim)
                 stim = [ex.stim{:}];
@@ -185,11 +225,10 @@ classdef roiData < matlab.mixin.Copyable
             end
         end
         
-        function load_ex2(r, ex)
-            % Version2. Loop over ex.stim.
+        function load_ex1(r, ex)
             % Read 'ex' structure and interpret it.
-            % interpret if middle line is preffered for plot for each stim type.
-            % repeat number
+            % Version2. Loop over ex.stim.
+            % Check repeat number
             if isfield(ex, 'n_repeats') && ~isempty(ex.n_repeats)
                 if r.avg_every ~= ex.n_repeats
                     r.avg_every = ex.n_repeats; % property set method 
@@ -232,11 +271,9 @@ classdef roiData < matlab.mixin.Copyable
                 end
                 % display tag     
                 r.avg_stim_tags(i + tag_shift) = {stim(k).tag};
-                
                 %   
                 i = i + cycle;
             end
-            
             
             if k-1 == length(stim)
                 fprintf('All (k=%d) stim tags were scanned and aligned with num of stim triggers.\n', k-1);
@@ -377,7 +414,7 @@ classdef roiData < matlab.mixin.Copyable
                [roi_aligned, ~] = align_rows_to_events(r.roi_smoothed, r.f_times, r.avg_trigger_times, r.avg_trigger_interval);
                 
                % Avg & Std over trials (dim 3)
-               r.avg_trace    = mean(roi_aligned, 3);
+               r.avg_trace      = mean(roi_aligned, 3);
                % Normalized and Centered trace
                r.avg_trace_norm = normc(r.avg_trace) -0.5;
                % Pearson correlation over repeats
@@ -467,30 +504,62 @@ classdef roiData < matlab.mixin.Copyable
                 [row, col, n_frames] = size(vol);
                 n_frames_snap = min(n_frames, round(512*512*1000/row/col));
                 r.image = mean(vol(:,:,1:n_frames_snap), 3);
-                
-                if nargin > 2
-                    r.ex_name = ex_str;
+                %
+                if nargin < 5 
+                    stim_trigger_times = 0;
                 end
-                
-                % Align frames (vol) with stimulus trigger times
+                %
+                if nargin < 4
+                    ifi = 1;
+                end
+                %
                 if nargin > 3
-                    % inter-frame interval
-                    r.ifi = ifi;
-                    r.f_times = ((1:r.numFrames)-0.5)*ifi; % frame times. in the middle of the frame
-                    
-                    % stim trigger times
+                    ex_str = [];
+                end
+                %
+                r.ex_name = ex_str;
+                r.ifi = ifi;
+                r.f_times = ((1:r.numFrames)-0.5)*ifi; % frame times. in the middle of the frame
+                r.stim_end = r.f_times(end);                    
+                
+                % stim_triger_times can be a cell array
+                % {1} : events1 - Major events. ~sess_trigger_times
+                % {2} : events2 - Finer evetns. ~stim_trigger_times
+                % {3} : ...
+                if iscell(stim_trigger_times)
+                    switch numel(stim_trigger_times)
+                        case 2
+                            r.stim_trigger_times = stim_trigger_times{2}; % minor trigger events
+                            r.sess_trigger_times = stim_trigger_times{1}; % major trigger events
+                            %
+                            numStimTriggers = numel(r.stim_trigger_times);
+                            numSessTriggers = numel(r.sess_trigger_times);
+                            fprintf('(roiData) Stim (fine) triggers: %d, Session (major) triggers: %d are given.\n', numStimTriggers, numSessTriggers);
+                            
+                            % Num of stim triggers within one session
+                            n = floor(numStimTriggers/numSessTriggers);
+                            if rem(numStimTriggers, numSessTriggers) ~= 0
+                                fprintf('(roiData) Not divisible, You would want to check the alignmennt between them.\n');
+                            else
+                                % Divisible. 
+                                % Assign stim trigger IDs to session triggers.
+                                % (Assumption: num of stim triggers inside one
+                                % session would be same over multiple sessions.)
+                                whereis_sess = mod(1:numel(r.stim_trigger_times), n) == 1; % logical array
+                                r.sess_trigger_ids = r.stim_trigger_times(whereis_sess);
+                                %
+                                r.avg_FLAG  = true;
+                                r.avg_every = n; % set method
+                            end
+                            
+                        otherwise
+                            r.stim_trigger_times = stim_trigger_times{1};
+                            r.sess_trigger_times = stim_trigger_times{1};
+                    end
+                else
+                    % not cell array.
                     r.stim_trigger_times = stim_trigger_times;
-                    
-                    % stim end time ~ recording end time
-                    r.stim_end = r.f_times(end);                    
-%                     if numel(stim_trigger_times)>1
-%                         r.stim_trigger_interval = stim_trigger_times(end)  - stim_trigger_times(end-1); % for uniform stim triggers
-%                         r.stim_end = stim_trigger_times(end) + r.stim_trigger_interval;
-%                     else
-%                         % total recording time after the trigger.
-%                         r.stim_trigger_interval = r.f_times(end) - stim_trigger_times(1);
-%                         r.stim_end = r.f_times(end);
-%                     end
+                    r.sess_trigger_times = stim_trigger_times;
                 end
                 
                 % Bg PMT level in images (vol)
@@ -506,23 +575,17 @@ classdef roiData < matlab.mixin.Copyable
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
                 end
                 
-                % ignore data before the 1st stim trigger
-                r.ignore_sec = stim_trigger_times(1);
+                % ignore data before the 1st stim trigger (mainly for filterig)
+                r.ignore_sec = r.stim_trigger_times(1);
                     
                 % Avg trace settings
-                if ~isempty(stim_trigger_times) && numel(stim_trigger_times) >=3 && ...
-                        isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'run')) && isempty(strfind(r.ex_name, 'runme'))
-                    
-                    r.avg_FLAG = true;
-                    
+                if r.avg_FLAG==false && ~isempty(r.stim_trigger_times) && numel(r.stim_trigger_times) > 1
                         % params for avg & avg plot
                         avg_every = 1;
-                        r.n_cycle = 2; % doucle cycles 
-                        r.s_phase = 1;
                         
                         % special cases
                         if strfind(r.ex_name, 'typing')
-                            avg_every = 18;
+                            avg_every = 23;
                             % copy the trace in (-) times.
                             r.n_cycle =2;
                             r.s_phase =1; % shfit one full cycle
@@ -536,20 +599,25 @@ classdef roiData < matlab.mixin.Copyable
                         elseif strfind(r.ex_name, 'jitter')
                             avg_every = 2;
                         end
-                        str_input = sprintf('Total PD trigger events: %d.\nAvg over every N triggers? [Default N = %d (%s)]',...
+                        
+                        % User input
+                        str_input = sprintf('PD trigger events num: %d.\nAvg over every N triggers? [Default N = %d (%s). 0 for no average analysis]',...
                             length(r.stim_trigger_times), avg_every, r.ex_name);
                         n = input(str_input);
                         if isempty(n)
                             n = avg_every; % case default number
                         end
                         
-                        % set avg_every (excute set.avg_every)
-                        r.avg_every = n;
+                        if n == 0
+                            r.avg_FLAG = false;
+                        else 
+                            % set avg_every (excute set.avg_every)
+                            r.avg_FLAG = true;
+                            r.avg_every = n;
+                        end
 
                         % cluster mean for avg trace (100 clusters max)
                         r.c_mean = zeros(length(r.avg_times), r.totClusterNum);
-                else
-                    r.avg_FLAG = false;
                 end
                   
                 % default smoothing or smoothed traces
@@ -573,7 +641,7 @@ classdef roiData < matlab.mixin.Copyable
                 r.roi_review = [];
                 
                 % stat
-                r.stat.mean_f = mean( r.roi_trace(r.f_times > stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);                  
+                r.stat.mean_f = mean( r.roi_trace(r.f_times > r.stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);                  
             end
         end
         
@@ -626,9 +694,10 @@ classdef roiData < matlab.mixin.Copyable
                 % cell array for tags
                 r.avg_stim_tags = cell(1, n_every);
                 % struct for the plot properties of each stim trigger time
-                r.avg_stim_plot(n_every) = struct('tag', [], 'middleline',[], 'shade', []);
+                r.avg_stim_plot = struct('tag', [], 'middleline',[], 'shade', []);
+                r.avg_stim_plot(n_every) = r.avg_stim_plot; % struct array
                     [r.avg_stim_plot(:).middleline] = deal(true);
-                    [r.avg_stim_plot(:).shade] = deal(false);
+                    [r.avg_stim_plot(:).shade]      = deal(false);
         end
         
         % Function for phase shift and multiply for vector

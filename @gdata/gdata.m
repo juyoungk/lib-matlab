@@ -1,7 +1,7 @@
 classdef gdata < handle
-% Data class for single experiment session.
-% Open single TIF file or multiple TIFs if there are logged into mutiple
-% files. Confine the filenames using long string.
+%GDATA Data class for single experiment session.
+% Open single (or multiple) TIF file(s). Interpret ScanImage and WaveSurfer
+% header files.
 % Assumptions for AI channels:
 %                   Num of channels - 4
     properties
@@ -21,7 +21,7 @@ classdef gdata < handle
             header
             metadata % raw header file
             
-            % Recording (pd & e-phys) data [h5 wavesurfer]
+            % Recording (pd & e-phys) data [WaveSurfer H5]
             h5_header
             h5_srate
             h5_AI
@@ -29,15 +29,17 @@ classdef gdata < handle
             
             % pd events info
             pd_AI_name = 'photodiode';
-            pd_threshold = 0.4
+            pd_threshold1 = 0.85 % Major events
+            pd_threshold2 = 0.50 % Minnor events
             min_interval_secs = 0.8
-            ignore_secs = 2
+            ignore_secs = 2 % Skip some initial times for threshold detection.
             pd_trace
             
             % stimulus events
-            pd_events  % trigger times
+            pd_events1   % trigger times
+            pd_events2  % trigger times
             stims      % 1~10 stimulus. Times [sec] for stim trigger events.
-            stims_ids   % clustered pd event ids up to 10 groups.
+            stims_ids  % clustered pd event ids up to 10 groups.
             intervals  % if it's not empty, the stim was repeated. Probably good to average.
             stim_fliptimes  % trigger events or fliptimes. up to 10 differnet cell arrays
             stim_whitenoise        % whitenoise stim pattern
@@ -183,20 +185,17 @@ classdef gdata < handle
             function setting_pd_event_params(g)
                 
                 if strfind(g.ex_name, 'flash')
-                    g.pd_threshold = 0.8;
+                    g.pd_threshold1 = 0.8;
                     g.min_interval_secs = 0.8;
                 elseif strfind(g.ex_name, 'movingbar')
-                    g.pd_threshold = 0.4;
+                    g.pd_threshold1 = 0.4;
                     g.min_interval_secs = 1.2;
                 elseif strfind(g.ex_name, 'jitter')
-                    g.pd_threshold = 0.4;
+                    g.pd_threshold1 = 0.4;
                     g.min_interval_secs = 1;
                 elseif strfind(g.ex_name, 'whitenoise')
-                    g.pd_threshold = 0.4;
+                    g.pd_threshold1 = 0.4;
                     g.min_interval_secs = 0.25;
-                else
-                    g.pd_threshold = 0.8;
-                    g.min_interval_secs = 0.5;
                 end
             end
             
@@ -235,7 +234,7 @@ classdef gdata < handle
                 % create roiData objects as many as numStimulus
                 % 1. extract roi traces, 2. split into numStimulus
                 if ~isempty(cc)
-                    r = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.pd_events); % all pd events
+                    r = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, {obj.pd_events1, obj.pd_events2}); %{ avg triggers, stim triggers }
                     r.header = obj.header;
                     
                     if obj.numStimulus == 1
@@ -403,30 +402,37 @@ classdef gdata < handle
 
                         % event timestamps from pd
                         g.setting_pd_event_params();
-                        i_start = g.ignore_secs * header.srate + 1; % first pd data point index for thresholding.
-                        pd_for_events = pd(i_start:end);            % after first a few seconds.
-                        ev_idx = th_crossing(pd_for_events, g.pd_threshold * max(pd_for_events), g.min_interval_secs * header.srate);
+                        i_start = g.ignore_secs * header.srate + 1; % First pd data point index for thresholding.
+                        trace_for_events = pd(i_start:end);         % after skipping the first few seconds.
+                        ev_idx = th_crossing(trace_for_events, g.pd_threshold1, g.min_interval_secs * header.srate);
                         ev_idx = ev_idx + i_start - 1;
                         ev = times(ev_idx);
-                        g.pd_events = ev;
-                        n_pd_events = numel(ev);
+                        g.pd_events1 = ev;
+                        n_pd_events1 = numel(ev);
                         
-                        % stimulus cluster for multiple events 
+                        % minnor events
+                        ev_idx = th_crossing(trace_for_events, g.pd_threshold2, g.min_interval_secs * header.srate);
+                        ev_idx = ev_idx + i_start - 1;
+                        ev = times(ev_idx);
+                        g.pd_events2 = ev;
+                        n_pd_events2 = numel(ev);
+                        
+                        % Stimulus cluster for multiple events (using only events1)
                         g.stims = cell(1,10);
                         g.stims_ids = cell(1,10);
                             % count # of odd events
 
-                        if n_pd_events <= 1
+                        if n_pd_events1 <= 1
                             % one trigger time
                             g.stims{1} = ev;
                             g.numStimulus = 1;
-                        elseif n_pd_events < 4
+                        elseif n_pd_events1 < 4
                             % Regard all different stimulus
-                            for k=1:n_pd_events
+                            for k=1:n_pd_events1
                                 g.stims{k}     = ev(k);
                                 g.stims_ids{k} = k;
                             end
-                            g.numStimulus = n_pd_events;
+                            g.numStimulus = n_pd_events1;
                         else
                             % n_events >= 4
                             % detect last event of the stimulus:
@@ -434,7 +440,7 @@ classdef gdata < handle
                             ev_interval = ev(2:end) - ev(1:end-1); % indicates the last event for stimulus
                             i_ev = 1;   % current   ev id
                                k = 0;   % current stim id
-                            while i_ev < n_pd_events
+                            while i_ev < n_pd_events1
                                 % new stim id
                                 %i_ev;
                                 k = k + 1;
@@ -444,7 +450,7 @@ classdef gdata < handle
 
                                 if isempty(odd_events)
                                     g.stims{k} = ev(i_ev:end);
-                                    g.stims_ids{k} = i_ev:n_pd_events;
+                                    g.stims_ids{k} = i_ev:n_pd_events1;
                                     g.intervals{k} = ev_interval(i_ev);
                                     break;
                                 end
@@ -457,18 +463,8 @@ classdef gdata < handle
                             g.numStimulus = k;
                         end
                         
-                        % plot pd % event stamps
-                        pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
-                        figure; set(gcf, 'Position', pos_plot);
-                        plot(times(i_start:end), pd(i_start:end)); hold on; % PD trace
-                        % PD trigger events
-                        %plot(ev, pd(ev_idx),'bo');                             
-                        for ii = 1:g.numStimulus % color coding for clustered PD events.    
-                            plot( ev(g.stims_ids{ii}), pd(ev_idx(g.stims_ids{ii})), 'o');
-                        end
-                        legend(['Num of events: ', num2str(length(ev_idx))],'Location','southeast');
-                        hold off
-                        disp(['Num of PD (stimulus trigger) events: ', num2str(length(ev_idx))]);
+                        % plot pd trace and trigger events
+                        g.pd_plot;
                         
                     end   % if h5 file exists.
 
@@ -512,14 +508,19 @@ classdef gdata < handle
                     pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
                     figure; set(gcf, 'Position', pos_plot);
                     plot(g.h5_times(i_start:end), g.pd_trace(i_start:end)); hold on; % PD trace
-                    % PD trigger events
-                    numPDevents = length(g.pd_events);
+                    % PD trigger events 1
                     for ii = 1:g.numStimulus % color coding for clustered PD events.    
-                        plot( g.pd_events(g.stims_ids{ii}), g.pd_threshold, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
+                        plot( g.pd_events1(g.stims_ids{ii}), g.pd_threshold1, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
                     end
-                    legend(['Num of events: ', num2str(numPDevents)],'Location','southeast');
+                    legend(['Num of events1: ', num2str(numPDevents)],'Location','southeast');
+                    % PD trigger events 2
+                    for ii = 1:g.numStimulus % color coding for clustered PD events.    
+                        plot( g.pd_events2, g.pd_threshold2, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
+                    end
+                    text = sprintf('Trigger Event 1: %d\nTrigger Event 2: %d', length(g.pd_events1), length(g.pd_events2));
+                    legend(text, 'Location', 'southeast');
                     hold off
-                    disp(['Num of PD (stimulus trigger) events: ', num2str(numPDevents)]);
+                    disp(text);
                 end
         end
         
