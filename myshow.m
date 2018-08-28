@@ -54,7 +54,7 @@ Tol = [fraction*0.01 1-fraction*0.01];
 
 if fraction ~= 0.5    
     %disp(['Tol  =  ', num2str(Tol)]);
-    fprintf('Tol = [%.3f  %.3f]\n', Tol(1), Tol(2));
+    %fprintf('Tol = [%.3f  %.3f]\n', Tol(1), Tol(2));
 else
     fprintf('\n');
 end

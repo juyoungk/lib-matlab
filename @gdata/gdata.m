@@ -30,7 +30,7 @@ classdef gdata < handle
             % pd events info
             pd_AI_name = 'photodiode';
             pd_threshold1 = 0.85 % Major events
-            pd_threshold2 = 0.50 % Minnor events
+            pd_threshold2 = 0.60 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
             pd_trace
@@ -471,6 +471,7 @@ classdef gdata < handle
                         % load cc struct if exist
                         cc_filenames = getfilenames(pwd, ['/*',ex_str,'*.mat']);
                         if ~isempty(cc_filenames)
+                            commandwindow
                             reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
                             if isempty(reply); reply = 'Y'; end
                             if reply == 'Y'
@@ -512,7 +513,6 @@ classdef gdata < handle
                     for ii = 1:g.numStimulus % color coding for clustered PD events.    
                         plot( g.pd_events1(g.stims_ids{ii}), g.pd_threshold1, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
                     end
-                    legend(['Num of events1: ', num2str(numPDevents)],'Location','southeast');
                     % PD trigger events 2
                     for ii = 1:g.numStimulus % color coding for clustered PD events.    
                         plot( g.pd_events2, g.pd_threshold2, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})

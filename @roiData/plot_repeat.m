@@ -28,6 +28,9 @@ function ids = plot_repeat(r, I, varargin)
     end
     ids = I;
     n_ROI = numel(I);
+    if n_ROI == 0
+        return;
+    end
     S = sprintf('ROI %d  *', I); C = regexp(S, '*', 'split'); % C is cell array.
     
     % cluster id & initialize projection vector
@@ -40,8 +43,9 @@ function ids = plot_repeat(r, I, varargin)
 %     color = jet(c_list_num); 
     
     % Figure 
-    hfig = figure('Position', [10 300 800 900]);
-    %axes('Position', [0  0  1  0.9524], 'Visible', 'off');
+    %hfig = figure('Position', [10 300 800 900]);
+    hfig = figure('Position', [10 300 1400 900]);
+    
     
     % callback
     set(hfig, 'KeyPressFcn', @keypress)
@@ -50,7 +54,7 @@ function ids = plot_repeat(r, I, varargin)
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
-    n_col = 1;
+    n_col = 2;
     n_row = 2;
     n_plots_per_fig = n_col * n_row;
     n_figs = ceil(n_ROI/n_plots_per_fig);
@@ -99,21 +103,14 @@ function ids = plot_repeat(r, I, varargin)
 %                 [y_aligned, ~] = align_rows_to_events(y, r.f_times, r.avg_trigger_times, r.avg_trigger_interval);
 %                 y_aligned = reshape(y_aligned, size(y_aligned, 1), []);
 %             
-            % under test: single liner?
+            %
             [y_aligned, x] = r.traceAvgPlot(y_aligned);
   
-%                 % n_cycle and phase shift (row vectors)
-%                 y_aligned = circshift(y_aligned, round( r.s_phase * size(y_aligned, 1)), 1); % last param is DIM.
-%                 y_aligned = repmat(y_aligned, [r.n_cycle, 1]); % multiplay along row (1st) dimension.
-% 
-%                 % time range filter for avg trace.
-%                 idx = (r.a_times > r.t_range(1)) & (r.a_times < r.t_range(2));
-%                 x = r.a_times(idx);
-%                 y_aligned = y_aligned(idx,:);
-
             %
             n_trace = size(y_aligned, 2);
-            str = sprintf('corr = %.2f ', r.p_corr.smoothed(k));
+            % correlation version?
+            str = sprintf('corr = %.2f ', r.p_corr.smoothed_norm(k));
+            %str = sprintf('corr = %.2f ', r.p_corr.smoothed(k));
                     
             % 2. Draw Mean (& std) trace
             axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.8*w_ax  0.9*h_ax_mean], 'Visible', 'off');
@@ -143,11 +140,24 @@ function ids = plot_repeat(r, I, varargin)
                     h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_trace;
                     % individual traces
                     for ii = 1:n_trace
-                        axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
-                        plot(x, y_aligned(:,ii), 'LineWidth', 1.2);
+                        ax = axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
+                        plot(x, y_aligned(:,ii), 'LineWidth', 1.2); hold on
                         xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+                        
+                        % (optional) stim trigger lines
+                        for k = 1:length(r.avg_stim_times) % measured by PD.
+                            x0 = r.avg_stim_times(k);
+                            if x0 < r.t_range(1) || x0 > r.t_range(2)
+                                continue;
+                            end
+                            plot([x0 x0], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.7*[1 1 1]);
+                            
+                        end
+                        hold off
+
                         axis tight
                         axis off
+                        
                     end
                     ax = gca;
                     % Print P-correlation value
