@@ -404,6 +404,7 @@ classdef roiData < matlab.mixin.Copyable
         function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_movie, stim_fliptimes)
             % ifi: inter-frame interval or log-frames-period
             if nargin > 0 % in order to create an array with no input arguments.
+                disp('roiData..');
                 r.roi_cc = cc;
                 r.numRoi = cc.NumObjects;
                 r.numFrames = size(vol, 3);
@@ -433,7 +434,20 @@ classdef roiData < matlab.mixin.Copyable
                 r.f_times = ((1:r.numFrames)-0.5)*ifi; % frame times. in the middle of the frame
                 r.stim_end = r.f_times(end);
                 
-
+                % Bg PMT level in images (vol)
+                a = sort(vec(vol(:,:,1))); % inferred from 1st frame
+                N = ceil(size(vol, 1)/10);
+                bg_PMT = mean(a(1:(N*N)));
+                    
+                % Extract roi trace from vol.
+                vol_reshaped = reshape(vol, [], r.numFrames);
+                for i=1:r.numRoi
+                    y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
+                    y = y - bg_PMT;       % bg substraction
+                    r.roi_trace(:,i) = y; % raw data (bg substracted)
+                end
+                disp('ROI traces were extracted..');
+                
                 % stim_triger_times can be a cell array
                 % {1} : events1 - Major events. ~ sess_trigger_times
                 % {2} : events2 - Finer evetns. ~ stim_trigger_times
@@ -446,12 +460,12 @@ classdef roiData < matlab.mixin.Copyable
                             %
                             numStimTriggers = numel(r.stim_trigger_times);
                             numSessTriggers = numel(r.sess_trigger_times);
-                            fprintf('(roiData) stim triggers: %d, Session (major) triggers: %d are given.\n', numStimTriggers, numSessTriggers);
+                            fprintf('Stim triggers: %d, Session (major) triggers: %d are given.\n', numStimTriggers, numSessTriggers);
                             
                             % Num of stim triggers within one session
                             n = floor(numStimTriggers/numSessTriggers);
                             if rem(numStimTriggers, numSessTriggers) ~= 0
-                                fprintf('(roiData) Not divisible, You would want to check the alignmennt between them.\n');
+                                fprintf('Not divisible, You would want to check the alignmennt between them.\n');
                             else
                                 % Divisible. 
                                 % Assign stim trigger IDs to session triggers.
@@ -463,7 +477,7 @@ classdef roiData < matlab.mixin.Copyable
                                 
                                 % Session as repeated stimulus?
                                 fprintf('%d stim triggers in one session.\n', n);
-                                str_input = sprintf('Are they repeated (every %d stim triggers)?', n);
+                                str_input = sprintf('Are they repeated by %d times (every %d triggers) [Y]? Enter ''n'' of stim triggers in one repeat. \n(enter 0 if it is not repeated.)', numSessTriggers, n);
                                 n_new = input(str_input);
                                 if isempty(n_new)
                                     n_new = n; % case default number
@@ -483,18 +497,7 @@ classdef roiData < matlab.mixin.Copyable
                     r.sess_trigger_times = stim_trigger_times;
                 end
                     
-                % Bg PMT level in images (vol)
-                a = sort(vec(vol(:,:,1))); % inferred from 1st frame
-                N = ceil(size(vol, 1)/10);
-                bg_PMT = mean(a(1:(N*N)));
-                    
-                % Extract roi trace from vol.
-                vol_reshaped = reshape(vol, [], r.numFrames);
-                for i=1:r.numRoi
-                    y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
-                    y = y - bg_PMT;       % bg substraction
-                    r.roi_trace(:,i) = y; % raw data (bg substracted)
-                end
+                % load ex struct?
                 
                 % Avg trace settings
                 if r.avg_FLAG==false && ~isempty(r.stim_trigger_times) && numel(r.stim_trigger_times) > 1
