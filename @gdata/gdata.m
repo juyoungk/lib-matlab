@@ -36,7 +36,7 @@ classdef gdata < handle
             pd_trace
             
             % stimulus events
-            pd_events1   % trigger times
+            pd_events1  % trigger times
             pd_events2  % trigger times
             stims      % 1~10 stimulus. Times [sec] for stim trigger events.
             stims_ids  % clustered pd event ids up to 10 groups.
@@ -212,8 +212,8 @@ classdef gdata < handle
                     error('>10 stimulus in one recording session? Too many numStimulus.');
                 end
                 % (re)-initialize array of roiDATA
-                r(1, n) = roiData;
-                obj.rr = r;
+                %r(1, n) = roiData;
+                %obj.rr = r;
                 obj.numStimulus = n;
             end
 
@@ -231,33 +231,35 @@ classdef gdata < handle
                 obj.roi_channel = ch;
                 obj.cc = cc;
                 
-                % create roiData objects as many as numStimulus
+                % create roiData object (as many as numStimulus? No. roiData will handle it.)
                 % 1. extract roi traces, 2. split into numStimulus
                 if ~isempty(cc)
+                    disp(['Create roiData object for Ch#',num2str(obj.roi_channel),'...']);
                     r = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, {obj.pd_events1, obj.pd_events2}); %{ avg triggers, stim triggers }
                     r.header = obj.header;
+                    obj.rr = r;
+%                     if obj.numStimulus == 1
+%                         obj.rr = r;
+%                     elseif obj.numStimulus >1
+%                         for i=1:obj.numStimulus
+%                             % select the part of the roi traces using event
+%                             % ids.
+%                             obj.rr(i) = r.select_data( obj.stims_ids{i} );
+% 
+%                             %obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
+%                             %obj.rr(i).header = obj.header;
+% 
+%                             % ex specific executions 
+%                             if strfind(obj.ex_name, 'whitenoise')
+%                                 % update stim repo    
+%                                 % import stimulus.h5
+%                                     %load(filename,'-mat',variables) 
+%                             else
+% 
+%                             end
+%                         end
+%                     end
                     
-                    if obj.numStimulus == 1
-                        obj.rr = r;
-                    elseif obj.numStimulus >1
-                        for i=1:obj.numStimulus
-                            % select the part of the roi traces using event
-                            % ids.
-                            obj.rr(i) = r.select_data( obj.stims_ids{i} );
-
-                            %obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
-                            %obj.rr(i).header = obj.header;
-
-                            % ex specific executions 
-                            if strfind(obj.ex_name, 'whitenoise')
-                                % update stim repo    
-                                % import stimulus.h5
-                                    %load(filename,'-mat',variables) 
-                            else
-
-                            end
-                        end
-                    end
                 else
                     disp('The given cc structure is empty. No roiDATA object was assigned.');
                 end

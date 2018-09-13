@@ -44,7 +44,7 @@ classdef roiData < matlab.mixin.Copyable
         
         % statistics
         stat
-        p_corr % over repeats ['.smoothed', '.smoothed_norm']
+        p_corr % over repeats ['.smoothed', '.smoothed_norm']. Only available for avg analysis
         
         % smoothing params
         smoothing_method = 'movmean';
@@ -115,7 +115,7 @@ classdef roiData < matlab.mixin.Copyable
             % avg triggers should be a subset of stim ids.
             if nargin < 3
                 trigger_type = 'sess';
-                disp('trigger_type: session');
+                disp('select_data trigger_type: session');
             end
             
             if nargin < 2
@@ -310,13 +310,20 @@ classdef roiData < matlab.mixin.Copyable
             % stim id for whitenoise?
             h5disp([dirpath, '/stimulus.h5']);
             a = h5info([dirpath,'/stimulus.h5']);
-            a.Groups.Name % display exp names?
+            %a.Groups.Name % display exp names?
             
-            % Assuption: expt1 is a whitenoise stimulus.
-            disp('Assumption: group /expt1/ is a whitenoise stimulus');
+            % Assuption: /expt1 is a whitenoise stimulus.
+            disp('Assumption: group /expt1/ (among several) is a whitenoise stimulus. Load /expt1/.'); % new function for /expt2 is needed.
             stim = h5read([dirpath, '/stimulus.h5'], '/expt1/stim');
             times = h5read([dirpath, '/stimulus.h5'], '/expt1/timestamps');
-            r.get_stimulus(stim, times);
+            whitenoise_size = h5readatt([dirpath, '/stimulus.h5'], '/disp', 'aperturesize_whitenoise_mm');
+                % display additional info
+                aperture_size = h5readatt([dirpath, '/stimulus.h5'], '/disp', 'aperturesize_mm');
+            fprintf('Aperture size [mm]: %.3f, Whitenoise aperture size [mm]: %.3f\n', aperture_size, whitenoise_size);
+            r.get_stimulus(stim, times, whitenoise_size);
+            disp('Whitenoise stimulus info has been loaded.');
+            
+            % select_data ?
         end
         
         function save(r)
@@ -389,10 +396,11 @@ classdef roiData < matlab.mixin.Copyable
             imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false); % can be different depending on threhsold 
         end
         
-        function get_stimulus(r, stims_whitenoise, fliptimes)
+        function get_stimulus(r, stims_whitenoise, fliptimes, aperture_size)
             % for whithenoise stim
             r.stim_movie = stims_whitenoise;
             r.stim_fliptimes = fliptimes;
+            r.stim_size = aperture_size;
         end
         
         function set.smoothing_size(r, t)
@@ -432,7 +440,7 @@ classdef roiData < matlab.mixin.Copyable
                 r.ex_name = ex_str;
                 r.ifi = ifi;
                 r.f_times = ((1:r.numFrames)-0.5)*ifi; % frame times. in the middle of the frame
-                r.stim_end = r.f_times(end);
+                r.stim_end = r.f_times(end); % used also for stat.
                 
                 % Bg PMT level in images (vol)
                 a = sort(vec(vol(:,:,1))); % inferred from 1st frame
@@ -466,6 +474,7 @@ classdef roiData < matlab.mixin.Copyable
                             n = floor(numStimTriggers/numSessTriggers);
                             if rem(numStimTriggers, numSessTriggers) ~= 0
                                 fprintf('Not divisible, You would want to check the alignmennt between them.\n');
+                                % average setting afterwards?
                             else
                                 % Divisible. 
                                 % Assign stim trigger IDs to session triggers.
@@ -474,15 +483,17 @@ classdef roiData < matlab.mixin.Copyable
                                 ids = 1:numel(r.stim_trigger_times);
                                 whereis_sess = mod(ids, n) == 1; % logical array
                                 r.sess_trigger_ids = ids(whereis_sess);
+                                if n == 1 % exception
+                                    r.sess_trigger_ids = ids;
+                                end
                                 
                                 % Session as repeated stimulus?
                                 fprintf('%d stim triggers in one session.\n', n);
-                                str_input = sprintf('Are they repeated by %d times (every %d triggers) [Y]? Enter ''n'' of stim triggers in one repeat. \n(enter 0 if it is not repeated.)', numSessTriggers, n);
+                                str_input = sprintf('\nAre they repeated by %d times (every %d triggers) [Y]?\n(or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers, n);
                                 n_new = input(str_input);
                                 if isempty(n_new)
                                     n_new = n; % case default number
                                 end
-                                disp('Average analysis ON..');
                                 r.avg_every = n_new; % set method
                             end
                             
@@ -499,9 +510,10 @@ classdef roiData < matlab.mixin.Copyable
                     
                 % load ex struct?
                 
-                % Avg trace settings
+                % Avg trace settings: only needed when major triggers are
+                % not divisible..
                 if r.avg_FLAG==false && ~isempty(r.stim_trigger_times) && numel(r.stim_trigger_times) > 1
-                        % params for avg & avg plot
+                        %
                         avg_every = 1;
                         
                         % special cases
@@ -551,7 +563,9 @@ classdef roiData < matlab.mixin.Copyable
                 elseif strfind(r.ex_name, 'whitenoise')
                     r.load_h5;
                     % stim size?
-                    r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
+                    if isempty(r.stim_size) || (r.stim_size == 0)
+                        r.stim_size = input('Stim size for whitenoise stim? [mm]: ');
+                    end
                 end
 
                 % cluster parameters
@@ -566,9 +580,18 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function set.avg_every(r, n_every)
+                
+                if n_every == 0
+                    r.avg_FLAG = false;
+                    r.avg_every = 0;
+                    disp('Average analysis OFF..');
+                    return;
+                end
+                    
                 %
                 r.avg_FLAG  = true;
                 r.avg_every = n_every;
+                disp('Average analysis ON..');
                 
                 % avg trigger times
                 if r.avg_every > 1 

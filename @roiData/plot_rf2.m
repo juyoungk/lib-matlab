@@ -54,7 +54,12 @@ function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
         if nargin < 2
             roi_array = 1:r.numRoi; % loop over all rois
         else
-            roi_array = id_roi;     % loop over selected rois
+            if islogical(id_roi)
+                id = 1:r.numRoi;
+                roi_array = id(id_roi);
+            else
+                roi_array = id_roi;     % loop over selected rois
+            end
         end
         
         n_cells = numel(roi_array);
