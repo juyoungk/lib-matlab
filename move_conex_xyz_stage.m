@@ -38,7 +38,8 @@ function move_conex_xyz_stage(src, evt)
         
          % 0814 New MEA ref
         pos_bot_ref = [6.465, 13.0289, 22.600];
-        
+        % 0829 new origin
+        pos_bot_ref = [6.455, 12.934, 22.600];
     
     % Align 2P (not VS focus) to MEA 0416 201
        % w/ 2 PMTs, 920 laser
@@ -60,7 +61,16 @@ function move_conex_xyz_stage(src, evt)
         
         % 0814: 1070 laser
         pos_top_ref = [112.2000 221.9000 -7.098e+03];
-
+        
+        % 0829: a little right and down
+        pos_top_ref = [132.2000 241.9000 -7.098e+03];
+        
+        % 0829: new origin, zoom 3 scanning
+        pos_top_ref = [24, 72, 21746];
+        % 0913 (w/ just glass surface. need to be confirmed?)
+        pos_top_ref(1) = pos_top_ref(1) - 10;
+        pos_top_ref(2) = pos_top_ref(2) - 30;
+        
     % offset between 2p and VS focal planes: 
     % always 150 um below imaging plane(e.g. GCL)
     %z_offset_vstim = 0;
@@ -103,7 +113,8 @@ function move_conex_xyz_stage(src, evt)
             error('CONEX stage: Too large z move attempted');
         else
             z_comm = sprintf('1PA%.3f\n',-dist(3)+pos_bot_ref(3)-z_offset_vstim);
-            disp(['Command move Z by ', num2str(dist(3)), '. Success.']);
+            disp(['Command move Z Success.']);
+            %disp(['Command move Z by ', num2str(dist(3)), '. Success.']);
             %z_comm = sprintf('1PA%.3f\n',-dist(3)+pos_bot_ref(3));
             fprintf(s3, z_comm);
         end

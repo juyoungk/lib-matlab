@@ -30,7 +30,7 @@ classdef gdata < handle
             % pd events info
             pd_AI_name = 'photodiode';
             pd_threshold1 = 0.85 % Major events
-            pd_threshold2 = 0.60 % Minnor events
+            pd_threshold2 = 0.40 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
             pd_trace
@@ -161,15 +161,21 @@ classdef gdata < handle
                 end
             end
             
-            function J = imvol(g, ch)
+            function J = imvol(g, ch, varargin)
+                % You can specify title if you specify channel #. 
                 if nargin < 2
                     ch = g.header.channelSave;
                 end
                 
                 for i = ch
                     s_title = sprintf('%s  (AI Ch:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
-                    
-                    if strfind(g.ex_name, 'stack')
+                    if numel(varargin) > 0
+                        if ischar(varargin{1})
+                            s_title = varargin{1};
+                        end
+                    end
+
+                    if contains(g.ex_name, 'stack')
                         J = imvol(g.AI{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'z_step_um', g.header.stackZStepSize);
                     else
                         if isempty(g.cc)
@@ -184,16 +190,16 @@ classdef gdata < handle
             
             function setting_pd_event_params(g)
                 
-                if strfind(g.ex_name, 'flash')
+                if contains(g.ex_name, 'flash')
                     g.pd_threshold1 = 0.8;
                     g.min_interval_secs = 0.8;
-                elseif strfind(g.ex_name, 'movingbar')
+                elseif contains(g.ex_name, 'movingbar')
                     g.pd_threshold1 = 0.4;
                     g.min_interval_secs = 1.2;
-                elseif strfind(g.ex_name, 'jitter')
+                elseif contains(g.ex_name, 'jitter')
                     g.pd_threshold1 = 0.4;
                     g.min_interval_secs = 1;
-                elseif strfind(g.ex_name, 'whitenoise')
+                elseif contains(g.ex_name, 'whitenoise')
                     g.pd_threshold1 = 0.4;
                     g.min_interval_secs = 0.25;
                 end
@@ -259,7 +265,6 @@ classdef gdata < handle
 %                             end
 %                         end
 %                     end
-                    
                 else
                     disp('The given cc structure is empty. No roiDATA object was assigned.');
                 end
