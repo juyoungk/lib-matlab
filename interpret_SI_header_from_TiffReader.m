@@ -14,39 +14,47 @@ end
 h = get_float_number_to_new_field(h, t, 'hBeams.powers', []);
 
 % scan parameters
-h = get_float_number_to_new_field(h, t, 'scanZoomFactor', []);
+h = get_float_number_to_new_field(h, t, 'scanZoomFactor',  []);
 h = get_float_number_to_new_field(h, t, 'scanFramePeriod', []);
-h = get_float_number_to_new_field(h, t, 'scanFrameRate', []);
-h = get_float_number_to_new_field(h, t, 'linesPerFrame', []);
-h = get_float_number_to_new_field(h, t, 'pixelsPerLine', []);
-h = get_float_number_to_new_field(h, t, 'logFramesPerFile', []);
-h = get_float_number_to_new_field(h, t, 'logAverageFactor', []);
+h = get_float_number_to_new_field(h, t, 'scanFrameRate',   []);
+h = get_float_number_to_new_field(h, t, 'linesPerFrame',   []);
+h = get_float_number_to_new_field(h, t, 'pixelsPerLine',   []);
+h = get_float_number_to_new_field(h, t, 'logFramesPerFile',[]);
+h = get_float_number_to_new_field(h, t, 'logAverageFactor',[]);
 h.logFramePeriod = h.scanFramePeriod * h.logAverageFactor;
 h.logFrameRate   = h.scanFrameRate / h.logAverageFactor;
 
 % stack parameters
-h = get_float_number_to_new_field(h, t, 'framesPerSlice', []);
 h = get_float_number_to_new_field(h, t, 'numSlices', 1); % not actual slice numbers in stored file
+h = get_float_number_to_new_field(h, t, 'framesPerSlice', []);
+% h = get_float_number_to_new_field(h, t, 'framesPerSlice', h.n_frames/h.numSlices);
+% if (h.framesPerSlice - floor(h.framesPerSlice)) > 0
+%     fprintf('\nTotal frame numbers (%d) are not divisible by numSlices (%d).\n', h.n_frames, h.numSlices);
+% end
 h = get_float_number_to_new_field(h, t, 'stackZStepSize', []);
 h = get_digit_numbers_to_new_field(h, t, 'zs', []);
 h.logFramesPerSlice = h.framesPerSlice / h.logAverageFactor;
 
 % Motor parameters: need to be updated !!!
-% SI.hMotors.motorPosition = [-706.04 -3209.32 4519.2]
 h = get_digit_numbers_to_new_field(h, t, 'motorPosition', []);
 h = get_digit_numbers_to_new_field(h, t, 'motorPositionTarget', []);
 
 if nargin > 1
     if length(size_vol) < 3
         disp('vol (data) has no frame dimension.');
-        n_frames = 1
+        n_frames = 1;
     else
         n_frames = size_vol(3);
     end
     %
     h.n_frames = n_frames;
     h.n_frames_ch = n_frames/h.n_channelSave;
-    h.logNumSlices = floor(h.n_frames_ch / h.logFramesPerSlice);                
+    if isempty(h.logFramesPerSlice)
+        h.logNumSlices = [];
+        disp('logFramesPerSlice was not defined.');
+    else
+        h.logNumSlices = floor(h.n_frames_ch / h.logFramesPerSlice);                
+    end
 end
 
 

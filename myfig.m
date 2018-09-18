@@ -7,7 +7,9 @@ function hfig = myfig(pos, hfig)
 if nargin < 2
     % No input for fig handle
     hfig = [];
-elseif nargin < 1
+end
+
+if nargin < 1
     % No input for fig pos 
     pos = get(0, 'DefaultFigurePosition');
 end

@@ -8,12 +8,12 @@ function C = merge(A, B, varargin)
 % %% 'merge' will do scaling. Input for 'imadjust' must be scaled.
 
 if ~ismatrix(A)
-    disp('fn: merge: A is not (image) matrix.');
+    disp('merge: A is not (image) matrix.');
     return
 end
 
 if ~ismatrix(B)
-    disp('fn: merge: B is not (image) matrix.');
+    disp('merge: B is not (image) matrix.');
     return
 end
 

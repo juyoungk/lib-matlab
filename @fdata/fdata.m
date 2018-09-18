@@ -1,10 +1,10 @@
 classdef fdata < handle
-% Imaging data under same FOV
-% Array of gdata objects
-% class for imaging sessions that can share same roi cc structure
+% Imaging data class under same FOV (same roi cc). Array of gdata objects
+
     properties
-        FOV_name
-        g
+        FOV_name    % e.g. loc1, loc2, ...
+        ex_name     %
+        g           % gdata cell array
         img_mean    % mean image of all imaging sessions
         numImaging  % # of imaging sessions under same FOV
         %
@@ -28,12 +28,14 @@ classdef fdata < handle
                % List of filenames
                [tif_filenames, h5_filenames] = tif_h5_filenames(dirpath, ex_str)
                
-               % cluster into imaging sessions
+               % File numbers
                numTifFiles = numel(tif_filenames);
                numh5Files = numel(h5_filenames);
                
-               % construct n gdata
+               % Construct 1 X N gdata
                g(1, numTifFiles) = gdata;
+               obj.ex_name = cell(1, numTifFiles);
+               
                obj.numImaging = numTifFiles;
                for i =1:numTifFiles
                     tif_filename = [dirpath,'/',tif_filenames{i}];
@@ -44,6 +46,9 @@ classdef fdata < handle
                     end
                     %
                     g(i) = gdata(tif_filename, h5_filename);
+                    % save the filenmae after FOV_name
+                    loc = strfind(tif_filename, obj.FOV_name);
+                    obj.ex_name{i} = get_ex_name(tif_filename(loc:end));
                end
                obj.g = g;
                
@@ -52,8 +57,8 @@ classdef fdata < handle
                for ch = obj.g(1).header.channelSave
                    [row, col] = size(obj.g(i).AI_mean{ch});
                    obj.img_mean{ch} = zeros(row, col);
-                   for i = 1:obj.numImaging 
-                        obj.img_mean{ch} = obj.img_mean{ch} + obj.g(i).AI_mean{ch};
+                   for i = 1:obj.numImaging
+                        obj.img_mean{ch} = obj.img_mean{ch} + obj.g(i).AI_mean{ch};                        
                    end
                    obj.img_mean{ch} = obj.img_mean{ch}/obj.numImaging;
                end
@@ -131,8 +136,9 @@ classdef fdata < handle
         end
         
         function imshowpair(obj, s1, s2)
-        % compare mean images between imaging sessions
-        % s1, s2 is session id#    
+        % Compare mean images between imaging sessions
+        % s1, s2 is session id#
+        % no input: compare between all sessions
                 for ch = obj.g(1).header.channelSave
                     figure('Position', [100 150 737 774]);
                     hfig.Color = 'none';
@@ -147,7 +153,6 @@ classdef fdata < handle
                         imshowpair(im1, im2);
                         title(['session pair: ', num2str(s1), ', ', num2str(s2)], 'FontSize', 18, 'Color', 'k');
                     else 
-                        
                         % loop for non-diagonal subscripts.
                         n = obj.numImaging;
                         m = ones(n) - eye(n);
@@ -203,4 +208,9 @@ function str_ex_name = get_ex_name(tif_filename)
     else
         str_ex_name = s_filename(1:(loc_name-1));
     end
+end
+
+function str = get_unique_name(filename)
+
+
 end

@@ -18,6 +18,7 @@ classdef gdata < handle
             AI_mean  % mean up to 1000 frames
             ifi
             nframes  % per channel (e.g. PMT)
+            size
             header
             metadata % raw header file
             
@@ -101,62 +102,22 @@ classdef gdata < handle
                 end
             end
             
-            function img = imfuse(g, ch)
-                % Create composite image
-                % c_fraction: contrast saturation [%]
-                A = g.AI_mean{4}; % background to gray
-                B = g.AI_mean{1}; % red channel
-                C = g.AI_mean{3}; % green channel
+            function J = myshow(g, ch, saturation)
+                % contrast-adjusted ch mean image    
+                if nargin < 3
+                    saturation = 1; % contrast saturation [%]
+                end
+                Tol = [saturation*0.01 1-saturation*0.01];
                 %
-                c_fraction = 2;
-                Tol = [c_fraction*0.01 1-c_fraction*0.01];
-                
-                if nargin < 2
-                    ch = g.roi_channel;
-                end
-                %
-                if isempty(A)
-                    img = []; 
-                    return
-                else
-                    A = scaled(A);
-                    MinMax = stretchlim(A, [0.001, 0.999]);
-                    A = imadjust(A, MinMax);
-                end
-                
-                % 
-                if isempty(B)
-                    B = zeros(size(A));
-                else
-                    B = scaled(B);
-                    MinMax = stretchlim(B,Tol);
-                    B = imadjust(B, MinMax);
-                end
-                %
-                if isempty(C)
-                    C = zeros(size(A));
-                else
-                    C = scaled(C);
-                    MinMax = stretchlim(C, Tol);
-                    C = imadjust(C, MinMax);
-                end
-                %
-                if ch == 1
-                    img = cat(3, max(A, B), A, A);
-                elseif ch == 3
-                    img = cat(3, A, max(A, C), A);
-                else
-                    img = cat(3, max(A, B), max(A, C), A);
-                end
-                imshow(img);
-            end
-            
-            function myshow(g, ch)
                 if nargin > 1
-                    myshow(g.AI_mean{ch});
+                    A = g.AI_mean{ch};
+                    A = mat2gray(A);
+                    MinMax = stretchlim(A, Tol);
+                    J = imadjust(A, MinMax);
                 else
                     for ch=g.header.channelSave
-                        myshow(g.AI_mean{ch});
+                        J = g.myshow(ch);
+                        myfig; imshow(J);
                     end
                 end
             end
@@ -168,7 +129,7 @@ classdef gdata < handle
                 end
                 
                 for i = ch
-                    s_title = sprintf('%s  (AI Ch:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
+                    s_title = sprintf('%s  (CH:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
                     if numel(varargin) > 0
                         if ischar(varargin{1})
                             s_title = varargin{1};
@@ -231,8 +192,9 @@ classdef gdata < handle
                 elseif obj.header.n_channelSave == 1
                     ch = obj.header.channelSave(1);
                     disp(['Ch# ',num2str(ch),' is selected for roi analysis']);
-                else    
-                    ch = input(['Imaging PMT channel # (Available: ', num2str(obj.header.channelSave),') ? ']);
+                else
+                    commandwindow
+                    ch = input([obj.ex_name, ': PMT channel # for maing recording (Available: ', num2str(obj.header.channelSave),') ? ']);
                 end
                 obj.roi_channel = ch;
                 obj.cc = cc;
@@ -339,11 +301,18 @@ classdef gdata < handle
                     g.ex_name = get_ex_name(g.tif_filename);
                     %
                     vol = SI_data.data; 
+                    size_vol = size(vol);
 
                     % Header file
-                    h   = interpret_SI_header_from_TiffReader(g.metadata, size(vol));
+                    h   = interpret_SI_header_from_TiffReader(g.metadata, size_vol);
                     g.header = h;
                     g.ifi = g.header.logFramePeriod;
+                    g.size = [g.header.pixelsPerLine, g.header.linesPerFrame];
+                    
+                    % channel initialization
+                    for i = 1:g.n_channels
+                        g.AI_mean{i} = zeros(size_vol(1), size_vol(2));
+                    end
 
                     % AI channel info
                     g.AI_chSave = h.channelSave;
