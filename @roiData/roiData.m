@@ -273,7 +273,7 @@ classdef roiData < matlab.mixin.Copyable
             end
             
             if i-1 == r.avg_every
-                fprintf('All (k=%d) stim tags were scanned and aligned with num of stim triggers (%d).\n', k-1, r.avg_every);
+                fprintf('All stim tags (k=%d) were scanned and aligned with num of %d stim trigger times (registered by PD).\n', k-1, r.avg_every);
             elseif i-1 < r.avg_every
                 fprintf('Stim tigger lines are more than # of stim tags. Make sure how many triggers are supposed to be in one stim repeat. Please load ex again. \n');
             elseif i-1 > r.avg_every

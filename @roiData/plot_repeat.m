@@ -13,6 +13,8 @@ function ids = plot_repeat(r, I, varargin)
     p=ParseInput(varargin{:});
     PlotType = p.Results.PlotType;
     
+    disp ('');
+    
     % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
         p = 0.1;
@@ -95,14 +97,10 @@ function ids = plot_repeat(r, I, varargin)
              
             % Algin single cell trace. Which trace? smoothed norm
             y = r.roi_smoothed_norm(:, k);
+            %y = r.roi_smoothed(:, k);
                 [y_aligned, ~] = align_rows_to_events(y, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
                 y_aligned = reshape(y_aligned, size(y_aligned, 1), []); % times (row) x repeats (cols) 
-%             
-%             % All traces (smoothed)
-%             y = r.roi_smoothed(:, k);
-%                 [y_aligned, ~] = align_rows_to_events(y, r.f_times, r.avg_trigger_times, r.avg_trigger_interval);
-%                 y_aligned = reshape(y_aligned, size(y_aligned, 1), []);
-%             
+                
             %
             [y_aligned, x] = r.traceAvgPlot(y_aligned);
   
@@ -117,13 +115,13 @@ function ids = plot_repeat(r, I, varargin)
                 
                 if contains(PlotType, 'overlaid')
                         
-                    % individual traces first (ignore 1st trace?!)
-                    disp('[Plot_repeat] 1st trace was ignored.');
+                    % individual traces first 
+                        % disp('[Plot_repeat] 1st trace was ignored.'); 
                     plot(x, y_aligned, 'LineWidth', 1.2); 
                     xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                     hold on
                     
-                    r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 3, 'Color', 'k', 'Label', false);
+                    r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 3, 'Color', 'k', 'Label', true);
                     %title('Mean response');
                     hold off;
                     
