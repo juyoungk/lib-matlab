@@ -16,9 +16,10 @@ classdef gdata < handle
             AI_chSave
             AI
             AI_mean  % mean up to 1000 frames
-            ifi
             nframes  % per channel (e.g. PMT)
             size
+            numSlices % stack is more than 1 numSlices.
+            ifi
             header
             metadata % raw header file
             
@@ -136,7 +137,7 @@ classdef gdata < handle
                         end
                     end
 
-                    if contains(g.ex_name, 'stack')
+                    if contains(g.ex_name, 'stack') || g.numSlices > 1
                         J = imvol(g.AI{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'z_step_um', g.header.stackZStepSize);
                     else
                         if isempty(g.cc)
@@ -186,12 +187,13 @@ classdef gdata < handle
 
             function set.cc(obj, cc)
             % will create roiData structure for only one channel. 
-                % channel select
+                
+                % ROI channel should be assigned.
                 if ~isempty(obj.roi_channel)
                     ch = obj.roi_channel;
                 elseif obj.header.n_channelSave == 1
                     ch = obj.header.channelSave(1);
-                    disp(['Ch# ',num2str(ch),' is selected for roi analysis']);
+                    disp(['ROI analysis ch: ',num2str(ch),' is selected.']);
                 else
                     commandwindow
                     ch = input([obj.ex_name, ': PMT channel # for maing recording (Available: ', num2str(obj.header.channelSave),') ? ']);
@@ -233,13 +235,11 @@ classdef gdata < handle
             end
             
             function set.roi_channel(obj, ch)
-                if ch >0 && ch <=obj.n_channels
+                if ch > 0 && ch <=obj.n_channels
                     obj.roi_channel = ch;
                 else
                     error('Not available channel number for roi analysis');
                 end
-                % how to recalculate rr for new channel? reassign cc to
-                % obj.cc
             end
 
             function g = gdata(tif_filename, h5_filename)
@@ -308,6 +308,7 @@ classdef gdata < handle
                     g.header = h;
                     g.ifi = g.header.logFramePeriod;
                     g.size = [g.header.pixelsPerLine, g.header.linesPerFrame];
+                    g.numSlices = g.header.numSlices;
                     
                     % channel initialization
                     for i = 1:g.n_channels
@@ -326,10 +327,10 @@ classdef gdata < handle
                         % de-interleave
                         ch = vol(:,:,id_ch==j); % de-interleave frames
                         g.AI{h.channelSave(j)} = ch;
-
-                        % mean of first 1000 frames (for 512x512 pixels)
                         [row, col, ch_frames] = size(ch);
                         g.nframes = ch_frames;
+                        
+                        % mean image: first 1000 frames (for 512x512 pixels)
                         n_frames_snap = min(ch_frames, round(512*512*1000/row/col));
                         ch_mean = mean(ch(:,:,1:n_frames_snap), 3);
                         g.AI_mean{h.channelSave(j)} = ch_mean;
@@ -343,11 +344,18 @@ classdef gdata < handle
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
                             imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
                     end
+                    
+                    % drift check if frame numbers are more than 1000
+                    if ch_frames > 999
+                        before_after = g.imdrift;
+                        % combined image for ROI segmentation.
+                        imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
+                    end
 
                     % h5 file: PD
                     % PD recording filename: {i}
                     if isempty(h5_filename)
-                        disp([tif_filename,': No corresponding h5 (e.g. photodiode) file']);
+                        disp(['No corresponding h5 (e.g. photodiode) file for ', tif_filename]);
                         g.numStimulus = 1; % default value for numStimulus.
                     else
                         % import data from h5 
@@ -467,13 +475,10 @@ classdef gdata < handle
                             end
                         else
                             disp(['No .mat file for ''', ex_str, ''' (e.g. ''cc'' structure for ROI segmentation)']);
-                            g.cc = []; % initialize cc struct
+                            %g.cc = []; % initialize cc struct. No need to
+                            %call set method.
                         end
 
-                        % drift?
-                        before_after = g.imdrift;
-                        % combined image for ROI segmentation.
-                        imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
                 end
 
