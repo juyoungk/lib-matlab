@@ -487,7 +487,8 @@ classdef gdata < handle
                     plot(g.h5_times(i_start:end), g.pd_trace(i_start:end)); hold on; % PD trace
                     % PD trigger events 1
                     for ii = 1:g.numStimulus % color coding for clustered PD events.    
-                        plot( g.pd_events1(g.stims_ids{ii}), g.pd_threshold1, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
+                        %plot( g.pd_events1(g.stims_ids{ii}), g.pd_threshold1, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
+                        plot( g.pd_events1, g.pd_threshold1, 'o');
                     end
                     % PD trigger events 2
                     for ii = 1:g.numStimulus % color coding for clustered PD events.    
