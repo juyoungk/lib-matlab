@@ -44,7 +44,8 @@ classdef roiData < matlab.mixin.Copyable
         
         % statistics
         stat
-        p_corr % over repeats ['.smoothed', '.smoothed_norm']. Only available for avg analysis
+        p_corr % between repeats ['.smoothed', '.smoothed_norm']. Only available for avg analysis.
+               % computed @updated_smoothed_trace 
         
         % smoothing params
         smoothing_method = 'movmean';
@@ -62,7 +63,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_trigger_times % Times for aligning between trials. A subset of stim_trigger_times. Might be same as sess_trigger_times
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_plot   % structure for plot properties of each stim triggers.
-            avg_stim_tags
+        avg_stim_tags
         avg_trigger_interval
         avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
         avg_trace_std   % std over trials
@@ -198,6 +199,8 @@ classdef roiData < matlab.mixin.Copyable
         function load_ex2(r, ex)
             % Read 'ex' structure and interpret it. Old version.
             % interpret if middle line is preffered for plot for each stim type.
+            disp('This is old version. Use version1');
+            
             if iscell(ex.stim)
                 stim = [ex.stim{:}];
             else
@@ -534,7 +537,7 @@ classdef roiData < matlab.mixin.Copyable
                         end
                         
                         % User input
-                        str_input = sprintf('PD trigger events num: %d.\nAvg over every N triggers? [Default N = %d (%s). 0 for no average analysis]',...
+                        str_input = sprintf('PD trigger events num: %d.\nRepeated stimulus over every N triggers? [Default N = %d (%s). 0 for no average analysis]',...
                             length(r.stim_trigger_times), avg_every, r.ex_name);
                         n = input(str_input);
                         if isempty(n)
@@ -546,11 +549,11 @@ classdef roiData < matlab.mixin.Copyable
                         else 
                             % set avg_every (excute set.avg_every)
                             r.avg_every = n;
-                        end
-
-                        % cluster mean for avg trace (100 clusters max)
-                        r.c_mean = zeros(length(r.avg_times), r.totClusterNum);
+                        end     
                 end
+                
+                % cluster mean initialization (100 clusters max)
+                r.c_mean = zeros(length(r.avg_times), r.totClusterNum);
                   
                 % default smoothing or smoothed traces
                 %r.smoothing_method = 'movmean';
@@ -575,7 +578,34 @@ classdef roiData < matlab.mixin.Copyable
                 r.roi_review = [];
                 
                 % stat
-                r.stat.mean_f = mean( r.roi_trace(r.f_times > r.stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);                  
+                r.stat.mean_f = mean( r.roi_trace(r.f_times > r.stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);
+                
+                % Plot several (avg) traces
+                if r.avg_every > 0
+                    % ROIs exhibiting hiested correlations between traces
+                    % under repeated stimulus
+                    [corr, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
+                    % summary
+                    numCell = 12;
+                    for ss = 1:numCell
+                        fprintf('ROI%3d: corr between trials %5.2f\n',good_cells(ss), corr(ss));
+                    end
+                    % plot
+                    r.plot_repeat(good_cells(1:numCell), 'PlotType', 'overlaid');
+                    make_im_figure;
+                    r.plot_roi(good_cells(1:numCell));
+                else
+                    % single trial case 
+                    [mean_f, good_cells] = sort(r.stat.mean_f, 'descend');
+                    % summary
+                    numCell = 12;
+                    for ss = 1:numCell
+                        fprintf('ROI %d: mean fluorescence level %5.2f\n',good_cells(ss), mean_f(ss));
+                    end
+                    % plot
+                    r.plot(good_cells(1:numCell));
+                end
+                
             end
         end
         
@@ -625,7 +655,7 @@ classdef roiData < matlab.mixin.Copyable
                 
                 
                 % Given avg_trigger_times and avg_trigger_interval, update
-                % traces.
+                % traces. p_corr is computed.
                 r.update_smoothed_trace;
 
                 % stim events within one avg

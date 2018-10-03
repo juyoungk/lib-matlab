@@ -7,8 +7,9 @@ function ids = plot_repeat(r, I, varargin)
 %           'ids' - array of ROI index (filtered by correlation)
 %
 % varargin:
-%           'PlotType' : For indivial trace. 'tiled' (default) or
-%           'overlaid' (Black mean + overlaid all traces except 1st one)
+%           'PlotType'
+%               'overlaid' (Black mean + overlaid all traces except 1st one)
+%               'tiled'
     
     p=ParseInput(varargin{:});
     PlotType = p.Results.PlotType;
@@ -17,12 +18,13 @@ function ids = plot_repeat(r, I, varargin)
     
     % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
-        p = 0.1;
-        I = 1:r.numRoi;    
-        I = I(r.p_corr.smoothed_norm > p);
-        fprintf('[plot_repeat] %d ROIs are seleted with a condition of p > %.2f.\n', numel(I), p);
+        % 12 cells having highest correlationns
+        numCell = 12;
+        [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
+        I = good_cells(1:numCell);
+        fprintf('[plot_repeat] %d ROIs having highest correlation are seleted.\n', numCell);
     end
-    if length(I) == 1 && I < 1 % I as p upper limit
+    if length(I) == 1 && I < 1 % ROIs selected by correlation 
         p = I;
         I = 1:r.numRoi;    
         I = I(r.p_corr.smoothed_norm > p);
@@ -46,8 +48,7 @@ function ids = plot_repeat(r, I, varargin)
     
     % Figure 
     %hfig = figure('Position', [10 300 800 900]);
-    hfig = figure('Position', [10 300 1400 900]);
-    
+    hfig = figure('Position', [10 55 1400 1050]);
     
     % callback
     set(hfig, 'KeyPressFcn', @keypress)
@@ -57,7 +58,7 @@ function ids = plot_repeat(r, I, varargin)
     
     % subplot info
     n_col = 2;
-    n_row = 2;
+    n_row = 3;
     n_plots_per_fig = n_col * n_row;
     n_figs = ceil(n_ROI/n_plots_per_fig);
     i_fig = 1;
@@ -69,7 +70,7 @@ function ids = plot_repeat(r, I, varargin)
         h_ax_mean   = 1/n_row * (1/4) * 0.9;
         h_ax_repeat = 1/n_row * (3/4) * 0.9;
         if contains(PlotType, 'overlaid')
-            n_row = 5;
+            n_row = 6;
             h_ax = (1-m)/n_row;
             h_ax_mean   = 1/n_row * 0.9;
             h_ax_repeat = 0;
@@ -201,7 +202,7 @@ function p =  ParseInput(varargin)
     
     p  = inputParser;   % Create an instance of the inputParser class.
     
-    p.addParameter('PlotType', 'tiled', @(x) strcmp(x,'tiled') || ...
+    p.addParameter('PlotType', 'overlaid', @(x) strcmp(x,'tiled') || ...
         strcmp(x,'overlaid'));
       
     % Call the parse method of the object to read and validate each argument in the schema:
