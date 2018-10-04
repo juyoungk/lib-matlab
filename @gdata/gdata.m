@@ -364,7 +364,7 @@ classdef gdata < handle
 
                     
                     % load cc struct if exist
-                    cc_filenames = getfilenames(pwd, ['/*',ex_str,'*.mat']);
+                    cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
                     if ~isempty(cc_filenames)
                         commandwindow
                         reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');

@@ -592,6 +592,7 @@ classdef roiData < matlab.mixin.Copyable
                     end
                     % plot
                     r.plot_repeat(good_cells(1:numCell), 'PlotType', 'overlaid');
+                    print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
                     make_im_figure;
                     r.plot_roi(good_cells(1:numCell));
                 else
@@ -604,8 +605,9 @@ classdef roiData < matlab.mixin.Copyable
                     end
                     % plot
                     r.plot(good_cells(1:numCell));
+                    print([r.ex_name, '_plot'], '-dpng', '-r300');
                 end
-                
+
             end
         end
         
@@ -623,7 +625,8 @@ classdef roiData < matlab.mixin.Copyable
                 r.avg_every = n_every;
                 disp('Average analysis ON..');
                 
-                % avg trigger times
+                % avg trigger times: automatically invokes
+                % update_smoothed_trace
                 if r.avg_every > 1 
                     id_trigger = mod(1:numel(r.stim_trigger_times), r.avg_every) == 1; % logical array
                     r.avg_trigger_times = r.stim_trigger_times(id_trigger);
@@ -656,8 +659,9 @@ classdef roiData < matlab.mixin.Copyable
                 
                 % Given avg_trigger_times and avg_trigger_interval, update
                 % traces. p_corr is computed.
-                r.update_smoothed_trace;
-
+                % in set method of avg_trigger_times.
+                %r.update_smoothed_trace;
+                
                 % stim events within one avg
                 r.avg_stim_times = r.stim_trigger_times(1:r.avg_every) - r.stim_trigger_times(1);
                 
@@ -676,6 +680,11 @@ classdef roiData < matlab.mixin.Copyable
                 r.avg_stim_plot(n_every) = r.avg_stim_plot; % struct array
                     [r.avg_stim_plot(:).middleline] = deal(true);
                     [r.avg_stim_plot(:).shade]      = deal(false);
+        end
+        
+        function set.avg_trigger_times(r, new_times)
+            r.avg_trigger_times = new_times;
+            r.update_smoothed_trace;
         end
         
         % Function for phase shift and multiply for vector
