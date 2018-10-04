@@ -314,6 +314,12 @@ classdef gdata < handle
                     g.size = [g.header.pixelsPerLine, g.header.linesPerFrame];
                     g.numSlices = g.header.numSlices;
                     
+                    % Check if acq was sync with triggers.
+                    disp(['SI.extTrigEnable = ', h.extTrigEnable]);
+                    if contains(h.extTrigEnable, 'false')
+                        disp('!!! Be aware that Scanimage was not triggered by stimulus trigger. !!!');
+                    end
+                    
                     % channel initialization
                     for i = 1:g.n_channels
                         g.AI_mean{i} = zeros(size_vol(1), size_vol(2));

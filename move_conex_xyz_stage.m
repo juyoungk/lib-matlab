@@ -31,12 +31,7 @@ function move_conex_xyz_stage(src, evt)
     % VS to MEA 0416
         pos_bot_ref = [5.958, 13.016, 23.017]; % mm
        
-        % find adjustment through bottom unit (0614. 1070 laser)
-        pos_bot_ref(1) = pos_bot_ref(1) + 0.053; % (+) makes VS left
-        pos_bot_ref(2) = pos_bot_ref(2) + 0.13;  % (+) makes VS down
-        pos_bot_ref(3) = pos_bot_ref(3);
-        
-         % 0814 New MEA ref
+        % 0814 New MEA ref
         pos_bot_ref = [6.465, 13.0289, 22.600];
         % 0829 new origin
         pos_bot_ref = [6.455, 12.934, 22.600];
@@ -67,9 +62,10 @@ function move_conex_xyz_stage(src, evt)
         
         % 0829: new origin, zoom 3 scanning
         pos_top_ref = [24, 72, 21746];
+        
         % 0913 (w/ just glass surface. need to be confirmed?)
-        pos_top_ref(1) = pos_top_ref(1) - 10;
-        pos_top_ref(2) = pos_top_ref(2) - 30;
+        pos_top_ref(1) = pos_top_ref(1) - 10 + 40; % (+) moves VS right
+        pos_top_ref(2) = pos_top_ref(2) - 30 + 10; % (+) moves VS down
         
     % offset between 2p and VS focal planes: 
     % always 150 um below imaging plane(e.g. GCL)

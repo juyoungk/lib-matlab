@@ -3,6 +3,10 @@ function h = interpret_SI_header_from_TiffReader(t, size_vol)
 %
 h = [];
 
+% general status
+% SI.extTrigEnable = false
+h = get_str_to_new_field(h, t, 'extTrigEnable', []); 
+
 % channel parameters
 h = get_digit_numbers_to_new_field(h, t, 'channelSave', [1]);
 h.n_channelSave = numel(h.channelSave);
@@ -57,8 +61,6 @@ if nargin > 1
     end
 end
 
-
-
 end
 
 function h = get_float_number_to_new_field(h, text, str, default_value)
@@ -80,6 +82,24 @@ str = strrep(str,'.','_');
 h.(str) = num; 
 
 end
+
+function h = get_str_to_new_field(h, text, str, default_value)
+% inputs:
+%           h - header struct. Should be predefined. 
+% search 'str' in 'text' file and add the value as a new field of the struct 'h' 
+
+value = get_str_after_str(text, [str,' = ']);
+
+if isempty(value)
+    value = default_value;
+end
+
+str = strrep(str,'.','_');
+
+h.(str) = value; 
+
+end
+
 
 function h = get_digit_numbers_to_new_field(h, text, str, default_value)
 % search 'str' in 'text' file and add the float number as a new field of the struct 'h' 
@@ -124,6 +144,26 @@ if isnumeric(a)
 else
     disp(['No property or numeric value for the metadata: ', str]);
 
+end
+
+end
+
+function a = get_str_after_str(text, str)
+% get str property value from the text
+% inputs:
+%   text
+%   str
+
+loc = strfind(text, str);
+str_lines = splitlines(text(loc:end));
+str_line = str_lines{1};
+
+a = sscanf(str_line, [str, '%s']);
+
+if ischar(a)
+    % do nothing
+else
+    disp(['No string value for the metadata: ', str]);
 end
 
 end
