@@ -36,7 +36,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         if ~r.avg_FLAG
             % whitenoise rf
             
-            plot_rf(r, id_roi, traceType);
+            %plot_rf(r, id_roi, traceType);
 
         else 
             if isempty(r.avg_trace)
