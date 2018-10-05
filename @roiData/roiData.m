@@ -633,30 +633,7 @@ classdef roiData < matlab.mixin.Copyable
                 else
                     r.avg_trigger_times = r.stim_trigger_times;
                 end
-
-                % avg trigger interval & stim end
-                if numel(r.avg_trigger_times) > 1
-                    r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
-                    disp(['Avg trigger interval: ', num2str(r.avg_trigger_interval), ' secs.']);
-                    
-                    numAvgTrigger = numel(r.avg_trigger_times);
-                     
-                    if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_trigger_interval)
-                        r.stim_end = r.f_times(end);
-                        numRepeat = numAvgTrigger - 1;
-                    else
-                        r.stim_end = r.avg_trigger_times(end) + r.avg_trigger_interval;
-                        numRepeat = numAvgTrigger;
-                    end
-                else
-                    disp('One trigger for average process. Default time interval between trigger set to 10 secs.');
-                    r.avg_trigger_interval = 10;
-                    numRepeat = 1;
-                end
-                fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
-                fprintf('Num of full repeats: %d.\n', numRepeat);
-                
-                
+  
                 % Given avg_trigger_times and avg_trigger_interval, update
                 % traces. p_corr is computed.
                 % in set method of avg_trigger_times.
@@ -683,7 +660,32 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function set.avg_trigger_times(r, new_times)
+            % Assign new times
             r.avg_trigger_times = new_times;
+            
+            % Avg trigger interval & stim end
+            if numel(r.avg_trigger_times) > 1
+                r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
+                disp(['Avg trigger interval: ', num2str(r.avg_trigger_interval), ' secs.']);
+
+                numAvgTrigger = numel(r.avg_trigger_times);
+
+                if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_trigger_interval)
+                    r.stim_end = r.f_times(end);
+                    numRepeat = numAvgTrigger - 1;
+                else
+                    r.stim_end = r.avg_trigger_times(end) + r.avg_trigger_interval;
+                    numRepeat = numAvgTrigger;
+                end
+            else
+                disp('Single trial response. Default time interval between trigger is set to 10 secs.');
+                r.avg_trigger_interval = 10;
+                numRepeat = 1;
+            end
+            fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
+            fprintf('Num of full repeats: %d.\n', numRepeat);
+            
+            % update traces
             r.update_smoothed_trace;
         end
         
