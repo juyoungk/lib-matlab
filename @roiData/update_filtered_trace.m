@@ -2,7 +2,7 @@ function update_filtered_trace(r)
 % update_smoothed_trace should be performed in advance. 
     % calculating filters
     fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .0005, 'StopbandFrequency', .001, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .001, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     
     % update ignore_sec
