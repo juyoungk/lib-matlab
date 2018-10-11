@@ -88,12 +88,10 @@ classdef gdata < handle
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
                     %
-                    figure('Color', 'none');
-                    ax = axes('Position', [0  0  1  0.9524], 'Visible', 'off');
-                    
+                    make_im_figure;
                     imshowpair(myshow(AI_mean_early, 0.2), myshow(AI_mean_late, 0.2)); % contrast adjust by myshow()
                     title(ax, 'Is it drifted? (Green-Magenta)', 'FontSize', 15, 'Color', 'w');
-                    print([g.getFigFileName(ch),'.png'], '-dpng', '-r300'); %high res
+                    print([g.getFigFileName(ch),'_drift.png'], '-dpng', '-r300'); %high res
                     vol = cat(3, AI_mean_early, AI_mean_late);
                 else
                     for PMT_ch=g.header.channelSave
