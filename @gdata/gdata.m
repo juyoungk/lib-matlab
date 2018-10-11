@@ -90,7 +90,7 @@ classdef gdata < handle
                     %
                     make_im_figure;
                     imshowpair(myshow(AI_mean_early, 0.2), myshow(AI_mean_late, 0.2)); % contrast adjust by myshow()
-                    title(ax, 'Is it drifted? (Green-Magenta)', 'FontSize', 15, 'Color', 'w');
+                    title('Is it drifted? (Green-Magenta)', 'FontSize', 15, 'Color', 'w');
                     print([g.getFigFileName(ch),'_drift.png'], '-dpng', '-r300'); %high res
                     vol = cat(3, AI_mean_early, AI_mean_late);
                 else
