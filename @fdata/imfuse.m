@@ -28,11 +28,8 @@ if nargin < 2
     ch2 = 3;
 end
 %
-% A = obj.g(s1).AI_mean{ch1};
-% B = obj.g(s2).AI_mean{ch2}; 
-
 A = obj.g(s1).myshow(ch1, 0.5);
-B = obj.g(s2).myshow(ch2, 1);
+B = obj.g(s2).myshow(ch2, 0.5);
 %
 if isempty(A)
     fprintf('Empty image data on session %d channel %d\n', s1, ch1);

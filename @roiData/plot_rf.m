@@ -36,10 +36,10 @@ function ax = plot_rf(r, id_roi, traceType, maxlag, upsampling)
         str_info = sprintf('%s\n%s', str_events_info, str_smooth_info);
         
         % subplot params
-        n_row =  8;
-        n_col = 10; % limit num of subplots by fixing n_col
+        n_row = 10;
+        n_col = 3; % limit num of subplots by fixing n_col
         % Figure params
-        n_cells_per_fig = 75;
+        n_cells_per_fig = 29;
         
         %        
         if nargin < 2
@@ -90,42 +90,10 @@ function ax = plot_rf(r, id_roi, traceType, maxlag, upsampling)
             %
             saveas(gcf, [r.ex_name,'_ROI_whitenoise_corrRF.png']);
         end
-        
-        
-
     end
 
 
 end
-
-function plot_rf_map(r, rf, s)
-
-    [num_x, num_t] = size(rf);
-    
-    imshow(rf, s.clim, 'Colormap', bluewhitered(64, s.clim)); % jet, parula, winter ..
-        axis on;
-        ax =gca; colorbar('TickLabels', []);
-        
-        time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
-        time_tick_label = 1:2:10; % up to 1s [ 100 ms]
-        time_tick_locs = time_tick_label * 0.1 / r.ifi;
-        ax.XTick = time_tick_locs;
-        S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
-        ax.XTickLabel = {time_label{1:end-1}}; 
-        xlabel('[x100 ms]');
-        %
-        x_tick_spacing = 0.5; % [mm]
-        w_bar = r.stim_size/num_x;
-        x_center = num_x/2.;
-        x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
-        x = unique([-x, x]);
-        ax.YTick = x + x_center;
-        S = sprintf('%.1f*', x*w_bar ); C = regexp(S, '*', 'split'); % C is cell array.
-        ax.YTickLabel = {C{1:end-1}};
-        ylabel('[mm]');
-        ax.FontSize = 12;
-end
-
 
 
 function make_figure(x_shift, y_shift)

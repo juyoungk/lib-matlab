@@ -69,7 +69,7 @@ sstim = double(sstim);
 
 % % resample stim at recording (or imaging) times
 sstim = interp1(fliptimes, sstim.', rtime); % [N (times), D1, D2, ..] for V (sstim)
-%sstim = sstim.';
+sstim = sstim.'; % [ch x times] 
 
 %# of frames for maxlag duration
 N_maxcorr = round(maxlag/r_ifi);

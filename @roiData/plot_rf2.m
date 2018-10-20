@@ -1,4 +1,7 @@
-function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
+function s = plot_rf2(r, id_roi, traceType, maxlag, upsampling)
+% Visualize RF map w/ space and time slice
+% traceType = 'smoothed_norm' (default), 'raw', 'smoothed'
+% Output s contains rf, rf slices, and stats.
     
     if nargin < 5
         upsampling = 5; % stimulus upsampling factor
@@ -48,7 +51,7 @@ function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
         
         % subplot params
         n_row = 4;
-        n_col = 5; % n_cells per figure
+        n_col = 7; % n_cells per figure
         
         %        
         if nargin < 2
@@ -112,10 +115,6 @@ function plot_rf2(r, id_roi, traceType, maxlag, upsampling)
                 'VerticalAlignment', 'top', 'HorizontalAlignment','right');
         %
         %saveas(gcf, [r.ex_name,'_ROI_whitenoise_corrRF.png']);
-
-        
-        
-
     end
 
 

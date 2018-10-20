@@ -9,8 +9,9 @@ if nargin < 2
     error('You probably wouldn''t want to export all the data. Please specify ROI IDs.');
 end
 
+% parameters for export
 dpath = '/Users/peterfish/Modules/';
-fname = [dpath, 'data.h5'];
+fname = [dpath, 'data_roi_.h5'];
 group = '/exp1';  % default group name
 upsampling = 5;
 
@@ -18,15 +19,19 @@ if exist(fname, 'file')==2
   delete(fname);
 end
 
-%
+% Which trace? 
 %y = r.roi_smoothed_norm(:, ids);
-y = r.roi_smoothed_detrend(:, ids);
-disp('Smoothed_detrend (trend substracted) was used for data.');
+
+% y = r.roi_smoothed_detrend(:, ids);
+% disp('Smoothed_detrend (trend substracted, but not normalized) was used for data.');
+
+y = r.roi_filtered(:, ids);
+disp('filtered trace (not normalizeed) was used for data.');
 
 t = r.f_times_norm;
 t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time
 
-% Upsample stim movie
+% First, upsample stim movie
 [sstim, fliptimes] = upsample_stim(r.stim_movie, r.stim_fliptimes, upsampling);
 
 % Resample stim movie at recording times
@@ -34,7 +39,7 @@ t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time
     t = t(t>fliptimes(1));
     y = y(t>fliptimes(1), :);
 
-    % 2. Resample stim
+    % 2. Stim resampled at frame times. 
     % Time dimension should be 1. sstim should be reshaped and transposed.
     stim_rtime = reshape(sstim, [], length(fliptimes));
     stim_rtime = double(stim_rtime);
@@ -52,8 +57,8 @@ t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time
     % Center the stim data
     stim_rtime = scaled(stim_rtime) - 0.5;
     
-    % Alignment Check
-    cell_id = 1;
+    % Alignment Check (only for one cell)
+    cell_id = 2;
     rf = revcorr(stim_rtime, y(:, cell_id), 35);
     figure; plot_rf_map(r, rf); title('Rev correlation (w/ resampeld stim)');
 

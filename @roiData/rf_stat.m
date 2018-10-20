@@ -1,5 +1,4 @@
 function s = rf_stat(r, rf, nearby)
-
 % only 1-D bar rf 
 %[n_xbin, n_timebin] = size(rf);
 
@@ -41,5 +40,7 @@ function s = rf_stat(r, rf, nearby)
     s.max = max(rf(:));
     s.max_abs = max( abs(s.min), abs(s.max) ); 
     s.clim = [-s.max_abs s.max_abs];
-
+    
+    % save rf
+    s.rf = rf;
 end

@@ -60,10 +60,12 @@ function plot(r, I)
             
             if contains(r.ex_name, 'whitenoise') || contains(r.ex_name, 'run') 
                 
-                r.plot_rf(k, 'smoothed');
-                title('Revrse correlation (smoothed trace)');
-                c = colorbar;
-                c.TickLabels = {};
+                if ~isempty(r.stim_movie)
+                    r.plot_rf(k, 'smoothed');
+                    title('Revrse correlation (smoothed trace)');
+                    c = colorbar;
+                    c.TickLabels = {};
+                end
             else
                 plot_avg(r, k);
                 ax =gca;

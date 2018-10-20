@@ -23,7 +23,8 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
 
         % trace type & convert f_times to f_times_norm    
         if contains(traceType, 'normalized')
-            y = r.roi_normalized(:, id_roi);
+            error('No more use for the tracetype ''roi_normalized''');
+            %y = r.roi_normalized(:, id_roi);
             
         elseif contains(traceType, 'raw')
             y = r.roi_trace(:, id_roi);
@@ -36,6 +37,12 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
             
         elseif contains(traceType, 'smoothed_norm')
             y = r.roi_smoothed_norm(:, id_roi);
+        
+        elseif contains(traceType, 'filtered')    
+            y = r.roi_filtered(:, id_roi);
+            
+        elseif contains(traceType, 'filtered_norm')    
+            y = r.roi_filtered_norm(:, id_roi);
             
         else
             disp('trace Type should be one of ''normalized'', ''raw'', ''smoothed''. ''Normalized'' trace was used');

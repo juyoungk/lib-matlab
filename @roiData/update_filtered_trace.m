@@ -1,14 +1,15 @@
 function update_filtered_trace(r)
 % update_smoothed_trace should be performed in advance. 
     % calculating filters
-    fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+    fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % default
+    %fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .1,  'StopbandFrequency', .2, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .001, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     
     % update ignore_sec
     r.ignore_sec = r.stim_trigger_times(1);
     
-    %
+    % time
     t = r.ignore_sec; 
     r.f_times_fil = r.f_times(r.f_times > t);
     r.f_times_norm = r.f_times_fil;
@@ -16,7 +17,6 @@ function update_filtered_trace(r)
     
     %
     r.roi_filtered = zeros(numframes, r.numRoi);
-
     r.roi_normalized = zeros(numframes, r.numRoi);
     r.roi_trend = zeros(numframes, r.numRoi);
     r.roi_smoothed_detrend = zeros(numframes, r.numRoi);

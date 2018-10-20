@@ -3,19 +3,19 @@ function ax = plot_trace_norm(r, id_roi)
 
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
-        plot(r.f_times_norm, r.roi_normalized(:,id_roi), 'LineWidth', 0.7); hold on
+        plot(r.f_times_norm, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
         title('Normalized trace');
             ylabel('dF/F [%]'); axis auto;
             ax = gca; 
             Fontsize = 14;
             ax.XAxis.FontSize = Fontsize;
-            ax.YAxis.FontSize = Fontsize;
+            ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
         
         % stimulus lines
         ev = r.stim_times;        
         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme')) 
-        if 1 % print all event times always
+        if ~contains(r.ex_name, 'whitenoise')
             for i=1:length(ev)
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line

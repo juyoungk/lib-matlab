@@ -11,13 +11,13 @@ function ax = plot_trace_raw(r, id_roi)
             ax = gca; 
             Fontsize = 14;
             ax.XAxis.FontSize = Fontsize;
-            ax.YAxis.FontSize = Fontsize;
+            ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
             axis tight
         % stimulus lines
         ev = r.stim_trigger_times;
         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
-        if 1
+        if ~contains(r.ex_name, 'whitenoise')
             for i=1:length(ev)
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line
