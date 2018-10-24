@@ -1,7 +1,8 @@
 function update_smoothed_trace(r)
     % initialize array
     r.roi_smoothed = zeros(size(r.roi_trace));
-
+    disp(['Smoothing size = ', num2str(r.smoothing_size)]);
+    
     % smooth trace
     for i=1:r.numRoi
         y = r.roi_trace(:,i);

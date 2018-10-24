@@ -3,7 +3,8 @@ function update_filtered_trace(r)
     % calculating filters
     fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % default
     %fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .1,  'StopbandFrequency', .2, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .001, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .0002, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % 2018 1022. Narutal movies are more dynamic
+    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .002, 'StopbandFrequency', .008, 'PassbandRipple', 1, 'StopbandAttenuation', 60);  % Short repeat(e.g. flash 0223 data) 2018 1023
     %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     
     % update ignore_sec
@@ -60,6 +61,7 @@ function update_filtered_trace(r)
         [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
         % Pearson correlation over repeats
         r.p_corr.smoothed_norm = corr_avg(roi_aligned_smoothed_norm);
+        r.p_corr.filtered = corr_avg(roi_aligned_fil);
         r.p_corr.filtered_norm = corr_avg(roi_aligned_filtered_norm);
         %
         r.stat.smoothed_norm = stat_smoothed_norm;

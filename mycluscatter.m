@@ -2,7 +2,7 @@ function mycluscatter(X, varargin)
 % X should be n-by-p matrix. 
 % 1st input in varargin should be cluster (group) index.
 % If X is image matrix, X should be "reshaped" before use.
-% mycluscatter(X): scatter plot with histogram (called by pcaimg)
+% mycluscatter(X): scatter plot with histogram (e.g. called by pcaimg)
 %
 % mycluscatter(X, idx, center): idx is n-by-1 matrix, a result of
 % clustering

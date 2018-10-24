@@ -19,16 +19,16 @@ function ids = plot_repeat(r, I, varargin)
     % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
         % 12 cells having highest correlationns
-        numCell = 12;
+        numCell = 49;
         [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
         I = good_cells(1:numCell);
-        fprintf('[plot_repeat] %d ROIs having highest correlation are seleted.\n', numCell);
+        fprintf('%d ROIs having highest correlation are seleted. (plot_repeat)\n', numCell);
     end
     if length(I) == 1 && I < 1 % ROIs selected by correlation 
         p = I;
         I = 1:r.numRoi;    
         I = I(r.p_corr.smoothed_norm > p);
-        fprintf('[plot_repeat] %d ROIs are seleted with a condition of p > %.2f.\n', numel(I), p);
+        fprintf('%d ROIs are seleted with a condition of p > %.2f. (plot_repeat)\n', numel(I), p);
     end
     ids = I;
     n_ROI = numel(I);
@@ -48,7 +48,8 @@ function ids = plot_repeat(r, I, varargin)
     
     % Figure 
     %hfig = figure('Position', [10 300 800 900]);
-    hfig = figure('Position', [10 55 1400 1050]);
+    %hfig = figure('Position', [10 55 1400 1050]);
+    hfig = figure('Position', [10 55 1110 1050]);
     
     % callback
     set(hfig, 'KeyPressFcn', @keypress)
@@ -57,7 +58,7 @@ function ids = plot_repeat(r, I, varargin)
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
-    n_col = 2;
+    n_col = 7;
     n_row = 3;
     n_plots_per_fig = n_col * n_row;
     n_figs = ceil(n_ROI/n_plots_per_fig);
@@ -70,7 +71,7 @@ function ids = plot_repeat(r, I, varargin)
         h_ax_mean   = 1/n_row * (1/4) * 0.9;
         h_ax_repeat = 1/n_row * (3/4) * 0.9;
         if contains(PlotType, 'overlaid')
-            n_row = 6;
+            n_row = 7;
             h_ax = (1-m)/n_row;
             h_ax_mean   = 1/n_row * 0.9;
             h_ax_repeat = 0;
@@ -97,11 +98,13 @@ function ids = plot_repeat(r, I, varargin)
             y_ax = m/2. + (I_plot(i)-1) * h_ax;
              
             % Algin single cell trace. Which trace? smoothed norm
+            if i == 1
+                disp('Trace type: smoothed_norm.'); 
+            end
             y = r.roi_smoothed_norm(:, k);
             %y = r.roi_smoothed(:, k);
                 [y_aligned, ~] = align_rows_to_events(y, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
                 y_aligned = reshape(y_aligned, size(y_aligned, 1), []); % times (row) x repeats (cols) 
-                
             %
             [y_aligned, x] = r.traceAvgPlot(y_aligned);
   
@@ -133,7 +136,7 @@ function ids = plot_repeat(r, I, varargin)
 
                 else
                     % Mean trace
-                    r.plot_avg(k, 'traceType', 'normalized'); 
+                    r.plot_avg(k, 'traceType', 'smoothed'); 
                     title('Mean response');
                     
                     h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_trace;

@@ -22,7 +22,7 @@ classdef roiData < matlab.mixin.Copyable
         stim_end
         %
         stim_movie
-        stim_fliptimes     % relative times between whitenoise flip times
+        stim_fliptimes     % relative times between whitenoise flip times. Should start from 0.
         stim_size          % spatial size [mm]
         stim_disp          % stimulus disp params
         % 
@@ -45,7 +45,7 @@ classdef roiData < matlab.mixin.Copyable
         % statistics
         stat
         p_corr % between repeats ['.smoothed', '.smoothed_norm']. Only available for avg analysis.
-               % computed @updated_smoothed_trace 
+               % computed @ updated_smoothed_trace 
         
         % smoothing params
         smoothing_method = 'movmean';
@@ -311,9 +311,15 @@ classdef roiData < matlab.mixin.Copyable
                 end
             end
             
+            fname = [dirpath, '/stimulus.h5']; 
+            if ~exist(fname, 'file')
+                disp('no file for /stimulus.h5.');
+                return;
+            end
+            
             % stim id for whitenoise?
-            h5disp([dirpath, '/stimulus.h5']);
-            a = h5info([dirpath,'/stimulus.h5']);
+            h5disp(fname);
+            a = h5info(fname);
             
             % Assuption: Group /expt1 is a whitenoise stimulus.
             disp('Assumption: group /expt1/ (among several) is a whitenoise stimulus. Load /expt1/.'); % new function for /expt2 is needed.
@@ -344,16 +350,17 @@ classdef roiData < matlab.mixin.Copyable
             % struct for save
             % roi info
             s.cc = r.roi_cc;
-            % plot info
-            s.avg_stim_tags = r.avg_stim_tags;
-            s.avg_stim_plot = r.avg_stim_plot;
+            % avg plot info
+            %s.avg_stim_tags = r.avg_stim_tags;
+            s.avg_stim_plot  = r.avg_stim_plot;
+            s.avg_stim_times = r.avg_stim_times;
             % cluster info
             s.c = r.c;
             s.c_note = r.c_note;
             s.roi_review = r.roi_review;
             % stim ex
             s.ex_stim = r.ex_stim;
-            save([r.ex_name,'_roi_save'], '-struct', 's');
+            save([r.ex_name,'_roiData_save'], '-struct', 's');
         end
         
         function load_c(r, c, c_note, roi_review)
@@ -411,10 +418,15 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function get_stimulus(r, stims_whitenoise, fliptimes, aperture_size)
+            if nargin > 3
+                r.stim_size = aperture_size;
+                if isempty(r.stim_size)
+                    disdp('Stim_size is still empty.');
+                end
+            end
             % for whithenoise stim
             r.stim_movie = stims_whitenoise;
             r.stim_fliptimes = fliptimes;
-            r.stim_size = aperture_size;
         end
         
         function set.smoothing_size(r, t)
@@ -592,18 +604,18 @@ classdef roiData < matlab.mixin.Copyable
                 r.stat.mean_f = mean( r.roi_trace(r.f_times > r.stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);
                 
                 % Plot several (avg) traces
-                numCell = 12;
+                numCell = min(21, r.numRoi);
                 if r.avg_every > 0
                     % ROIs exhibiting hiested correlations between traces
                     % under repeated stimulus
                     [corr, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
+                    r.roi_good = good_cells;
                     % summary
                     for ss = 1:numCell
-                        fprintf('ROI%3d: corr between trials %5.2f\n',good_cells(ss), corr(ss));
+                        fprintf('ROI%3d: corr between trials %5.2f\n', good_cells(ss), corr(ss));
                     end
                     % plot
-                    r.roi_good = good_cells(1:numCell);
-                    r.plot_repeat(r.roi_good, 'PlotType', 'overlaid');
+                    r.plot_repeat;
                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
                     make_im_figure;
                     r.plot_roi(good_cells(1:numCell));
@@ -615,7 +627,7 @@ classdef roiData < matlab.mixin.Copyable
                         fprintf('ROI %d: mean fluorescence level %5.2f\n',good_cells(ss), mean_f(ss));
                     end
                     % plot
-                    r.roi_good = good_cells(1:numCell);
+                    r.roi_good = good_cells;
                     r.plot(r.roi_good);
                     print([r.ex_name, '_plot'], '-dpng', '-r300');
                 end

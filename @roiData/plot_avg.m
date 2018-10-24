@@ -110,7 +110,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 if Label == true
                     % ROI id
                     if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
-                     text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 9, 'Color', 'k', ...
+                     text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 12, 'Color', 'k', ...
                                     'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');                   
                     end
                     % cluster id

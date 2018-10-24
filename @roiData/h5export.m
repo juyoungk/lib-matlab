@@ -11,7 +11,7 @@ end
 
 % parameters for export
 dpath = '/Users/peterfish/Modules/';
-fname = [dpath, 'data_roi_.h5'];
+fname = [dpath, 'data_roi.h5'];
 group = '/exp1';  % default group name
 upsampling = 5;
 
@@ -29,7 +29,7 @@ y = r.roi_filtered(:, ids);
 disp('filtered trace (not normalizeed) was used for data.');
 
 t = r.f_times_norm;
-t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time
+t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time [-xx, .. , 0, xx, .. ]
 
 % First, upsample stim movie
 [sstim, fliptimes] = upsample_stim(r.stim_movie, r.stim_fliptimes, upsampling);

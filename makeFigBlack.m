@@ -4,7 +4,7 @@ function hfig = makeFigBlack(hfig)
 % See also the function 'ccc' for just copying the figure to the clipboard
 % 
 %
-Fontsize = 18;
+Fontsize = 22;
 color = [0.9 0.9 0.1];
 color = [1 1 1];
 %color = [0.1 0.1 0.1];

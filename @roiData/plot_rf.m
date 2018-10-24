@@ -25,7 +25,7 @@ function ax = plot_rf(r, id_roi, traceType, maxlag, upsampling)
         if nargin > 1 && ischar(id_roi)
             traceType = id_roi;
         else
-            traceType = 'normalized';
+            traceType = 'filtered';
         end
 
         % ex info

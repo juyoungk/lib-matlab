@@ -360,7 +360,6 @@ classdef gdata < handle
                         imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
 
-                    
                     % load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
                     if ~isempty(cc_filenames)
@@ -368,17 +367,9 @@ classdef gdata < handle
                         reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
                         if isempty(reply); reply = 'Y'; end
                         if reply == 'Y'
-                            S = load(cc_filenames{1});
-                            % S should have a field name 'cc', 'c',
-                            % 'c_note', 'roi_review'
-                            if isfield(S, 'cc')
-                                g.cc = S.cc;
-                                disp('gData: ROI (cc) was defined. [roiDATA g.rr].');
-                            end
-                            if isfield(S, 'c')
-                                g.rr.load_c(S.c, S.c_note, S.roi_review);
-                                disp('gData: Cluster data was loaded for g.rr roiDATA.');
-                            end
+                            
+                            g.load_roiData_save(cc_filenames{1});
+
                         else
                             g.cc = [];
                         end
