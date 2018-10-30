@@ -1,22 +1,25 @@
 function plot_rf_map(r, rf, s)
-% 's' is stat of the rf
+% VIsualize RF by using imshow. 's' is stat of the rf
 %
     if nargin <3 
-        nearby = 0;
-        s = rf_stat(r, rf, nearby);
+        s = rf_stat(r, rf);
     end
 
     [num_x, num_t] = size(rf);
+    % axis ratio for space
+    im_ratio = (2 * num_t) / (3 * num_x);
     
     imshow(rf, s.clim, 'Colormap', bluewhitered(64, s.clim)); % jet, parula, winter ..
+    
         axis on;
-        ax =gca; colorbar('TickLabels', []);
         
-        time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
-        time_tick_locs = time_tick_label * 0.1 / r.ifi;
-        ax.XTick = time_tick_locs;
-        S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
-        ax.XTickLabel = {time_label{1:end-1}}; 
+        ax =gca; 
+        ax.DataAspectRatio = [im_ratio 1 1];
+        
+        colorbar('Ticks', s.clim, 'TickLabels', [{'-'},{'+'}]);
+       
+        ax.XTick = s.XTick;
+        ax.XTickLabel = s.XTickLabel;
         xlabel('[x100 ms]');
         %
         x_tick_spacing = 0.5; % [mm]
@@ -30,8 +33,12 @@ function plot_rf_map(r, rf, s)
         x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
         x = unique([-x, x]);
         ax.YTick = x + x_center;
-        S = sprintf('%.1f*', x*w_bar ); C = regexp(S, '*', 'split'); % C is cell array.
+        ax.YTick = [];
+        
+        S = sprintf('%.0f*', x*w_bar * 1000 ); C = regexp(S, '*', 'split'); % C is cell array.
         ax.YTickLabel = {C{1:end-1}};
-        ylabel('[mm]');
-        ax.FontSize = 12;
+        
+        %ylabel('[um]');
+        
+        ax.FontSize = s.FontSize;
 end

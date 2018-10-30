@@ -7,12 +7,12 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
 %           instead. 
 
     if nargin < 4
-        PlotType = 'normal';
+        PlotType = 'normalize';
     end
 
     if nargin < 3
         n_trace = 4;
-        disp('Summary mode if n_trace is 0. (e.g. r.plot_cluster(cluster ids, 0) )');
+        disp('Summary mode if n_trace is 0.  e.g.) r.plot_cluster(cluster ids, 0)');
     end
     
     if nargin < 2 % Summary mode
@@ -119,15 +119,15 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
         %subplot(n_row, n_col, (i-1)*n_col + j);
             %r.plot_avg(r.c{i}, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.2);
-            y = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.2);
+            y = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'Label', false, 'LineWidth', 1.8); axis off
             % zero mean & unit norm for cluster mean projection in r.plot2
                 y = y - mean(y);
                 r.c_mean(:,i) = y/norm(y);
-            %title(['c',num2str(i),': mean']);
+            
             str = sprintf('C%d   (n =%d)', i, numel(roi_clustered));
-                ht = title(str, 'HorizontalAlignment', 'center', 'FontSize', 12);
-                pos = ht.Position;
-                ht.Position = [pos(1), pos(2), pos(3)];
+%                 ht = title(str, 'HorizontalAlignment', 'center', 'FontSize', 12);
+%                 pos = ht.Position;
+%                 ht.Position = [pos(1), pos(2), pos(3)];
             yticklabels([]);
 
         % All traces in one axes
@@ -138,17 +138,25 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
             %axes('Parent', h, 'Position', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
                         
-            %[~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', false); axis off;
-            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', true);
+            [~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.9, 'Label', false); axis off;
+            %[~, s] = r.plot_avg(roi_clustered, 'PlotType', 'all', 'NormByCol', true, 'LineWidth', 0.7, 'Label', false);
             
             %str = sprintf('c%d: all traces (n = %d)', i, numel(roi_clustered));
             yticklabels([]);
             ax = gca;
+            % title
             str = sprintf('%s', r.c_note{i});
-            ht= title(ax, str, 'HorizontalAlignment', 'center', 'FontSize', 12); 
-            w = ht.Extent(3);
-            pos = ht.Position;
-            ht.Position = [ax.XLim(1)+w/2, pos(2), pos(3)];
+%             ht= title(ax, str, 'HorizontalAlignment', 'center', 'FontSize', 12); 
+%             w = ht.Extent(3);
+%             pos = ht.Position;
+%             ht.Position = [ax.XLim(1)+w/2, pos(2), pos(3)];
+
+            % text
+            str = sprintf('C%d (n =%2d)', i, numel(roi_clustered));
+            text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 12, 'Color', 'k', ...
+                    'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+               
+            
             
        % Summary Plot Mode
        if n_trace == 0 % means 'summary' mode
@@ -166,10 +174,10 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
            % See if specific cluster has distinively high dF (~spiking)
                 ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
                
-                scatter(r.stat.mean_f(roi_clustered), r.stat.smoothed_norm.avg_amp(roi_clustered), 8);
+                scatter(r.p_corr.smoothed_norm(roi_clustered), r.stat.mean_f(roi_clustered), 8);
                 %ax.Color = 'k'; % background color
-                xlabel(['mean f']);
-                ylabel('dF amplitude');
+                xlabel('corr');
+                ylabel(['mean f']);
 
            continue;
        end

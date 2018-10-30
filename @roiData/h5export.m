@@ -11,7 +11,7 @@ end
 
 % parameters for export
 dpath = '/Users/peterfish/Modules/';
-fname = [dpath, 'data_roi.h5'];
+fname = [dpath, '_data_',r.ex_name, '_exported_', datestr(now, 'HH_MM_SS'),'.h5'];
 group = '/exp1';  % default group name
 upsampling = 5;
 
@@ -25,8 +25,11 @@ end
 % y = r.roi_smoothed_detrend(:, ids);
 % disp('Smoothed_detrend (trend substracted, but not normalized) was used for data.');
 
-y = r.roi_filtered(:, ids);
-disp('filtered trace (not normalizeed) was used for data.');
+%y = r.roi_filtered(:, ids); 
+% --> usually unwanted correlation with a certain pixel.
+%disp('filtered trace (not normalizeed) was used for data.'); 
+y = r.roi_smoothed_norm(:, ids);
+disp('Smoothed normalized trace was used for data.');
 
 t = r.f_times_norm;
 t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time [-xx, .. , 0, xx, .. ]
@@ -60,7 +63,7 @@ t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time 
     % Alignment Check (only for one cell)
     cell_id = 2;
     rf = revcorr(stim_rtime, y(:, cell_id), 35);
-    figure; plot_rf_map(r, rf); title('Rev correlation (w/ resampeld stim)');
+    figure; plot_rf_map(r, rf); title('Rev correlation (w/ resampeld stim at frame times)');
 
     % Save resampled stim movie
     h5create(fname, [group '/stim_rtime'], size(stim_rtime));
@@ -91,6 +94,8 @@ t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time 
     % Alignment Check for upsampled stim
     rf = revcorr(sstim_res, y_fliptimes(:, cell_id), 100);
     figure; plot_rf_map(r, rf); title('Rev correlation (w/ upsampled stim)');
+    %stim_upsampled_rate = 20 * upsampling;
+    ax = gca; ax.DataAspectRatio = [1 0.4 1];
 
     % Save upsampled stim (reshaped). (20 Hz x 5 ~ 100 Hz)
     h5create(fname, [group '/stim_res'], size(sstim_res), 'Datatype', 'uint8');
@@ -100,10 +105,13 @@ t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time 
     %
     h5create(fname, [group '/rdata_fliptimes'], size(y_fliptimes));
     h5write(fname, [group '/rdata_fliptimes'], y_fliptimes);
-
+    % IDs
+    h5create(fname, [group '/roi_ids'], size(ids));
+    h5write(fname, [group '/roi_ids'], ids);
 
 % Name
 h5writeatt(fname, group, 'Name', r.ex_name);
+;
 h5writeatt(fname, group, 'Smooth_size', r.smoothing_size);
         disp(['Smoothing size : ', num2str(r.smoothing_size)]);
         

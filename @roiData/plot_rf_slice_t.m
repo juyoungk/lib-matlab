@@ -1,24 +1,19 @@
-function plot_rf_slice_t(r, rf, s)
+function plot_rf_slice_t(r, s)
 % inputs:
 %       s - stat of rf. Output of corr_rf function.
-
-%     if nargin < 2
-%         [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling); % sampled at f_times_norm
-%     end
+    
+    rf = s.rf;
 
     [num_x, num_t] = size(rf);
     plot(s.slice_t, 'LineWidth', 1.5);
         ax = gca;
-            time_tick_label = 1:2:(num_t*r.ifi*10); % [ 100 ms]
-            time_tick_locs = time_tick_label * 0.1 / r.ifi;
-            S = sprintf('%.0f*', time_tick_locs*r.ifi*10 ); time_label = regexp(S, '*', 'split'); % C is cell array.
-        ax.XTick = time_tick_locs;
-        ax.XTickLabel = {time_label{1:end-1}};
+        ax.XTick = s.XTick(end-3:end);
+        ax.XTickLabel = s.XTickLabel(end-3:end);
         ax.YTick = 0;
-        %ax.YTickLabel = [];
-        ax.FontSize = 12;
+        ax.FontSize = s.FontSize;
+        ax.XLim(2) = num_t;
         xlabel('[x100 ms]');
-        ylabel('[a.u.]');
+        %ylabel('[a.u.]');
         grid on
-        ylim([s.min s.max]);
+        %ylim([s.min s.max]);
 end

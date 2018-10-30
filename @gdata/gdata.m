@@ -368,7 +368,7 @@ classdef gdata < handle
                         if isempty(reply); reply = 'Y'; end
                         if reply == 'Y'
                             
-                            g.load_roiData_save(cc_filenames{1});
+                        %    g.load_roiData_save(cc_filenames{1});
 
                         else
                             g.cc = [];

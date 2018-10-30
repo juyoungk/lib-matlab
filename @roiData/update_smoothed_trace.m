@@ -17,7 +17,7 @@ function update_smoothed_trace(r)
        % Avg & Std over trials (dim 3)
        r.avg_trace      = mean(roi_aligned, 3);
        % Normalized and Centered trace
-       r.avg_trace_norm = normc(r.avg_trace) -0.5;
+       r.avg_trace_norm = normc(r.avg_trace) - 0.5;
        % Pearson correlation over repeats
        r.p_corr.smoothed = corr_avg(roi_aligned);
     end

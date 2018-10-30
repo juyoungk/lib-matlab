@@ -1,20 +1,27 @@
 %% struct 'r' and 'cc' should be defined.
-r = g.rr;
-I = 1:r.numRoi;
+% r should be defined
+
 %% select ROIs according to its statistical properties 
 %r.smoothing_size = 10;
 %
 I = 1:r.numRoi;
-I = I(r.c~=0);
-x = r.stat.mean_f;
+
+%x = r.stat.mean_f;
+x = r.p_corr.smoothed_norm;
 y = r.stat.smoothed_norm.trace_std_avg;
+x_label = 'corr';
+y_label = 'avg std to repeated stimulus';
 %
 figure; scatter(x, y);
-xlabel('mean'); ylabel('avg std to repeated stimulus');
+xlabel(x_label); 
+ylabel(y_label);
 
 %% Clustered ROI only 
-figure; scatter(x(r.c~=0), y(r.c~=0), [], r.c(r.c~=0));
-xlabel('mean'); ylabel('avg std to repeated stimulus');
+I = I(r.c~=0);
+figure; scatter(x(I), y(I), [], r.c(I));
+xlabel(x_label); 
+ylabel(y_label);
+set(gca, 'Color', [0 0 0])
 
 %%
 [xv, yv] = getPolygon;
@@ -24,13 +31,13 @@ plot(xv,yv,x(in),y(in),'.r',x(~in),y(~in),'.b')
 I = 1:r.numRoi;
 %I = I(in);
 %I = id_selected;
+%% Cells with high reliability
+I = find(r.p_corr.smoothed_norm > 0.2);
+
 %% data X & smoothing
 r.smoothing_size = 10;
-
 X = r.avg_trace_smooth_norm(:,I);
 times = r.avg_times;
-%X = r.avg_trace_norm(:,I);
-
 % example avg traces
 id = 1:5;
 figure;
@@ -40,41 +47,72 @@ plot(X(:,id),  'LineWidth', 1.2)
 X = normc(X);
 plot(X(:,id),  'LineWidth', 1.2)
 
-%% PCA (and filtered trace)
-%X = r.c_mean(:,1:10);
+%% PCA: cells fitered by the reliability (P correlations)
+r.smoothing_size = 7;
+% condition here
+I = find(r.p_corr.smoothed_norm > 0.2); % 2018 1027 on-off clustering
+%
 X = r.avg_trace_smooth_norm(:,I);
+X = normc(X);
 X_col_times = X.'; % times as variables
 [coeff, score, latent, ts, explained] = pca(X_col_times);
+
+% plot explained as PC order.
+figure('Position', [2400 1350 560 420]);
+semilogy(latent, '-o', 'LineWidth', 1.5, 'MarkerSize', 10)
+    
+    %% PCA works well? Check the projected trace into PCA low dim space.
+    % projected (or filtered) X vs raw-trace X using low numbers (3~5) of PC. 
+    numPC = 5;
+    score_filtered = score;
+    score_filtered(:, (numPC+1):end) = 0;
+    Xprojected = score_filtered*coeff';
+    Xprojected = Xprojected.';
+    % sample id plot
+    id = 1:5;
+    figure;
+    subplot(211); plot(X(:,id), 'LineWidth', 1.2);
+    subplot(212); plot(Xprojected(:,id),  'LineWidth', 1.2);
+
+    %% Check PCA basis vectors
+    numPCto = 5;
+    figure; plot(coeff(:,1:numPCto), 'LineWidth', 1.2);
+    legend;
+
+%% Score all cells w/ learned PCA basis
+% define new (r > 0.1) set of cells
+I = find(r.p_corr.smoothed_norm > 0.1);
+X = r.avg_trace_smooth_norm(:,I);
+X = normc(X);
 % score (= X*coeff): Representation in PCA space
+score = X.'*coeff; % times as variables in X.'
+% PCA projected traces
+    numPC = 5;
+    score_filtered = score;
+    score_filtered(:, (numPC+1):end) = 0;
+    Xprojected = score_filtered*coeff';
+    Xprojected = Xprojected.';
 
-%% PCA filtered X
-score_filtered = score;
-score_filtered(:,5:end) = 0;
-Xprojected = score_filtered*coeff';
-Xprojected = Xprojected.';
-plot(Xprojected(:,id),  'LineWidth', 1.2)
+        %% K-means cluster using PCA scores
+        % input data set: 'score'
+        PCA_dim = 5;
+        num_cluster = 2;
+        
+        sum_within_cluster = zeros(num_cluster, 1);
+        silh_avg = zeros(num_cluster, 1);
+        
+        for k = 1:num_cluster
+        
+            fprintf('K-means analysis for Num of CLusters: %d\n', k);
+            %[c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster, 'dist', 'cos');
+            [c_idx, cent, sumdist, silh_avg(k)] = mykmeans(score(:, 1:PCA_dim), k);
+            sum_within_cluster(k) = sum(sumdist);
+            
+        end
+        
+        figure; plot(sum_within_cluster, '-o', 'Linewidth', 2, 'MarkerSize', 10); title('Sum of within-cluster dist to centroids of clusters');
+        figure; plot(silh_avg,  '-o', 'Linewidth', 2, 'MarkerSize', 10);          title('Average Silhouette Value');
 
-%%
-% PCA basis vectors
-figure; plot(coeff(:,1:5), 'LineWidth', 1.2);
-
-%% K-means cluster
-num_cluster = 8;
-PCA_dim = 7;
-
-% Projected traces onto the fist few PCA dimensions.
-score_filtered = score;
-score_filtered(:,PCA_dim:end) = 0;
-Xprojected = score_filtered*coeff';
-Xprojected = Xprojected.';
-
-        %% K-means cluster for selected ids
-        % X = X(:, I);
-        % Xprojected = Xprojected(:, I); 
-        % [idx, cent, sumdist] = mykmeans(score(I, 1:PCA_dim), num_cluster);
-
-        %[c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster, 'dist', 'cos');
-        [c_idx, cent, sumdist] = mykmeans(score(:, 1:PCA_dim), num_cluster);
 
         %% H-cluster
         % 1. distant metric
@@ -113,7 +151,7 @@ mask = false(r.roi_cc.ImageSize);
 % middle line
 x_middle = r.avg_trigger_interval/2.;
 
-figure('Position', [100, 150, 1800, 1350]);
+figure('Position', [100, 150, 350*num_cluster, 1400]);
 
 for k = 1:num_cluster
    X_cluster{k} = X(:, c_idx == k);
@@ -129,11 +167,11 @@ for k = 1:num_cluster
         
    ax = subplot(4, num_cluster, k + num_cluster);
    % PCA projected trace
-        plot(times, Xprojected(:, c_idx == k) ); hold on
-        plot([x_middle, x_middle], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
-        title('PCA projected');
-        grid on
-        hold off
+%         plot(times, Xprojected(:, c_idx == k) ); hold on
+%         plot([x_middle, x_middle], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+%         title('PCA projected');
+%         grid on
+%         hold off
    
    ax = subplot(4, num_cluster, k + 2*num_cluster);
    % mean trace in same classification

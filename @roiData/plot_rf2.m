@@ -9,7 +9,7 @@ function s = plot_rf2(r, id_roi, traceType, maxlag, upsampling)
     end
     
     if nargin < 4
-        maxlag = 1.2; %sec
+        maxlag = 1.5; %sec
     end
     
 
@@ -26,11 +26,11 @@ function s = plot_rf2(r, id_roi, traceType, maxlag, upsampling)
         
         % time slice
         subplot(1, 4, 3);
-        plot_rf_slice_t(r, rf, s);
+        plot_rf_slice_t(r, s);
 
         % x slice
         subplot(1, 4, 4);
-        plot_rf_slice_x(r, rf, s);
+        plot_rf_slice_x(r, s);
 
             
     else
@@ -80,8 +80,8 @@ function s = plot_rf2(r, id_roi, traceType, maxlag, upsampling)
             subplot(n_col, n_row, (k-1)*4 + [1, 2])
             plot_rf_map(r, rf, s);
                 ax = gca;
-                text(ax.XLim(end), ax.YLim(1), ['ROI: ', num2str(roi_array(id_cell))], 'FontSize', 11, 'Color', 'k', ...
-                'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+%                 text(ax.XLim(end), ax.YLim(1), ['ROI: ', num2str(roi_array(id_cell))], 'FontSize', 11, 'Color', 'k', ...
+%                 'VerticalAlignment', 'top', 'HorizontalAlignment','right');
 
             % time slice
             subplot(n_col, n_row, (k-1)*4 + 3);

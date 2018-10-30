@@ -1,9 +1,6 @@
 function plot_cluster_compare(r, c_list)
-% Compare (avg) repsonses for two or more clusters.
+% Compare (avg) repsonse traces for two or more clusters. Not ROI locations. 
 % Default PlotType? 
-
-% c_mean has been computed? 
-
 
     for c = c_list % cluster id list
         
@@ -15,10 +12,11 @@ function plot_cluster_compare(r, c_list)
         % zero mean & unit norm for cluster mean projection in r.plot2
         y = y - mean(y);
         y = y/norm(y);
-        y = r.traceForAvgPlot(y);
+        %y = r.traceForAvgPlot(y);
+        [y, t] = r.traceAvgPlot(y);
         
         % Draw plot         
-        plot(r.a_times, y, 'LineWidth', 1.5);
+        plot(t, y, 'LineWidth', 1.5);
         hold on        
 
     end

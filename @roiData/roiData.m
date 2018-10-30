@@ -75,7 +75,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
         a_times     % times for avg plot. Full cycles (e.g. 2 cycles). Phase shifted.
-        t_range = [-0.9, 100] % Time filter for avg plot range (last filter). can be arbitrarily time points. [secs]
+        t_range = [-1.5, 100] % Time filter for avg plot range (last filter). can be arbitrarily time points. [secs]
         
         % whitenoise responses
         rf              % cell arrays
@@ -235,12 +235,17 @@ classdef roiData < matlab.mixin.Copyable
 %             if isfield(ex, 'n_repeats') && ~isempty(ex.n_repeats) 
 %                 n_repeat = ex.n_repeats;
 %             end
-%             
+%           
+            if isempty(ex)
+                return;
+            end
+            
             if iscell(ex.stim)
                 stim = [ex.stim{:}];
             else
                 stim = ex.stim;
             end
+
             
             i = 1; % id for trigger events
             
@@ -414,7 +419,7 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function imvol(r)
-            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false); % can be different depending on threhsold 
+            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', true, 'scanZoom', r.header.scanZoomFactor); % can be different depending on threhsold 
         end
         
         function get_stimulus(r, stims_whitenoise, fliptimes, aperture_size)

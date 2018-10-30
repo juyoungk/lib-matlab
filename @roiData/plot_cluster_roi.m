@@ -1,6 +1,10 @@
 function plot_cluster_roi(r, k, varargin)
 % PLOT_CLUSTER_ROI Display boundaries of clustered ROIs on real image or Black & White
-% gray scsale
+% gray scsale.
+%
+% e.g.) BW image with boundaries : r.plot_cluster_roi(6, 'compare', 8, 'imageType', 'bw', 'label', false);
+%       Visualize boundaries only: r.plot_cluster_roi(4,               'imageType', 'no', 'label', false); 
+%       
 % inputs:
 %         k - cluster id you want to draw boundaries
 %         
@@ -33,18 +37,16 @@ function plot_cluster_roi(r, k, varargin)
         end
         
         if contains(imageType, 'bw')
-            imagesc(bwmask, [0 1]);
+            imagesc(bwmask, [0 1]); hold on
             colormap gray;
             axis off;
         elseif contains(imageType, 'image')
             r.myshow;
-            
+            hold on
         end
-        hold on
         
         % Contour (k cluster only, not k2)
-        visboundaries(bw_k,'Color','r','LineWidth', 0.7); 
-        
+        visboundaries(bw_k,'Color','r','LineWidth', 1.2); 
                
         % ROI number display
         if FLAG_label
@@ -85,7 +87,7 @@ function p =  ParseInput(varargin)
     p  = inputParser;   % Create an instance of the inputParser class.
     
     p.addParameter('imageType', 'image', @(x) strcmp(x,'bw') || ...
-        strcmp(x,'image'));
+        strcmp(x,'image') || strcmp(x,'no'));
     p.addParameter('compare', 0, @(x) isnumeric(x));
     p.addParameter('label', true, @(x) islogical(x));
     

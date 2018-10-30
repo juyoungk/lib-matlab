@@ -14,7 +14,10 @@ function plot2(r, I, varargin)
     if nargin < 2
         I = 1:r.numRoi;    
     end
-    i_roi = 1;
+    if islogical(I)
+        I = find(I);
+    end
+    i_roi = 1; % current roi index inside a given list. 
     imax = numel(I);
     
     % cluster id & initialize projection vector
@@ -134,9 +137,12 @@ function plot2(r, I, varargin)
                     plot(ax.XLim, [y0+y_std y0+y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                     plot(ax.XLim, [y0-y_std y0-y_std], '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
                 hold off
-                title('Avg response (smoothed) over trials');
+                title('Avg response (smoothed norm)');
                 if ~isempty(ax)
-                    text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+%                     text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+%                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+                        str_corr = sprintf('corr = %.2f', r.p_corr.smoothed_norm(k));
+                        text(ax.XLim(end), ax.YLim(1), str_corr, 'FontSize', 11, 'Color', 'k', ...
                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
             end

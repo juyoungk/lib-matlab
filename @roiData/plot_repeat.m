@@ -19,7 +19,7 @@ function ids = plot_repeat(r, I, varargin)
     % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
         % 12 cells having highest correlationns
-        numCell = 49;
+        numCell = 64;
         [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
         I = good_cells(1:numCell);
         fprintf('%d ROIs having highest correlation are seleted. (plot_repeat)\n', numCell);
@@ -58,7 +58,7 @@ function ids = plot_repeat(r, I, varargin)
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
-    n_col = 7;
+    n_col = 8;
     n_row = 3;
     n_plots_per_fig = n_col * n_row;
     n_figs = ceil(n_ROI/n_plots_per_fig);
@@ -71,7 +71,8 @@ function ids = plot_repeat(r, I, varargin)
         h_ax_mean   = 1/n_row * (1/4) * 0.9;
         h_ax_repeat = 1/n_row * (3/4) * 0.9;
         if contains(PlotType, 'overlaid')
-            n_row = 7;
+            n_row = n_col;
+            %n_row = 4;
             h_ax = (1-m)/n_row;
             h_ax_mean   = 1/n_row * 0.9;
             h_ax_repeat = 0;
@@ -108,65 +109,61 @@ function ids = plot_repeat(r, I, varargin)
             %
             [y_aligned, x] = r.traceAvgPlot(y_aligned);
   
-            %
-            n_trace = size(y_aligned, 2);
-            % correlation version?
-            str = sprintf('corr = %.2f ', r.p_corr.smoothed_norm(k));
-            %str = sprintf('corr = %.2f ', r.p_corr.smoothed(k));
-                    
             % 2. Draw Mean (& std) trace
             axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.8*w_ax  0.9*h_ax_mean], 'Visible', 'off');
                 
-                if contains(PlotType, 'overlaid')
-                        
-                    % individual traces first 
-                        % disp('[Plot_repeat] 1st trace was ignored.'); 
-                    plot(x, y_aligned, 'LineWidth', 1.2); 
-                    xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
-                    hold on
-                    
-                    r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 3, 'Color', 'k', 'Label', true);
-                    %title('Mean response');
-                    hold off;
-                    
-                    ax = gca;
-                    % Print P-correlation value
-                    text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 14, 'Color', 'k', ...
-                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+            if contains(PlotType, 'overlaid')
 
-                else
-                    % Mean trace
-                    r.plot_avg(k, 'traceType', 'smoothed'); 
-                    title('Mean response');
-                    
-                    h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_trace;
-                    % individual traces
-                    for ii = 1:n_trace
-                        ax = axes('Position', [x_ax,  y_ax + m/2. + (n_trace-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
-                        plot(x, y_aligned(:,ii), 'LineWidth', 1.2); hold on
-                        xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
-                        
-                        % (optional) stim trigger lines
-                        for k = 1:length(r.avg_stim_times) % measured by PD.
-                            x0 = r.avg_stim_times(k);
-                            if x0 < r.t_range(1) || x0 > r.t_range(2)
-                                continue;
-                            end
-                            plot([x0 x0], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.7*[1 1 1]);
-                            
-                        end
-                        hold off
+                % individual traces first 
 
-                        axis tight
-                        axis off
-                        
-                    end
-                    ax = gca;
-                    % Print P-correlation value
-                    text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 14, 'Color', 'k', ...
-                                'VerticalAlignment', 'top', 'HorizontalAlignment','right');                    
-                end
+                %plot(x, y_aligned, 'LineWidth', 1.2); % color plot
+                plot(x, y_aligned, 'Color', [0.5 0.5 0.5], 'LineWidth', 0.7); axis off 
+                xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+                hold on
                 
+                color_line = [0 0.45 0.74];
+                color_line = 'k';
+                
+                r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 3., 'Color', color_line, 'Label', false);
+                %title('Mean response');
+                hold off;
+                ylabel ''; % or 'dF/F'
+
+            else
+                % Mean trace
+                r.plot_avg(k, 'traceType', 'normalized'); 
+                title('Mean response');
+                n_repeats = size(y_aligned, 2);
+                h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_repeats;
+                % individual traces
+                for ii = 1:n_repeats
+                    ax = axes('Position', [x_ax,  y_ax + m/2. + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
+                    plot(x, y_aligned(:,ii), 'LineWidth', 1.2); hold on
+                    xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+
+                    % (optional) stim trigger lines
+                    for k = 1:length(r.avg_stim_times) % measured by PD.
+                        x0 = r.avg_stim_times(k);
+                        if x0 < r.t_range(1) || x0 > r.t_range(2)
+                            continue;
+                        end
+                        plot([x0 x0], ax.YLim, '-', 'LineWidth', 1.0, 'Color', 0.7*[1 1 1]);
+
+                    end
+                    hold off
+
+                    axis tight
+                    axis off
+
+                end
+            end
+
+            ax = gca;
+            % Print P-correlation value
+%             str = sprintf('corr = %.2f ', r.p_corr.smoothed_norm(k));
+%             text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 14, 'Color', 'k', ...
+%                         'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+
         end
     end
     
@@ -207,6 +204,8 @@ function p =  ParseInput(varargin)
     
     p.addParameter('PlotType', 'overlaid', @(x) strcmp(x,'tiled') || ...
         strcmp(x,'overlaid'));
+    
+    p.addParameter('Label', true, @(x) islogical(x));
       
     % Call the parse method of the object to read and validate each argument in the schema:
     p.parse(varargin{:});

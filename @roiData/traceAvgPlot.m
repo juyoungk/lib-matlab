@@ -20,8 +20,7 @@ function [yy, tt] = traceAvgPlot(r, y)
         yy = circshift(y, round( r.s_phase * N_data ) );
         yy = repmat(yy, [r.n_cycle, 1]);
         
-        tt = r.a_times;
-        %tt = timesAvgPlot(r);
+        tt = r.a_times; % = timesForAvgPlot(r)
         
         % Final time range filter
         ids = (tt > r.t_range(1)) & (tt < r.t_range(2));

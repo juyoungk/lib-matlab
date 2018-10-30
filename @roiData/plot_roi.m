@@ -1,4 +1,4 @@
-function plot_roi(r, ids, varargin)
+function bw_k = plot_roi(r, ids, varargin)
 % PLOT_ROI Display boundaries of clustered ROIs on real image or Black & White
 % gray scsale
 % inputs:

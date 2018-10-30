@@ -33,18 +33,18 @@ if contains(plotType, 'avg')
             hold on
             for n = 1:r.n_cycle
                 x = (n-1) * duration;
-                plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                plot([x x], ax.YLim, 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]);
                 
                 % middle line
                 if strfind(r.ex_name, 'flash')
                     x = (n-1) * duration + duration/2.;
-                    plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                    plot([x x], ax.YLim, 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]);
                 end
                 
                 % stim trigger lines between avg triggers
                 for k = 1:(r.avg_every-1)
                     x = (n-1) * duration + k * r.stim_trigger_interval;
-                    plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
+                    plot([x x], ax.YLim, 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]);
                 end
             end
             hold off
