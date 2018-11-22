@@ -59,6 +59,7 @@ function update_filtered_trace(r)
         [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil);
         [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
         [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
+        
         % Pearson correlation over repeats
         r.p_corr.smoothed_norm = corr_avg(roi_aligned_smoothed_norm);
         r.p_corr.filtered = corr_avg(roi_aligned_fil);

@@ -3,6 +3,7 @@ function plot_rf_slice_x(r, s)
     rf = s.rf;
 
     [num_x, num_t] = size(rf);
+    
     plot(s.slice_x, 'LineWidth', 1.5);
         ax = gca;
 

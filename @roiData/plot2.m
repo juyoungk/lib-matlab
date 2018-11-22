@@ -56,12 +56,10 @@ function plot2(r, I, varargin)
         delete(hfig.Children);
         
         % Color setting for clusters;
-        c_list = unique(r.c(r.c~=0)); 
-        c_list_num = numel(c_list);
-        color = jet(c_list_num); 
+        c_list = unique(r.c(r.c~=0));
+        color = jet(max(c_list)); 
         % color index? color(c_list == r.c(k), :)
 
-        
         k = I(i_roi); % roi index. Real index
         mask = false(cc.ImageSize);
         % ex info
@@ -77,6 +75,9 @@ function plot2(r, I, varargin)
                 
                 %
                 i = 1; j = 2; % first 2 scores of PCA
+                
+                % Scatter plot of pca projection onto i,j dims.
+                r.pca_plot(i, j);
         
                 % all avg traces
                 X = r.avg_pca_score; % can be empty when ..
@@ -85,22 +86,8 @@ function plot2(r, I, varargin)
                     % X will be empty when only one data is clustered.
                     % size(X, 2) is (n-1) where n is num of data or traces.
                 else
-                    for c = c_list
-                        % Color scatter plot for non-zero cluster data 
-                        scatter(X(r.c==c, i),X(r.c==c, j), 15, color(c_list==c,:));               
-                            grid on
-                            hold on
-                    end
-                    % un-assigned cluster 0: gray plot
-                    c0_color = [0.4 0.4 0.4];
-                    scatter(X(r.c==0, i),X(r.c==0, j), 12, c0_color, 'filled');
-                    %
-                    ax = gca;
-                    ax.Color = 'k'; % background color
-                    xlabel(['PCA ', num2str(i)], 'FontSize', 12);
-                    ylabel(['PCA ', num2str(j)], 'FontSize', 12);
 
-                    % k-index ROI
+                    % Where is the k-th ROI in PCA space?
                     if r.c(k)
                         % cluster 0 : cluster is not assigned or noisy data.
                         k_color = color(c_list==r.c(k), :);
@@ -110,12 +97,9 @@ function plot2(r, I, varargin)
                     end
                     %scatter(X(k, i),X(k, j), 18, color(c_list==r.c(k), :), 'filled');
                     plot(X(k, i),X(k, j), 'kd', 'MarkerSize', 13, 'LineWidth', 1.8, 'Color', k_color); 
+                                        
                     hold off
-                    if c_list_num > 0
-                        cluster_colorbar = label2rgb(vec(1:c_list_num), @jet, 'k');
-                        axes('Position', [0.93  0.45  0.05  0.2], 'Visible', 'off');
-                        imshow(cluster_colorbar);
-                    end
+
                 end
 
         % 4. roi avg (smoothed) trace

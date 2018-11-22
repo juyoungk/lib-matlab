@@ -1,6 +1,10 @@
 function [trace, s] = plot_avg(r, id_roi, varargin)
 % plot avg trace or RF (receptuve field)
 %
+% Output:
+%           trace - averaged time-varying trace
+%           s     - stat & line handle
+%
 % OPTION (varargin):
 %       'PlotType' (options for multiple traces)
 %           1. as 'tiled' (default)
@@ -76,22 +80,27 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 
                 duration = r.avg_trigger_interval;
                 
-
+                
                 % Adjust for plot (phase & cycles)
                 [y, x] = r.traceAvgPlot(y);
                 
+                % Do you want to have more control on color? Use ColorOrderIndex.
                 if contains(PlotType, 'tiled') || contains(PlotType, 'mean')
-                    argPlot = {'Color', lineColor};
+                    if ~isempty(lineColor)
+                        argPlot = {'Color', lineColor};
+                    end
                 end
                 
+                ax = gca;  Fontsize = 10;
+
                 %
                 if isempty(h_axes)
-                    plot(x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                    s.h = plot(x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
                 else
-                    plot(h_axes, x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                    s.h = plot(h_axes, x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
                 end
-
-                ax = gca;  Fontsize = 10;
+                    
+                
                 %ax.XLim = [x(1), max(x(end), r.avg_trigger_interval)]; % at least up to avg_trigger_interval
                 ax.XLim = [x(1), x(end)];
                 ax.XAxis.FontSize = Fontsize;
@@ -100,6 +109,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
         %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
                 xtickformat('%.0f');
+                s.YLim = ax.YLim; % save current YLim
 
                 % y-label
                 if contains(traceType, 'normalized') && ~NormByCol
@@ -111,7 +121,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 if Label == true
                     % ROI id
                     if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
-                     text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 12, 'Color', 'k', ...
+                        text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 12, 'Color', 'k', ...
                                     'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');                   
                     end
                     % cluster id
@@ -120,6 +130,10 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
                                     'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
                     end
+                    % Correlation between traces                    
+                    str = sprintf('r = %.2f ', r.p_corr.smoothed_norm(id_roi));
+                    text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 12, 'Color', 'k', ...
+                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
                 
                 %% Additional lines first
@@ -133,7 +147,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         continue;
                     end
                     % Lines for avg trigger times
-                    plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]); hold on
+                    plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
                 end
 
                 % within one repeat, stim trigger events
@@ -143,7 +157,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         continue;
                     end
                     if k ~= 1
-                        plot([x x], ax.YLim, '-', 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]);
+                        plot([x x], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
                     end
                     
                     kk = mod(k, r.avg_every); % kk-th stimulus within one repeat.
@@ -249,7 +263,7 @@ function p =  ParseInput(varargin)
     p.addParameter('DrawPlot', true, @(x) islogical(x));
     p.addParameter('Label', true, @(x) islogical(x));
     p.addParameter('LineWidth', 1.5, @(x) x>0);
-    p.addParameter('Color', [0 0.4470 0.7410], @(x) isvector(x) || ischar(x));
+    p.addParameter('Color', [], @(x) isvector(x) || ischar(x) || isempty(x)); % [0 0.4470 0.7410]
     p.addParameter('axes', []);
  
 %     addParamValue(p,'verbose', true, @(x) islogical(x));

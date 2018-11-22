@@ -18,7 +18,7 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
         
         % normalization
         X = normc(X);
-        dip('PCA basis is computed after normalization');
+        disp('PCA basis is computed for normalized traces.');
         
         
         X_col_times = X.'; % times as variables

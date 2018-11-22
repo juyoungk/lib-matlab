@@ -23,10 +23,10 @@ spacing_px = spacing_um * px_per_um;
 [hist_cell, hist_area, radius] = hist_radius(size(r.image), centroids_k, spacing_px);
 % density
 density = hist_cell ./ (hist_area * mm2_per_px2);
-radius  = radius * (1/px_per_um);
+radius  = radius * (1/px_per_um) - spacing_um/2.;
 
-bar(radius, density); hold on
-plot(radius, density, 'ko', 'LineWidth', 3)
+bar(radius, density, 1, 'LineStyle', 'none'); hold on
+plot(radius, density, 'kd', 'MarkerSize', 15, 'MarkerFaceColor', 'k')
 xlabel('radius (um)');
 ylabel('Density (cells / mm2)');
 ax = gca;
@@ -41,7 +41,7 @@ hold off
 [hist_cell, hist_area, radius] = hist_radius(size(r.image), centroids(id_kn, :), spacing_px);
 % density
 density = hist_cell ./ (hist_area * mm2_per_px2);
-radius  = radius * (1/px_per_um);
+radius  = radius * (1/px_per_um) - spacing_um/2.;
 
 
 % random distribution of same numbers of cells?
@@ -49,7 +49,7 @@ radius  = radius * (1/px_per_um);
 % [hist_cell, hist_area, radius] = hist_radius(size(r.image), locations, spacing_px);
 % % density
 % density = hist_cell ./ (hist_area * mm2_per_px2);
-% radius  = radius * (1/px_per_um);
+% radius  = radius * (1/px_per_um) - spacing_um/2.;
 
 
 yyaxis right

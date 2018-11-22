@@ -34,17 +34,21 @@ end
 hfig = figure('Name', ['Cluster ',num2str(c_list)]);
     hfig.Color = 'none';
     hfig.PaperPositionMode = 'auto';
-    hfig.InvertHardcopy = 'off';   
+    hfig.InvertHardcopy = 'off';
+    hfig.Position(4) = hfig.Position(3); % square figure size
     
 %cluster_RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
 cluster_RGB_label = label2rgb(bw_labeled, jet(c_max), 'k'); % @jet
 %cluster_colorbar = label2rgb(sort(c_list)-min_cluster+1, jet(c_max), 'k');
 cluster_colorbar = label2rgb(sort(c_list), jet(c_max), 'k');
-        
-axes('Position', [0  0.1  1  0.8524], 'Visible', 'off');
+
+
+%axes('Position', [0  0.1  1  0.8524], 'Visible', 'off');
+axes('Position', [0  0  1  1], 'Visible', 'off');
 imshow(cluster_RGB_label);
-axes('Position', [0  0  1  0.05], 'Visible', 'off');
-imshow(cluster_colorbar);
+
+% axes('Position', [0  0  1  0.05], 'Visible', 'off');
+% imshow(cluster_colorbar);
 
 end
 

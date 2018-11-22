@@ -30,6 +30,7 @@ function p_corr = corr_avg(y)
                 p_corr(i) = corr_avg(yy);
                 
             end
+            
         else
             
             disp('[corr_avg] Input Dim seems not correct. No output.');

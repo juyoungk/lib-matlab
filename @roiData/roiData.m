@@ -66,10 +66,10 @@ classdef roiData < matlab.mixin.Copyable
         avg_stim_tags
         avg_trigger_interval
         avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
-        avg_trace_std   % std over trials
+        avg_trace_norm  % Normed and centered. Not detrended.
         avg_trace_fil   % avg over (filtered) trials.
-        avg_trace_norm  % avg over (normalized) trials.
         avg_trace_smooth_norm
+        avg_trace_std   % std over trials
         %avg_trace_filter_norm
         avg_projected   % projected trace onto (PCA) space.
         avg_pca_score   % roi# x dim

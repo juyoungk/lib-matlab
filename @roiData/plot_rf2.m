@@ -85,11 +85,11 @@ function s = plot_rf2(r, id_roi, traceType, maxlag, upsampling)
 
             % time slice
             subplot(n_col, n_row, (k-1)*4 + 3);
-            plot_rf_slice_t(r, rf, s);
+            plot_rf_slice_t(r, s);
 
             % x slice
             subplot(n_col, n_row, (k-1)*4 + 4);
-            plot_rf_slice_x(r, rf, s);            
+            plot_rf_slice_x(r, s);            
             
             % next cell
             id_cell = id_cell + 1; 

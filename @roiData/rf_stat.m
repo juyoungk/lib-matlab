@@ -2,8 +2,8 @@ function s = rf_stat(r, rf, nearby)
 % only 1-D bar rf 
 %[n_xbin, n_timebin] = size(rf);
 
-    if nargin <2
-        nearby = 1;
+    if nargin < 3
+        nearby = 2;
     end
     
     % condition?
@@ -64,7 +64,7 @@ function s = rf_stat(r, rf, nearby)
     s.slice_x = s.slice_x / norm(s.slice_x);
     
     % plot properties
-    s.FontSize = 18;
+    s.FontSize = 14;
     s.LineWidth = 3;
     
 end

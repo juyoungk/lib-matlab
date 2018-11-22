@@ -1,32 +1,52 @@
 function plot_cluster_compare(r, c_list)
 % Compare (avg) repsonse traces for two or more clusters. Not ROI locations. 
-% Default PlotType? 
+% Default PlotType?
 
+    % Fig setting
+    figure;
+    hfig = gcf;
+        hfig.Color = 'none';
+        hfig.PaperPositionMode = 'auto';
+        hfig.InvertHardcopy = 'off';
+        hfig.Position(4) = hfig.Position(3); % square figure size
+
+        
     for c = c_list % cluster id list
         
         roi_clustered = find(r.c==c);
         
+        ax = gca;
+        
+        hold on
+        
+        % Color order as in default
+%         ax.ColorOrderIndex = c;
+        
+        % or you can define same color as clusters
+        c_max = max(r.c);
+        color = jet(c_max);
+        ax.ColorOrder = color;
+        ax.ColorOrderIndex = c;
+        
+        
         % mean trace. No drawing.
-        y = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'DrawPlot', false);
+        r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'DrawPlot', true, 'Label', false); 
         
-        % zero mean & unit norm for cluster mean projection in r.plot2
-        y = y - mean(y);
-        y = y/norm(y);
-        %y = r.traceForAvgPlot(y);
-        [y, t] = r.traceAvgPlot(y);
         
-        % Draw plot         
-        plot(t, y, 'LineWidth', 1.5);
-        hold on        
-
     end
     
-    r.plot_style(gca, 'avg', 'FontSize', 15);
+    %r.plot_style(gca, 'avg', 'FontSize', 15);
     
     ylabel('a.u.');
-    yticklabels([]);
+    ax.YTick = []; 
+    %yticklabels([]);
+    
+    ax.Color = 'k';
+    
+    axis off
     
     hold off
+    
 
 
 end

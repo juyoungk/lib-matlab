@@ -102,11 +102,10 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         % this is not axes, but uicontrol
         
         roi_clustered = find(r.c==i);
-            % sort by mean f
-            mean_f = r.stat.mean_f(roi_clustered);
-            [~, i_sorted] = sort(mean_f, 'descend');
-            %std_avg = r.stat.smoothed_norm.trace_std_avg_normc(roi_clustered);
-            %[~, i_sorted] = sort(std_avg);
+            % sort by correlation (reliability)
+            corr = r.p_corr.smoothed_norm(roi_clustered);
+            [~, i_sorted] = sort(corr, 'descend');
+            
         roi_clustered = roi_clustered(i_sorted);
         
         if isempty(roi_clustered)
@@ -119,10 +118,12 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
         %subplot(n_row, n_col, (i-1)*n_col + j);
             %r.plot_avg(r.c{i}, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.2);
-            y = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'Label', false, 'LineWidth', 1.8); axis off
+            [y, s] = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'Label', false, 'LineWidth', 1.8); axis off
+            s.h.LineWidth = 2;
             % zero mean & unit norm for cluster mean projection in r.plot2
                 y = y - mean(y);
                 r.c_mean(:,i) = y/norm(y);
+            
             
             str = sprintf('C%d   (n =%d)', i, numel(roi_clustered));
 %                 ht = title(str, 'HorizontalAlignment', 'center', 'FontSize', 12);
@@ -152,9 +153,14 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
 %             ht.Position = [ax.XLim(1)+w/2, pos(2), pos(3)];
 
             % text
-            str = sprintf('C%d (n =%2d)', i, numel(roi_clustered));
-            text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 12, 'Color', 'k', ...
-                    'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+%             str = sprintf('C%d (n =%2d)', i, numel(roi_clustered));
+%             text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 14, 'Color', 'k', ...
+%                     'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+                
+            str = sprintf('n =%2d', numel(roi_clustered));
+            text((ax.XLim(end)+ax.XLim(1))/2., ax.YLim(1), str, 'FontSize', 16, 'Color', 'k', ...
+                    'VerticalAlignment', 'top', 'HorizontalAlignment','center');
+            
                
             
             
@@ -191,8 +197,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             %axes('Parent', h, 'OuterPosition', [(j-1)*x_width 1-i*y_spacing x_width y_width]);
             axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
             %subplot(n_row, n_col, (i-1)*n_col + j);
-            r.plot_avg(roi_clustered(k), 'LineWidth', 1.2);
-           
+            r.plot_avg(roi_clustered(k), 'LineWidth', 1.2);          
         end
 
         

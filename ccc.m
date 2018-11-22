@@ -19,11 +19,11 @@ else
     disp('No appropriate inputs.');
 end
 
-s = input('Fig Color? [NONE or white] ', 's'); 
-if contains(s, 'white')
-    hfig.Color = 'white';
-else
+s = input('Fig Color? [NONE or white(w) or black(k)] ', 's'); 
+if isempty(s)
     hfig.Color = 'none';
+else
+    hfig.Color = s;
 end
 
 hfig.PaperPositionMode = 'auto';

@@ -16,10 +16,33 @@ function ids = plot_repeat(r, I, varargin)
     
     disp ('');
     
+    % subplot info: num of cells being plotted will be depending on figure size.
+    n_col = 8;
+    n_row = 3;
+    
+    i_fig = 1;
+    
+     % axes dim for single ROI (cell)
+        m = 0.1; % margin
+        h_ax = (1-m)/n_row;
+        w_ax = (1-m)/n_col;
+        h_ax_mean   = 1/n_row * (1/4) * 0.9;
+        h_ax_repeat = 1/n_row * (3/4) * 0.9;
+        if contains(PlotType, 'overlaid')
+            n_row = n_col;
+            %n_row = 2;
+            h_ax = (1-m)/n_row;
+            h_ax_mean   = 1/n_row * 0.9;
+            h_ax_repeat = 0;
+        end 
+    %
+    n_plots_per_fig = n_col * n_row;
+    [I_plot, J_plot] = ind2sub([n_row, n_col], 1:n_plots_per_fig);
+    
     % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
         % 12 cells having highest correlationns
-        numCell = 64;
+        numCell = n_plots_per_fig;
         [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
         I = good_cells(1:numCell);
         fprintf('%d ROIs having highest correlation are seleted. (plot_repeat)\n', numCell);
@@ -35,6 +58,8 @@ function ids = plot_repeat(r, I, varargin)
     if n_ROI == 0
         return;
     end
+    %
+    n_figs = ceil(n_ROI/n_plots_per_fig);
     S = sprintf('ROI %d  *', I); C = regexp(S, '*', 'split'); % C is cell array.
     
     % cluster id & initialize projection vector
@@ -56,31 +81,6 @@ function ids = plot_repeat(r, I, varargin)
     % roi rgb image
     labeled = labelmatrix(r.roi_cc);
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
-    
-    % subplot info
-    n_col = 8;
-    n_row = 3;
-    n_plots_per_fig = n_col * n_row;
-    n_figs = ceil(n_ROI/n_plots_per_fig);
-    i_fig = 1;
-    
-     % axes dim for single ROI (cell)
-        m = 0.1; % margin
-        h_ax = (1-m)/n_row;
-        w_ax = (1-m)/n_col;
-        h_ax_mean   = 1/n_row * (1/4) * 0.9;
-        h_ax_repeat = 1/n_row * (3/4) * 0.9;
-        if contains(PlotType, 'overlaid')
-            n_row = n_col;
-            %n_row = 4;
-            h_ax = (1-m)/n_row;
-            h_ax_mean   = 1/n_row * 0.9;
-            h_ax_repeat = 0;
-            n_plots_per_fig = n_col * n_row;
-            n_figs = ceil(n_ROI/n_plots_per_fig);
-        end 
-        
-    [I_plot, J_plot] = ind2sub([n_row, n_col], 1:n_plots_per_fig);
         
     function redraw()   
         % delete all objects
@@ -113,20 +113,29 @@ function ids = plot_repeat(r, I, varargin)
             axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.8*w_ax  0.9*h_ax_mean], 'Visible', 'off');
                 
             if contains(PlotType, 'overlaid')
-
-                % individual traces first 
-
-                %plot(x, y_aligned, 'LineWidth', 1.2); % color plot
-                plot(x, y_aligned, 'Color', [0.5 0.5 0.5], 'LineWidth', 0.7); axis off 
-                xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
-                hold on
                 
+                % Individual traces
+                
+                % norm by col?
+                %y_aligned = normc(y_aligned);
+                
+                %plot(x, y_aligned, 'LineWidth', 1.2); % color plot
+                plot(x, y_aligned, 'Color', [0.5 0.5 0.5], 'LineWidth', 0.7);
+                xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+                
+                hold on % axis freeze
+                
+                % Avg trace
                 color_line = [0 0.45 0.74];
                 color_line = 'k';
-                
-                r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 3., 'Color', color_line, 'Label', false);
+                [~, s] = r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 2., 'Color', color_line, 'Label', false);
                 %title('Mean response');
+                
+                % avg trace on top
+                %uistack(s.h, 'top')
+                %ylim(s.YLim);
                 hold off;
+                axis off
                 ylabel ''; % or 'dF/F'
 
             else
@@ -158,11 +167,8 @@ function ids = plot_repeat(r, I, varargin)
                 end
             end
 
-            ax = gca;
-            % Print P-correlation value
-%             str = sprintf('corr = %.2f ', r.p_corr.smoothed_norm(k));
-%             text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 14, 'Color', 'k', ...
-%                         'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+            % Print correlation value (now in plot_avg)
+            fprintf('ROI %d corr: %.2f\n', k, r.p_corr.smoothed_norm(k));
 
         end
     end

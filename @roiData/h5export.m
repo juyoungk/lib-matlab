@@ -11,7 +11,7 @@ end
 
 % parameters for export
 dpath = '/Users/peterfish/Modules/';
-fname = [dpath, '_data_',r.ex_name, '_exported_', datestr(now, 'HH_MM_SS'),'.h5'];
+fname = [dpath, 'data_',r.ex_name, '_exported_', datestr(now, 'HH_MM_SS'),'.h5'];
 group = '/exp1';  % default group name
 upsampling = 5;
 
@@ -109,9 +109,10 @@ t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time 
     h5create(fname, [group '/roi_ids'], size(ids));
     h5write(fname, [group '/roi_ids'], ids);
 
-% Name
+% Attributes
 h5writeatt(fname, group, 'Name', r.ex_name);
-;
+h5writeatt(fname, group, 'roi', ids);
+h5writeatt(fname, group, 'ifi', r.ifi);
 h5writeatt(fname, group, 'Smooth_size', r.smoothing_size);
         disp(['Smoothing size : ', num2str(r.smoothing_size)]);
         

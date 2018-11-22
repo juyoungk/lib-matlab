@@ -1,4 +1,4 @@
-function corr_plot(r)
+function plot_corr(r)
 % compare correlations of various types of traces 
 
 X = zeros(r.numRoi, 4);

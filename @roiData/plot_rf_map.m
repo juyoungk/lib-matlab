@@ -16,11 +16,11 @@ function plot_rf_map(r, rf, s)
         ax =gca; 
         ax.DataAspectRatio = [im_ratio 1 1];
         
-        colorbar('Ticks', s.clim, 'TickLabels', [{'-'},{'+'}]);
+        colorbar('Ticks', [s.clim(1), 0, s.clim(2)], 'TickLabels', [{'OFF'}, {'0'}, {'ON'}], 'FontSize', 16);
        
-        ax.XTick = s.XTick;
-        ax.XTickLabel = s.XTickLabel;
-        xlabel('[x100 ms]');
+        ax.XTick = s.XTick(end-3:end);
+        ax.XTickLabel = s.XTickLabel(end-3:end);
+        
         %
         x_tick_spacing = 0.5; % [mm]
         if isempty(r.stim_size) || isnan(r.stim_size)
@@ -33,12 +33,17 @@ function plot_rf_map(r, rf, s)
         x = 0:(x_tick_spacing/w_bar):(num_x/2.); % half size 
         x = unique([-x, x]);
         ax.YTick = x + x_center;
-        ax.YTick = [];
         
         S = sprintf('%.0f*', x*w_bar * 1000 ); C = regexp(S, '*', 'split'); % C is cell array.
         ax.YTickLabel = {C{1:end-1}};
         
+        %
+        ax.YTick = [1, num_x];
+        ax.YTickLabel = [{num2str(r.stim_size/2)}, {num2str(-r.stim_size/2)}];
+        
+        %xlabel('delay (x0.1 s)');
         %ylabel('[um]');
+        
         
         ax.FontSize = s.FontSize;
 end
