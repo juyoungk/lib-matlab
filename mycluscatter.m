@@ -38,6 +38,9 @@ for i = 1:p
         end
         for c = 1:c_list_num  %c_list % # of clustering (# of colors)
             if i==j
+                if sum(idx == c) == 0 % no element in cluster
+                    continue;
+                end
                 range = linspace(min(X(idx==c,i)),max(X(idx==c,i)), 8);
                 if range(1) == range(end) % only one data in cluster
                     range = range(1);

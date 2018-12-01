@@ -1,6 +1,6 @@
-function plot_hist(r, id, num_bin)
+function plot_hist_normed(r, id, num_bin)
 
-% default trace type: Smoothed trace.
+% plot_hist for normed trace version
 
 if nargin <3 
     num_bin = 25;
@@ -15,7 +15,7 @@ N = numel(id);
 if N > 1
     % multi cell plot
     
-    figure('Name', 'Smoothed trace');
+    figure('Name', 'Smoothed Norm trace');
     
     num_col = ceil(sqrt(N));
     num_row = ceil(sqrt(N));
@@ -35,7 +35,7 @@ else
     % single cell plot. No figure.
     
     % smoothed trace
-    x = r.roi_smoothed(:, id);
+    x = r.roi_smoothed_norm(:, id);
     
     %
     myplot_hist(x, num_bin);
@@ -45,11 +45,11 @@ else
     ax = gca;
     
     % Line plot: mean value of raw trace 
-    m = r.stat.mean_f(id);
-    plot([m m], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
-    text( 1.1*m, 0.95*ax.YLim(end), sprintf('%.0f',m), 'FontSize', 12, 'Color', 'k', ...
-                                'VerticalAlignment', 'top', 'HorizontalAlignment','left');
-    
+%     m = r.stat.mean_f(id);
+%     plot([m m], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
+%     text( 1.1*m, 0.95*ax.YLim(end), sprintf('%.0f',m), 'FontSize', 12, 'Color', 'k', ...
+%                                 'VerticalAlignment', 'top', 'HorizontalAlignment','left');
+%     
     
     hold off
 end
@@ -86,7 +86,11 @@ hold off
 ax = gca;
 
 Fontsize = 16;
+
 ax.XAxis.FontSize = Fontsize;
 ax.YAxis.FontSize = Fontsize;
+
+
+
 
 end

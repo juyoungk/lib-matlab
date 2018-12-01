@@ -38,9 +38,11 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     if any([numel(id_roi) == 1, ~strcmp(PlotType,'tiled')])    
         % plot single roi avg trace
         if ~r.avg_FLAG
-            % whitenoise rf
             
-            %plot_rf(r, id_roi, traceType);
+            % whitenoise rf
+            if ~isempty(r.stim_fliptimes) && ~isempty(r.stim_movie)
+                plot_rf(r, id_roi, traceType);
+            end
 
         else 
             if isempty(r.avg_trace)

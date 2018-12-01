@@ -1,17 +1,18 @@
 function update_filtered_trace(r)
-% update_smoothed_trace should be performed in advance. 
+% update_smoothed_trace should be called in advance. 
+
     % calculating filters
-    fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % default
-    %fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .1,  'StopbandFrequency', .2, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
+    %fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % default
+    fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  r.w_filter_low_pass,  'StopbandFrequency', r.w_filter_low_stop, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .0002, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % 2018 1022. Narutal movies are more dynamic
     fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .002, 'StopbandFrequency', .008, 'PassbandRipple', 1, 'StopbandAttenuation', 60);  % Short repeat(e.g. flash 0223 data) 2018 1023
     %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     
     % update ignore_sec
     r.ignore_sec = r.stim_trigger_times(1);
+    t = r.ignore_sec; 
     
     % time
-    t = r.ignore_sec; 
     r.f_times_fil = r.f_times(r.f_times > t);
     r.f_times_norm = r.f_times_fil;
     numframes = numel(r.f_times_fil);
@@ -26,13 +27,18 @@ function update_filtered_trace(r)
 
     for i=1:r.numRoi
             y = r.roi_trace(:,i); % raw data (bg substracted)
+            
             %
-            y_smoothed = r.roi_smoothed(:,i); % raw data (bg substracted)
-            y_smoothed = y_smoothed(r.f_times > t);
-            %
-            y_filtered = filtfilt(fil_low,   y);       % low-pass filtering
-            y_filtered = y_filtered(r.f_times > t);    % ignore the first secs
-            %
+            y_smoothed = r.roi_smoothed(:,i);       % raw data (bg substracted)
+            
+            % Low-pass filtering: all data
+            y_filtered = filtfilt(fil_low, y);
+            
+            % Select data after stimulus onset: For de-trending
+            y_smoothed = y_smoothed(r.f_times > t); 
+            y_filtered = y_filtered(r.f_times > t); 
+            
+            % High-pass filter
             y_trend = filtfilt(fil_trend, y_filtered); 
 
             % detrend & normalization

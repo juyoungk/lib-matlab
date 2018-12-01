@@ -1,6 +1,6 @@
 %% what is the best trace filtering or smoothing for RF estimation and modeling? 
 % raw vs smoothed vs filtered traces
-id_selected = [4, 9, 10, 14, 20, 21];
+id_selected = [9, 10, 14, 20, 21];
 
 % roiData object 
 id = 9
@@ -71,12 +71,10 @@ ylabel('Correlation');
 legend({'15 ms', '25 ms', '35 ms', '45 ms'}, 'FontSize', 18);
 grid on
 %ylim([0.25 0.85]);
+
 %% 2018 1021 Traces vs smoothing_size
-ids = 67;
-h = figure;
-h.Position(3) = 1500;
-h.Position(4) = 350;
-%
+ids = 9;
+h = figure; h.Position = [300 1445 1500 350];
 linewidth = 1.5;
 
 for i = [1, 7]
@@ -88,9 +86,10 @@ for i = [1, 7]
      end
 end
 % xlim([r.sess_trigger_times(1), r.sess_trigger_times(2)]); 
-% xlim([40, 60]);
+xlim([100, 120]);
 xlabel('Time (s)');
 ylabel('dF/F');
+
 hold off
 %grid on
 

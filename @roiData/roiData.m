@@ -52,10 +52,11 @@ classdef roiData < matlab.mixin.Copyable
         smoothing_size  
         smoothing_size_init = 3;
                 
-        % filter params (currently not being used)
-        cutoff_period = 10; % secs. for high-pass filtering
-        w_filter_low  = 0.5 
-        w_filter_high = 0.05; % in terms of norm. (or Nyquist) freq. 
+        % params:  Norm. (or Nyquist) freq. 
+        w_filter_low_pass  = 0.4 
+        w_filter_low_stop  = 0.6
+        w_filter_trend_pass 
+        w_filter_trend_stop 
         
         % avg trace timed at avg_trigger_times (always smoothed at least)
         avg_FLAG = false
@@ -65,7 +66,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_stim_plot   % structure for plot properties of each stim triggers.
         avg_stim_tags
         avg_trigger_interval
-        avg_trace       % avg over trials. Smoothed. (times x roi#): good for 2-D plot
+        avg_trace       % avg over trials. SMOOTHED. (times x roi#): good for 2-D plot
         avg_trace_norm  % Normed and centered. Not detrended.
         avg_trace_fil   % avg over (filtered) trials.
         avg_trace_smooth_norm
@@ -438,6 +439,17 @@ classdef roiData < matlab.mixin.Copyable
             r.smoothing_size = t;
             r.update_smoothed_trace;
         end
+        
+        function set.w_filter_low_pass(r, w)
+            r.w_filter_low_pass = w;
+            r.update_smoothed_trace;
+        end
+        
+        function set.w_filter_low_stop(r, w)
+            r.w_filter_low_stop = w;
+            r.update_smoothed_trace;
+        end
+        
                 
         % constructor
         function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_movie, stim_fliptimes)

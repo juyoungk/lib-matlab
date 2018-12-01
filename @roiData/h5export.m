@@ -1,13 +1,18 @@
-function h5export(r, ids)
+function h5export(r, ids, PlotType)
 % Export upsample or dowmsampled stim & resampled data to h5 file
 % Note: you should first choose right filter and smoothing size. 
 % stim:  [ch x frames] (vs [frames x ch] ?)
 % rdata: [times x rois] - confusing..
 
+if nargin < 3
+    PlotType = 'Smoothed';
+end
+
 if nargin < 2
     ids = 1:r.numRoi;
     error('You probably wouldn''t want to export all the data. Please specify ROI IDs.');
 end
+
 
 % parameters for export
 dpath = '/Users/peterfish/Modules/';
@@ -28,8 +33,12 @@ end
 %y = r.roi_filtered(:, ids); 
 % --> usually unwanted correlation with a certain pixel.
 %disp('filtered trace (not normalizeed) was used for data.'); 
-y = r.roi_smoothed_norm(:, ids);
-disp('Smoothed normalized trace was used for data.');
+
+% y = r.roi_smoothed_norm(:, ids);
+% disp('Smoothed normalized trace was used for data.');
+
+y = r.roi_filtered_norm(:, ids);
+disp('Filtered normalized trace was used for data.');
 
 t = r.f_times_norm;
 t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time [-xx, .. , 0, xx, .. ]
@@ -114,7 +123,7 @@ h5writeatt(fname, group, 'Name', r.ex_name);
 h5writeatt(fname, group, 'roi', ids);
 h5writeatt(fname, group, 'ifi', r.ifi);
 h5writeatt(fname, group, 'Smooth_size', r.smoothing_size);
-        disp(['Smoothing size : ', num2str(r.smoothing_size)]);
+        %disp(['Smoothing size : ', num2str(r.smoothing_size)]);
         
 end
 
