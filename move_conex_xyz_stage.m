@@ -33,8 +33,8 @@ function move_conex_xyz_stage(src, evt)
        
         % 0814 New MEA ref
         pos_bot_ref = [6.465, 13.0289, 22.600];
-        % 0829 new origin
-        pos_bot_ref = [6.455, 12.934, 22.600];
+        % 1130 2018 new origin
+        pos_bot_ref = [6.455, 12.934, 22.0];
     
     % Align 2P (not VS focus) to MEA 0416 201
        % w/ 2 PMTs, 920 laser
