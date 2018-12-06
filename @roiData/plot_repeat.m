@@ -42,7 +42,7 @@ function ids = plot_repeat(r, I, varargin)
     % ROI ids? 1. direct input 2. filter by p value. 
     if nargin < 2
         % 12 cells having highest correlationns
-        numCell = n_plots_per_fig;
+        numCell = min(n_plots_per_fig, r.numRoi);
         [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
         I = good_cells(1:numCell);
         fprintf('%d ROIs having highest correlation are seleted. (plot_repeat)\n', numCell);
