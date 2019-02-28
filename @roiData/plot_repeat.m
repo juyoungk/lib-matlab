@@ -3,6 +3,11 @@ function ids = plot_repeat(r, I, varargin)
 % Limited number of plots per figure. Keyboard navigation for next set of
 % ROIs.
 %
+% input:
+%           I - array of ROI index
+%             - logic array
+%             - If I < 1, lower bound for correlation between repeats.  
+%
 % output:
 %           'ids' - array of ROI index (filtered by correlation)
 %
@@ -17,7 +22,7 @@ function ids = plot_repeat(r, I, varargin)
     disp ('');
     
     % subplot info: num of cells being plotted will be depending on figure size.
-    n_col = 8;
+    n_col = 2;
     n_row = 3;
     
     i_fig = 1;
@@ -29,7 +34,7 @@ function ids = plot_repeat(r, I, varargin)
         h_ax_mean   = 1/n_row * (1/4) * 0.9;
         h_ax_repeat = 1/n_row * (3/4) * 0.9;
         if contains(PlotType, 'overlaid')
-            n_row = n_col;
+            %n_row = n_col;
             %n_row = 2;
             h_ax = (1-m)/n_row;
             h_ax_mean   = 1/n_row * 0.9;
@@ -74,7 +79,8 @@ function ids = plot_repeat(r, I, varargin)
     % Figure 
     %hfig = figure('Position', [10 300 800 900]);
     %hfig = figure('Position', [10 55 1400 1050]);
-    hfig = figure('Position', [10 55 1110 1050]);
+    %hfig = figure('Position', [10 55 1110 1050]);
+    hfig = figure('Position', [1780 1274 1079 442]); % 2019 Feb Steve Grant Fig
     
     % callback
     set(hfig, 'KeyPressFcn', @keypress)
@@ -119,20 +125,15 @@ function ids = plot_repeat(r, I, varargin)
                 % norm by col?
                 %y_aligned = normc(y_aligned);
                 
-                %plot(x, y_aligned, 'LineWidth', 1.2); % color plot
-                plot(x, y_aligned, 'Color', [0.5 0.5 0.5], 'LineWidth', 0.7);
+                % Plot individual traces
+                %plot(x, y_aligned, 'Color', 0.6*[1 1 1], 'LineWidth', 0.7); hold on % axis freeze
                 xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                 
-                hold on % axis freeze
-                
-                % Avg trace
-                color_line = [0 0.45 0.74];
-                color_line = 'k';
-                [~, s] = r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 2., 'Color', color_line, 'Label', false);
+                % Plot avg trace
+                color_line = 'k'; %color_line = [0 0.45 0.74];
+                [~, s] = r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 2., 'Color', color_line, 'Label', false, 'Lines', true);
                 %title('Mean response');
                 
-                % avg trace on top
-                %uistack(s.h, 'top')
                 %ylim(s.YLim);
                 hold off;
                 axis off

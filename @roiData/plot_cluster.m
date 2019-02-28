@@ -36,6 +36,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
     x_width = (1-x0)/n_col;
     y_spacing = (1-y0)/n_row;
     y_width = 0.9 * y_spacing;
+    y_width = 1. * y_spacing;
      
     % get focus or create new function if it is not empty
     if ishandle(r.c_hfig)
@@ -47,8 +48,8 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         else
             f_width = 1000;
         end
-        r.c_hfig = figure('Position', [1430 50 f_width 900]);
-        %r.c_hfig = figure('Position', [1430 50 1100 1500]);
+        r.c_hfig = figure('Position', [1226 1229 2427 537]); % 2019 Feb Steve grant
+        %r.c_hfig = figure('Position', [1430 50 f_width 900]);
         pos = r.c_hfig.Position;
         % Create button group
         bg = uibuttongroup('Visible','off',...
@@ -113,17 +114,23 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             continue;
         end
         
-        % avg over clustered ROIs
+        % Plot avg over clustered ROIs
         j = 1; % col number
         axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
         %subplot(n_row, n_col, (i-1)*n_col + j);
-            %r.plot_avg(r.c{i}, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.2);
-            [y, s] = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'Label', false, 'LineWidth', 1.8); axis off
-            s.h.LineWidth = 2;
+            
+            % 'mean' case
+            %[y, s] = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'Label', false, 'LineWidth', 2, 'Lines', false); axis off
+            %s.h.LineWidth = 2;
+            
+            % 'overlaid' case
+            [y, s] = r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'Label', false, 'LineWidth', 1.8, 'Lines', false); axis off
+            y = mean(y, 2);
+            
             % zero mean & unit norm for cluster mean projection in r.plot2
+                
                 y = y - mean(y);
                 r.c_mean(:,i) = y/norm(y);
-            
             
             str = sprintf('C%d   (n =%d)', i, numel(roi_clustered));
 %                 ht = title(str, 'HorizontalAlignment', 'center', 'FontSize', 12);
@@ -161,9 +168,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
             text((ax.XLim(end)+ax.XLim(1))/2., ax.YLim(1), str, 'FontSize', 16, 'Color', 'k', ...
                     'VerticalAlignment', 'top', 'HorizontalAlignment','center');
             
-               
-            
-            
+           
        % Summary Plot Mode
        if n_trace == 0 % means 'summary' mode
            j = 3;

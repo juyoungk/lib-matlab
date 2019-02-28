@@ -25,6 +25,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     h_axes    = p.Results.axes;
     DrawPlot = p.Results.DrawPlot;
     Label    = p.Results.Label;
+    Lines    = p.Results.Lines;
     
     argPlot = {};
     
@@ -32,6 +33,11 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     
     if nargin < 2
         id_roi = 1:r.numRoi; % loop over all rois
+    end
+    
+    if islogical(id_roi)
+        ids = 1:r.numRoi;
+        id_roi = ids(id_roi)
     end
     
     %if any([nargin>1 && numel(id_roi) == 1, avg_over_ROIs])
@@ -72,6 +78,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             
             % Output1 : trace
             trace = y;
+            
             % Output2 : stat
             s.min = min(y, [], 1);
             s.max = max(y, [], 1);
@@ -82,9 +89,8 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 
                 duration = r.avg_trigger_interval;
                 
-                
                 % Adjust for plot (phase & cycles)
-                [y, x] = r.traceAvgPlot(y);
+                [y, times] = r.traceAvgPlot(y);
                 
                 % Do you want to have more control on color? Use ColorOrderIndex.
                 if contains(PlotType, 'tiled') || contains(PlotType, 'mean')
@@ -93,26 +99,24 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     end
                 end
                 
+                if contains(PlotType,'overlaid') % output is the mean trace
+                    y_mean = mean(y, 2);
+                    argPlot = {'Color', 0.6*[1 1 1]};
+                end
+            
                 ax = gca;  Fontsize = 10;
 
-                %
+                % Plot
                 if isempty(h_axes)
-                    s.h = plot(x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                    s.h = plot(times, y, 'LineWidth', w_Line, argPlot{:}); hold on;
                 else
-                    s.h = plot(h_axes, x, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                    s.h = plot(h_axes, times, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                end
+                
+                if contains(PlotType,'overlaid')
+                    plot(times, y_mean, 'LineWidth', 2.0, 'Color', 'k')
                 end
                     
-                
-                %ax.XLim = [x(1), max(x(end), r.avg_trigger_interval)]; % at least up to avg_trigger_interval
-                ax.XLim = [x(1), x(end)];
-                ax.XAxis.FontSize = Fontsize;
-                ax.YAxis.FontSize = Fontsize;
-                % XTick positions: independent of phase value
-                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
-        %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
-                xtickformat('%.0f');
-                s.YLim = ax.YLim; % save current YLim
-
                 % y-label
                 if contains(traceType, 'normalized') && ~NormByCol
                     ylabel('dF/F');
@@ -120,7 +124,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     ylabel('a.u.');
                 end
                 
-                if Label == true
+                if Label == true % many kinds of labels.    
                     % ROI id
                     if numel(id_roi) == 1 && strcmp(PlotType,'tiled')
                         text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 12, 'Color', 'k', ...
@@ -138,50 +142,63 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
                 
-                %% Additional lines first
-                % event does not need to shift
-                % avg trigger events
-                %tt = r.timesForAvgPlot( 0 );
-                tt = ((1:(r.n_cycle))-1)*duration;
-                for n = 1:length(tt)
-                    x = tt(n);
-                    if x < r.t_range(1) && x > r.t_range(2)
-                        continue;
-                    end
-                    % Lines for avg trigger times
-                    plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
-                end
-
-                % within one repeat, stim trigger events
-                for k = 1:length(r.avg_stim_times) % measured by PD.
-                    x = r.avg_stim_times(k);
-                    if x < r.t_range(1) || x > r.t_range(2)
-                        continue;
-                    end
-                    if k ~= 1
-                        plot([x x], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
-                    end
-                    
-                    kk = mod(k, r.avg_every); % kk-th stimulus within one repeat.
-                    if kk == 0; kk = r.avg_every; end;
-                    
-                    % tag
-                    if ~isempty(r.avg_stim_plot(kk).tag) && Label
-                        text(x, ax.YLim(1), r.avg_stim_plot(kk).tag, 'FontSize', 9, 'Color', 'k', ...
-                            'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
-                    end
-                    % middle lines
-                    if r.avg_stim_plot(kk).middleline == true
-                        if kk == r.avg_every
-                            next_stim = r.avg_trigger_interval;
-                        else
-                            next_stim = r.avg_stim_times(kk+1);
+                if Lines == true
+                    %% Additional lines first
+                    % event does not need to shift
+                    % avg trigger events
+                    %tt = r.timesForAvgPlot( 0 );
+                    tt = ((1:(r.n_cycle))-1)*duration;
+                    for n = 1:length(tt)
+                        x = tt(n);
+                        if x < r.t_range(1) && x > r.t_range(2)
+                            continue;
                         end
-                        x = x + 0.5*(next_stim-r.avg_stim_times(kk));
-                        plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                        % Lines for avg trigger times
+                        plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
                     end
-                    
+
+                    % within one repeat, stim trigger events
+                    for k = 1:length(r.avg_stim_times) % measured by PD.
+                        x = r.avg_stim_times(k);
+                        if x < r.t_range(1) || x > r.t_range(2)
+                            continue;
+                        end
+                        if k ~= 1
+                            plot([x x], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
+                        end
+
+                        kk = mod(k, r.avg_every); % kk-th stimulus within one repeat.
+                        if kk == 0; kk = r.avg_every; end
+
+                        % tag
+                        if ~isempty(r.avg_stim_plot(kk).tag) && Label
+                            text(x, ax.YLim(1), r.avg_stim_plot(kk).tag, 'FontSize', 15, 'Color', 'k', ...
+                                'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
+                        end
+
+                        % middle lines
+                        if r.avg_stim_plot(kk).middleline == true
+                            if kk == r.avg_every
+                                next_stim = r.avg_trigger_interval;
+                            else
+                                next_stim = r.avg_stim_times(kk+1);
+                            end
+                            x = x + 0.5*(next_stim-r.avg_stim_times(kk));
+                            plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                        end
+
+                    end
                 end
+                
+                %ax.XLim = [x(1), max(x(end), r.avg_trigger_interval)]; % at least up to avg_trigger_interval
+                ax.XLim = [times(1), times(end)];
+                ax.XAxis.FontSize = Fontsize;
+                ax.YAxis.FontSize = Fontsize;
+                % XTick positions: independent of phase value
+                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
+        %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
+                xtickformat('%.0f');
+                s.YLim = ax.YLim; % save current YLim
 
                 hold off;
             end
@@ -259,11 +276,12 @@ function p =  ParseInput(varargin)
         strcmp(x,'filtered') || strcmp(x,'smoothed') || strcmp(x,'projected'));
     
     p.addParameter('PlotType', 'tiled', @(x) strcmp(x,'tiled') || ...
-        strcmp(x,'all') || strcmp(x,'mean'));
+        strcmp(x,'all') || strcmp(x,'mean') || strcmp(x,'overlaid'));
     
     p.addParameter('NormByCol', false, @(x) islogical(x));
     p.addParameter('DrawPlot', true, @(x) islogical(x));
     p.addParameter('Label', true, @(x) islogical(x));
+    p.addParameter('Lines', true, @(x) islogical(x));
     p.addParameter('LineWidth', 1.5, @(x) x>0);
     p.addParameter('Color', [], @(x) isvector(x) || ischar(x) || isempty(x)); % [0 0.4470 0.7410]
     p.addParameter('axes', []);
