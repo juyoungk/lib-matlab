@@ -22,8 +22,8 @@ function ids = plot_repeat(r, I, varargin)
     disp ('');
     
     % subplot info: num of cells being plotted will be depending on figure size.
-    n_col = 2;
-    n_row = 3;
+    n_col = 1;
+    n_row = 1;
     
     i_fig = 1;
     
@@ -31,8 +31,8 @@ function ids = plot_repeat(r, I, varargin)
         m = 0.1; % margin
         h_ax = (1-m)/n_row;
         w_ax = (1-m)/n_col;
-        h_ax_mean   = 1/n_row * (1/4) * 0.9;
-        h_ax_repeat = 1/n_row * (3/4) * 0.9;
+        h_ax_mean   = 1/n_row * (1/6) * 0.95;
+        h_ax_repeat = 1/n_row * (5/6) * 0.95;
         if contains(PlotType, 'overlaid')
             %n_row = n_col;
             %n_row = 2;
@@ -79,8 +79,8 @@ function ids = plot_repeat(r, I, varargin)
     % Figure 
     %hfig = figure('Position', [10 300 800 900]);
     %hfig = figure('Position', [10 55 1400 1050]);
-    %hfig = figure('Position', [10 55 1110 1050]);
-    hfig = figure('Position', [1780 1274 1079 442]); % 2019 Feb Steve Grant Fig
+    hfig = figure('Position', [10 55 1110 1050]);
+    %hfig = figure('Position', [1780 1274 1079 442]); % 2019 Feb Steve Grant Fig
     
     % callback
     set(hfig, 'KeyPressFcn', @keypress)
@@ -125,13 +125,21 @@ function ids = plot_repeat(r, I, varargin)
                 % norm by col?
                 %y_aligned = normc(y_aligned);
                 
+                % Draw mean and freeze axis?, then update..
+                
                 % Plot individual traces
-                %plot(x, y_aligned, 'Color', 0.6*[1 1 1], 'LineWidth', 0.7); hold on % axis freeze
+                plot(x, y_aligned, 'Color', 0.6*[1 1 1], 'LineWidth', 0.7); hold on 
+                % plot(x, y_aligned, 'LineWidth', 0.7); hold on
                 xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                 
                 % Plot avg trace
                 color_line = 'k'; %color_line = [0 0.45 0.74];
-                [~, s] = r.plot_avg(k, 'traceType', 'normalized', 'LineWidth', 2., 'Color', color_line, 'Label', false, 'Lines', true);
+                [~, s] = r.plot_avg(k, 'traceType', 'normalized',...
+                                        'PlotType', PlotType,...
+                                        'LineWidth', 2., 'Color', color_line,... 
+                                        'Label', true, 'Lines', true);
+                hold on % axis freeze
+                
                 %title('Mean response');
                 
                 %ylim(s.YLim);
@@ -144,10 +152,10 @@ function ids = plot_repeat(r, I, varargin)
                 r.plot_avg(k, 'traceType', 'normalized'); 
                 title('Mean response');
                 n_repeats = size(y_aligned, 2);
-                h_ax_one_trace = 0.85*(h_ax_repeat-m/4.)/n_repeats;
+                h_ax_one_trace = 0.90*(h_ax_repeat-m/4.)/n_repeats;
                 % individual traces
                 for ii = 1:n_repeats
-                    ax = axes('Position', [x_ax,  y_ax + m/2. + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
+                    ax = axes('Position', [x_ax,  y_ax + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
                     plot(x, y_aligned(:,ii), 'LineWidth', 1.2); hold on
                     xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
 

@@ -3,6 +3,8 @@ function move_conex_xyz_stage(src, evt)
 % XY stage (NEWPORT CONEX) are algined with the pos_ref_pos in advance.
 % CAUTION: Coordinate of 285A is 10x lower than actual dimensions.
 % MP285A @ COM8
+% What is the coordinate of MP285A in the eyes of scanimage?
+% ====> type "hSI.hMotors"
     
     % conversion factor for 285A
     c = 1;
@@ -33,8 +35,10 @@ function move_conex_xyz_stage(src, evt)
        
         % 0814 New MEA ref
         pos_bot_ref = [6.465, 13.0289, 22.600];
-        % 1130 2018 new origin
-        pos_bot_ref = [6.455, 12.934, 22.0];
+        % 1221 2018 new origin
+        pos_bot_ref = [6.314, 13.340, 21.965];
+        % 1221 2018 new origin
+        pos_bot_ref = [6.314, 13.340, 22.6150];
     
     % Align 2P (not VS focus) to MEA 0416 201
        % w/ 2 PMTs, 920 laser
@@ -63,9 +67,16 @@ function move_conex_xyz_stage(src, evt)
         % 0829: new origin, zoom 3 scanning
         pos_top_ref = [24, 72, 21746];
         
-        % 0913 (w/ just glass surface. need to be confirmed?)
-        pos_top_ref(1) = pos_top_ref(1) - 10 + 40; % (+) moves VS right
-        pos_top_ref(2) = pos_top_ref(2) - 30 + 10; % (+) moves VS down
+        % 1221
+        pos_top_ref = [87, 105.8, 15470];
+        
+        % 2019 0228 (reference to 2P scanning, not MEA)
+        pos_top_ref = [60 -382.5000 1.1228e+04];
+        
+        % 2019 0228 (w/ just glass surface. need to be confirmed?)
+        pos_top_ref(1) = pos_top_ref(1) + 40; % (+) moves VS right
+        pos_top_ref(2) = pos_top_ref(2) + 170; % (+) moves VS down
+        
         
     % offset between 2p and VS focal planes: 
     % always 150 um below imaging plane(e.g. GCL)

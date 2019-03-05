@@ -50,7 +50,7 @@ classdef roiData < matlab.mixin.Copyable
         % smoothing params
         smoothing_method = 'movmean';
         smoothing_size  
-        smoothing_size_init = 3;
+        smoothing_size_init = 5;
                 
         % params:  Norm. (or Nyquist) freq. 
         w_filter_low_pass  = 0.4 

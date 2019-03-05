@@ -32,7 +32,7 @@ classdef gdata < handle
             % pd events info
             pd_AI_name = 'photodiode';
             pd_threshold1 = 0.85 % Major events
-            pd_threshold2 = 0.25 % Minnor events
+            pd_threshold2 = 0.35 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
             pd_trace
@@ -368,7 +368,7 @@ classdef gdata < handle
                         if isempty(reply); reply = 'Y'; end
                         if reply == 'Y'
                             
-                        %    g.load_roiData_save(cc_filenames{1});
+                            g.load_roiData_save(cc_filenames{1});
 
                         else
                             g.cc = [];
