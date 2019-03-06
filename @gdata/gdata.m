@@ -409,7 +409,7 @@ end
 
 function str_ex_name = get_ex_name(tif_filename)
     %s_filename = tif_filename;
-    %s_filename = strrep(tif_filename, '_', '  ');    
+    s_filename = strrep(tif_filename, '__', '_');    
     s_filename = strrep(tif_filename, '00', '');
     loc_space = strfind(s_filename, '.');
     

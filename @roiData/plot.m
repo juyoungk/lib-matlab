@@ -2,7 +2,8 @@ function plot(r, I)
 % Create new figure with interactive keyboard navigation over roi#
 
     if nargin < 2
-        I = 1:r.numRoi;    
+        %I = 1:r.numRoi;
+        I = r.roi_good;
     end
     i_roi = 1;
     imax = numel(I);
@@ -32,7 +33,8 @@ function plot(r, I)
         k = I(i_roi); % roi index
         mask = false(cc.ImageSize);
         % ex info
-        str_smooth_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
+        ex_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
+        ex_info = [];
         
         % 1. whole trace
         subplot(n_row, n_col, [1, n_col]);
@@ -70,8 +72,8 @@ function plot(r, I)
                 plot_avg(r, k);
                 ax =gca;
                 title('Avg response (smoothed) over trials');
-                if ~isempty(ax)
-                    text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+                if ~isempty(ax) && ~isempty(ex_info)
+                    text(ax.XLim(end), ax.YLim(1), ex_info, 'FontSize', 11, 'Color', 'k', ...
                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
             end
@@ -87,8 +89,8 @@ function plot(r, I)
             else
                 ax = plot_avg_fil(r, k);
                 title('Avg response (filtered) over trials');
-                if ~isempty(ax)
-                    text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+                if ~isempty(ax) && ~isempty(ex_info)
+                    text(ax.XLim(end), ax.YLim(1), ex_info, 'FontSize', 11, 'Color', 'k', ...
                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
             end

@@ -10,6 +10,7 @@ function plot2(r, I, varargin)
     
     p=ParseInput(varargin{:});
     c_given = p.Results.Cluster;
+    c0_color = 'g';
     
     if nargin < 2
         I = 1:r.numRoi;    
@@ -23,7 +24,7 @@ function plot2(r, I, varargin)
     % cluster id & initialize projection vector
     i_c = 1; % id in sorted cluster array
     p = zeros(size(r.c_mean, 2));
-    i_sorted = zeros(1, 100);
+    i_sorted = zeros(1, r.totClusterNum);
     
     % open plot_cluster for calculating c_mean
     if ~ishandle(r.c_hfig)
@@ -123,11 +124,13 @@ function plot2(r, I, varargin)
                 hold off
                 title('Avg response (smoothed norm)');
                 if ~isempty(ax)
-%                     text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
+                        % Smooth info
+%                       text(ax.XLim(end), ax.YLim(1), str_smooth_info, 'FontSize', 11, 'Color', 'k', ...
 %                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-                        str_corr = sprintf('corr = %.2f', r.p_corr.smoothed_norm(k));
-                        text(ax.XLim(end), ax.YLim(1), str_corr, 'FontSize', 11, 'Color', 'k', ...
-                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+                        % Corr info
+%                         str_corr = sprintf('corr = %.2f', r.p_corr.smoothed_norm(k));
+%                         text(ax.XLim(end), ax.YLim(1), str_corr, 'FontSize', 11, 'Color', 'k', ...
+%                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
             end
             
@@ -148,6 +151,9 @@ function plot2(r, I, varargin)
                 p = y * r.c_mean;
                 i_nonzero = (p~=0);
                 [p_sorted, i_sorted] = sort(p, 'descend');
+                
+                % i_sorted is empty?
+                
                 i_sorted(p_sorted ==0) = [];
                 
                 %
@@ -177,7 +183,11 @@ function plot2(r, I, varargin)
             else
                 c = r.c;     % cluster id array for all rois
                 
-                c_suggested = i_sorted(i_c);
+                if isempty(i_sorted)
+                    c_suggested = 0;
+                else
+                    c_suggested = i_sorted(i_c);
+                end
                 
                 roi_clustered = find(c==c_suggested);
                 r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.4, 'Label', false);
@@ -190,23 +200,29 @@ function plot2(r, I, varargin)
                 %axis tight
                 ax = gca;
                 
-                title( {r.c_note{c_suggested} }, 'FontSize', 14);
-                text(ax.XLim(end), ax.YLim(end), ['C', num2str(c_suggested)], 'FontSize', 15, 'Color', 'k', ...
-                                'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+                if c_suggested > 0 
+                    title( {r.c_note{c_suggested} }, 'FontSize', 14);
+                    text(ax.XLim(end), ax.YLim(end), ['C', num2str(c_suggested)], 'FontSize', 15, 'Color', 'k', ...
+                                    'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+                end
             end
 
         % bottom text 
         %axes('Parent', hfig, 'OuterPosition', [0.1, 0, 0.5, 0.06]); axis off;
         axes('Parent', hfig, 'OuterPosition', [0, 0, 1, 0.06]); axis off;
         ax = gca;
-        str = sprintf('Current Cluster #: %d  (Press ''SPACE'' to move to c%d:  %s )', r.c(k), i_sorted(i_c), r.c_note{c_suggested});
+        if c_suggested > 0 
+            str = sprintf('Current Cluster #: %d  (Press ''SPACE'' to move to c%d:  %s )', r.c(k), c_suggested, r.c_note{c_suggested});
+        else
+            str = sprintf('Current Cluster #: %d  (Press ''SPACE'' to move to c%d:  %s )', r.c(k), c_suggested, 'unclustered cells');
+        end
         text(ax.XLim(1), ax.YLim(end), str, 'FontSize', 15);
         
         % 2. ROI spatial pattern
         %subplot(n_row, n_col, [n_col+1, 2*n_col]);
         ax_roi = axes('Position', [0.05  0.39  0.4  0.36], 'Visible', 'off');
             if c_given > 0
-               r.plot_cluster_roi(c_given, 'compare', c_suggested, 'imageType', 'bw');
+               r.plot_cluster_roi(c_given, 'compare', c_suggested, 'imageType', 'bw'); % c_suggested = 0 ? No comparison.
                hold on
                    s = regionprops(r.roi_cc, 'centroid');
                    center = s(k).Centroid;

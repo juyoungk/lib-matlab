@@ -5,7 +5,7 @@ function ax = plot_trace_raw(r, id_roi)
         % plot single roi trace (smoothed)
         plot(r.f_times,     r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
         plot(r.f_times_fil, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
-        title([r.ex_name, '- raw trace']);
+        title([r.ex_name]);
         %legend('raw trace (bg substracted)', 'F (trend)');
             ylabel('a.u.'); axis auto;
             ax = gca; 

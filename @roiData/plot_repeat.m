@@ -22,8 +22,28 @@ function ids = plot_repeat(r, I, varargin)
     disp ('');
     
     % subplot info: num of cells being plotted will be depending on figure size.
-    n_col = 1;
-    n_row = 1;
+    
+    switch PlotType
+        case 'overlaid'
+            n_col=6;
+            n_row=3;
+            %hfig = figure('Position', [10 55 900 450]);
+            n_col=4;
+            n_row=5;
+            hfig = figure('Position', [10 55 550 750]);
+        case 'tiled'
+            n_col=2;
+            n_row=9;
+            hfig = figure('Position', [10 55 1110 1050]);
+        otherwise
+    end
+    
+    % Figure 
+    %hfig = figure('Position', [10 55 1110 1050]);
+    %hfig = figure('Position', [1780 1274 1079 442]); % 2019 Feb Steve Grant Fig
+    
+    % callback
+    set(hfig, 'KeyPressFcn', @keypress)
     
     i_fig = 1;
     
@@ -31,15 +51,16 @@ function ids = plot_repeat(r, I, varargin)
         m = 0.1; % margin
         h_ax = (1-m)/n_row;
         w_ax = (1-m)/n_col;
-        h_ax_mean   = 1/n_row * (1/6) * 0.95;
-        h_ax_repeat = 1/n_row * (5/6) * 0.95;
+        h_ax_mean   = 1/n_row * (1/6);
+        h_ax_repeat = 1/n_row * (5/6) - m/2.;
         if contains(PlotType, 'overlaid')
             %n_row = n_col;
             %n_row = 2;
             h_ax = (1-m)/n_row;
             h_ax_mean   = 1/n_row * 0.9;
             h_ax_repeat = 0;
-        end 
+        end
+        
     %
     n_plots_per_fig = n_col * n_row;
     [I_plot, J_plot] = ind2sub([n_row, n_col], 1:n_plots_per_fig);
@@ -76,14 +97,7 @@ function ids = plot_repeat(r, I, varargin)
 %     c_list_num = numel(c_list);
 %     color = jet(c_list_num); 
     
-    % Figure 
-    %hfig = figure('Position', [10 300 800 900]);
-    %hfig = figure('Position', [10 55 1400 1050]);
-    hfig = figure('Position', [10 55 1110 1050]);
-    %hfig = figure('Position', [1780 1274 1079 442]); % 2019 Feb Steve Grant Fig
     
-    % callback
-    set(hfig, 'KeyPressFcn', @keypress)
     % roi rgb image
     labeled = labelmatrix(r.roi_cc);
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
@@ -148,16 +162,21 @@ function ids = plot_repeat(r, I, varargin)
                 ylabel ''; % or 'dF/F'
 
             else
-                % Mean trace
-                r.plot_avg(k, 'traceType', 'normalized'); 
+                % Mean traces
+                r.plot_avg(k, 'traceType', 'normalized');
+                %axis off
                 title('Mean response');
+                
                 n_repeats = size(y_aligned, 2);
-                h_ax_one_trace = 0.90*(h_ax_repeat-m/4.)/n_repeats;
+                h_ax_one_trace = 0.90*(h_ax_repeat)/n_repeats;
                 % individual traces
                 for ii = 1:n_repeats
                     ax = axes('Position', [x_ax,  y_ax + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
-                    plot(x, y_aligned(:,ii), 'LineWidth', 1.2); hold on
+                    y_single = y_aligned(:,ii);
+                    
+                    plot(x, y_single, 'LineWidth', 1.2); hold on
                     xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+                    ylim([ min(y_single), max(y_single)]);
 
                     % (optional) stim trigger lines
                     for k = 1:length(r.avg_stim_times) % measured by PD.

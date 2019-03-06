@@ -48,8 +48,8 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
         else
             f_width = 1000;
         end
-        r.c_hfig = figure('Position', [1226 1229 2427 537]); % 2019 Feb Steve grant
-        %r.c_hfig = figure('Position', [1430 50 f_width 900]);
+        %r.c_hfig = figure('Position', [1226 1229 2427 537]); % 2019 Feb Steve grant
+        r.c_hfig = figure('Position', [1430 50 f_width 900]);
         pos = r.c_hfig.Position;
         % Create button group
         bg = uibuttongroup('Visible','off',...
