@@ -30,7 +30,11 @@ function ids = plot_repeat(r, I, varargin)
             %hfig = figure('Position', [10 55 900 450]);
             n_col=4;
             n_row=5;
-            hfig = figure('Position', [10 55 550 750]);
+            %hfig = figure('Position', [10 55 550 750]);
+            % Juyoung Demo
+            n_col=8;
+            n_row=8;
+            hfig = figure('Position', [10 55 950 950]);
         case 'tiled'
             n_col=2;
             n_row=9;
