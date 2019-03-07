@@ -5,11 +5,12 @@ function ax = plot_trace_raw(r, id_roi)
         % plot single roi trace (smoothed)
         plot(r.f_times,     r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
         plot(r.f_times_fil, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
-        title([r.ex_name]);
+        %title([r.ex_name]);
+        title('raw trace');
         %legend('raw trace (bg substracted)', 'F (trend)');
             ylabel('a.u.'); axis auto;
             ax = gca; 
-            Fontsize = 14;
+            Fontsize = 16;
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];

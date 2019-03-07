@@ -65,14 +65,17 @@ classdef gdata < handle
                 end
                  % title name
                  t_filename = strrep(g.tif_filename, '_', '  ');
-                 s = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, ch, g.header.scanZoomFactor);
+                 s = sprintf('%s  (AI ch:%d, Zoom:%.1f)', t_filename, ch, g.header.scanZoomFactor);
             end
             
             function filename = getFigFileName(g, ch)
                 s = getFigTitle(g,ch);
                 filename = strrep(s, ' ', '_');
                 filename = strrep(filename, '(', '_');
+                filename = strrep(filename, ')', '_');
                 filename = strrep(filename, ':', '');
+                filename = strrep(filename, '__', '_');
+                filename = strrep(filename, '00', '');
             end
             
             function vol = imdrift(g, ch)
