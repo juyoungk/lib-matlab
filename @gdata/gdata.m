@@ -331,7 +331,11 @@ classdef gdata < handle
                         s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
 
                         % plot mean images
-                        hf = figure; 
+                        if g.size(1) == g.size(2)l
+                            hf = figure('Position',[2 50 850 893]);
+                        else
+                            hf = figure('Position',[2 50 850 1200]);
+                        end
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
                             imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
                     end

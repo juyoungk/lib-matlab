@@ -1,5 +1,5 @@
 function channelcorr(g, ch1, ch2, nframe)
-% Cross-channel correlation.
+% Cross-channel correlation of pixel values.
     
     if length(g.AI_chSave) < 2
         str = ['Only one channel available: ', num2str(g.AI_chSave)];

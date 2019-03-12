@@ -20,9 +20,7 @@ function ids = plot_repeat(r, I, varargin)
     PlotType = p.Results.PlotType;
     
     disp ('');
-    
-    % subplot info: num of cells being plotted will be depending on figure size.
-    
+    n_plots_per_fig = 64;
     switch PlotType
         case 'overlaid'
             n_col=6;
@@ -42,6 +40,34 @@ function ids = plot_repeat(r, I, varargin)
         otherwise
     end
     
+    % ROI ids? 1. direct input 2. filter by p value. 
+    if nargin < 2
+        % 12 cells having highest correlationns
+        numCell = min(n_plots_per_fig, r.numRoi);
+        [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
+        I = good_cells(1:numCell);
+        fprintf('%d ROIs having highest correlation are seleted. (plot_repeat)\n', numCell);
+    end
+    if length(I) == 1 && I < 1 % ROIs selected by correlation 
+        p = I;
+        I = 1:r.numRoi;    
+        I = I(r.p_corr.smoothed_norm > p);
+        fprintf('%d ROIs are seleted with a condition of p > %.2f. (plot_repeat)\n', numel(I), p);
+    end
+    ids = I;
+    n_ROI = numel(I);
+    if n_ROI == 0
+        print('No ROI was selected or given');
+        return;
+    end
+   
+    % Special case. n=1
+    if n_ROI == 1
+        n_plots_per_fig = 1;
+        n_col = 1;
+        n_row = 1;
+    end
+
     % Figure 
     %hfig = figure('Position', [10 55 1110 1050]);
     %hfig = figure('Position', [1780 1274 1079 442]); % 2019 Feb Steve Grant Fig
@@ -69,25 +95,6 @@ function ids = plot_repeat(r, I, varargin)
     n_plots_per_fig = n_col * n_row;
     [I_plot, J_plot] = ind2sub([n_row, n_col], 1:n_plots_per_fig);
     
-    % ROI ids? 1. direct input 2. filter by p value. 
-    if nargin < 2
-        % 12 cells having highest correlationns
-        numCell = min(n_plots_per_fig, r.numRoi);
-        [~, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
-        I = good_cells(1:numCell);
-        fprintf('%d ROIs having highest correlation are seleted. (plot_repeat)\n', numCell);
-    end
-    if length(I) == 1 && I < 1 % ROIs selected by correlation 
-        p = I;
-        I = 1:r.numRoi;    
-        I = I(r.p_corr.smoothed_norm > p);
-        fprintf('%d ROIs are seleted with a condition of p > %.2f. (plot_repeat)\n', numel(I), p);
-    end
-    ids = I;
-    n_ROI = numel(I);
-    if n_ROI == 0
-        return;
-    end
     %
     n_figs = ceil(n_ROI/n_plots_per_fig);
     S = sprintf('ROI %d  *', I); C = regexp(S, '*', 'split'); % C is cell array.
