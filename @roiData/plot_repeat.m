@@ -134,9 +134,10 @@ function ids = plot_repeat(r, I, varargin)
                 disp('Trace type: smoothed_norm.'); 
             end
             y = r.roi_smoothed_norm(:, k);
-            %y = r.roi_smoothed(:, k);
-                [y_aligned, ~] = align_rows_to_events(y, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
-                y_aligned = reshape(y_aligned, size(y_aligned, 1), []); % times (row) x repeats (cols) 
+           
+            %
+            [y_aligned, ~] = align_rows_to_events(y, r.f_times_norm, r.avg_trigger_times, r.n_cycle*r.avg_trigger_interval);
+            y_aligned = reshape(y_aligned, size(y_aligned, 1), []); % times (row) x repeats (cols) 
             %
             [y_aligned, x] = r.traceAvgPlot(y_aligned);
   

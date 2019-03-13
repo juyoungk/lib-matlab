@@ -58,18 +58,23 @@ classdef roiData < matlab.mixin.Copyable
         w_filter_trend_pass 
         w_filter_trend_stop 
         
-        % avg trace timed at avg_trigger_times (always smoothed at least)
+        % average analysis parameters
         avg_FLAG = false
         avg_every
-        avg_trigger_times % Times for aligning between trials. A subset of stim_trigger_times. Might be same as sess_trigger_times
+        avg_trigger_times % Times for aligning between trials for average analysis. 
+                          % A subset of stim_trigger_times. 
+                          % (usually, same as sess_trigger_times)
+        avg_trigger_interval
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_plot   % structure for plot properties of each stim triggers.
         avg_stim_tags
-        avg_trigger_interval
+        
+        % avg traces (always smoothed at least)
         avg_trace       % avg over trials. SMOOTHED. (times x roi#): good for 2-D plot
-        avg_trace_norm  % Normed and centered. Not detrended.
+        avg_trace_norm  % Normed and centered. SMOOTHED trace. No more use?
         avg_trace_fil   % avg over (filtered) trials.
         avg_trace_smooth_norm
+        %avg_trace_filter_norm
         avg_trace_std   % std over trials
         %avg_trace_filter_norm
         avg_projected   % projected trace onto (PCA) space.
@@ -92,9 +97,10 @@ classdef roiData < matlab.mixin.Copyable
         roi_selected
         roi_good % selected ids for good cells (e.g. high correlation over repeats) 
         
-        % properties for plot of averaged trace: use traceAvgPlot.
-        n_cycle = 2 
-        s_phase = 1 % Shift phase toward negative time direction. 
+        % Properties for plot of averaged trace. (use traceAvgPlot ?? not any more?)
+        % Method 'align_trace_to_avg_triggers' will use those properties.
+        n_cycle = 1 
+        s_phase = 0 % Shift phase toward negative time direction. 1 means one full cycle.  
         %c_range = [0, 1]; % Cycle range. Not used yet. 
         coeff   % (PCA) basis
     end
@@ -436,21 +442,31 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function set.smoothing_size(r, t)
+            if nargin < 2
+                t = r.smoothing_size_init;
+            end
             r.smoothing_size = t;
             r.update_smoothed_trace;
+            r.average_analysis;
         end
         
         function set.w_filter_low_pass(r, w)
             r.w_filter_low_pass = w;
             r.update_smoothed_trace;
+            r.average_analysis;
         end
         
         function set.w_filter_low_stop(r, w)
             r.w_filter_low_stop = w;
             r.update_smoothed_trace;
+            r.average_analysis;
         end
         
-                
+%         function set.n_cycle(r, n)
+%             r.n_cycle = n;
+%             r.average_analysis;
+%         end
+                        
         % constructor
         function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_movie, stim_fliptimes)
             % ifi: inter-frame interval or log-frames-period
@@ -503,9 +519,10 @@ classdef roiData < matlab.mixin.Copyable
                 % {1} : events1 - Major events. ~ sess_trigger_times
                 % {2} : events2 - Finer evetns. ~ stim_trigger_times
                 % {3} : ...
+                % or simple array.
                 if iscell(stim_trigger_times)
                     switch numel(stim_trigger_times)
-                        case 2
+                        case 2 % since 2018 Aug.
                             r.stim_trigger_times = stim_trigger_times{2}; % minor trigger events
                             r.sess_trigger_times = stim_trigger_times{1}; % major trigger events
                             %
@@ -515,9 +532,10 @@ classdef roiData < matlab.mixin.Copyable
                             
                             % Num of stim triggers within one session
                             n = floor(numStimTriggers/numSessTriggers);
+                            %
                             if rem(numStimTriggers, numSessTriggers) ~= 0
                                 fprintf('Not divisible, You would want to check the alignmennt between them.\n');
-                                % average setting afterwards?
+                                % error?
                             else
                                 % Divisible. 
                                 % Assign stim trigger IDs to session triggers.
@@ -530,52 +548,78 @@ classdef roiData < matlab.mixin.Copyable
                                     r.sess_trigger_ids = ids;
                                 end
                                 
-                                % Session as repeated stimulus?
-                                fprintf('%d stim triggers in one session.\n', n);
-                                str_input = sprintf('\nAre they repeated by %d times (every %d triggers) [Y]?\n(or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers, n);
-                                n_new = input(str_input);
-                                if isempty(n_new)
-                                    n_new = n; % case default number
-                                end
-                                r.avg_every = n_new; % set method
+%                                 % Session as repeated stimulus?
+%                                 fprintf('%d stim triggers in one session.\n', n);
+%                                 str_input = sprintf('\nAre they repeated by %d times (every %d triggers) [Y]?\n(or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers, n);
+%                                 n_every = input(str_input);
+%                                 if isempty(n_every)
+%                                     n_every = n; % case default number
+%                                 end
                             end
                             
                         otherwise
                             r.stim_trigger_times = stim_trigger_times{1};
                             r.sess_trigger_times = stim_trigger_times{1};
+                            n = 1;
                     end
                     
                 else
                     % not cell array.
                     r.stim_trigger_times = stim_trigger_times;
                     r.sess_trigger_times = stim_trigger_times;
+                    n = 1;
                 end
+                
+                % Check for number of stim triggers in one session.
+                % Get user input.
+                % Session as repeated stimulus? 
+                fprintf('%d stim triggers in one session.\n', n);
+                str_input = sprintf('\nAre they repeated by %d times (every %d triggers) [Y]?\n(or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers, n);
+                n_every = input(str_input);
+                if isempty(n_every)
+                    n_every = n; % case default number
+                end
+                
+                % stim_trigger_times --> trace filtering after the first PD event.
+                % default smoothing
+                r.smoothing_size = r.smoothing_size_init;
+
+                % Average analysis properties.
+                if contains(r.ex_name, 'typing')
+                    % copy the trace in (-) times.
+                    r.n_cycle =2;
+                    r.s_phase =1; % shfit one full cycle
+                    r.t_range =[-0.9, 100];
+                elseif contains(r.ex_name, 'flash')
+                    %r.s_phase = 0.25;
+                    %r.t_range =[-100, 100];
+                    % 2019 0312 
+                    r.n_cycle = 1.5;
+                    r.s_phase = -0.25;
+                    r.t_range = [0, 100];
+                elseif contains(r.ex_name, 'movingbar')
+                    avg_every = 8;
+                elseif contains(r.ex_name, 'jitter')
+                    avg_every = 2;
+                end
+                
+                % Now, do average analysis.
+                r.avg_every = n_every;
                     
                 % load ex struct?
                 
-                % Avg trace settings: only needed when major triggers are
-                % not divisible..
+                % (only) Not divisible case?
                 if r.avg_FLAG==false && ~isempty(r.stim_trigger_times) && numel(r.stim_trigger_times) > 1
                         %
                         avg_every = 1;
                         
                         % special cases
-                        if strfind(r.ex_name, 'typing')
-                            avg_every = 23;
-                            % copy the trace in (-) times.
-                            r.n_cycle =2;
-                            r.s_phase =1; % shfit one full cycle
-                            r.t_range =[-0.9, 100];
-                        elseif strfind(r.ex_name, 'flash')
-                            r.n_cycle = 2;
-                            r.s_phase = 0.25;
-                            r.t_range =[-100, 100];
-                        elseif strfind(r.ex_name, 'movingbar')
-                            avg_every = 8;
-                        elseif strfind(r.ex_name, 'jitter')
-                            avg_every = 2;
-                        end
-                        
+%                         if contains(r.ex_name, 'typing')
+%                             % copy the trace in (-) times.
+%                             r.n_cycle =2;
+%                             r.s_phase =1; % shfit one full cycle
+%                             r.t_range =[-0.9, 100];
+%                         
                         % User input
                         str_input = sprintf('PD trigger events num: %d.\nRepeated stimulus over every N triggers? [Default N = %d (%s). 0 for no average analysis]',...
                             length(r.stim_trigger_times), avg_every, r.ex_name);
@@ -594,16 +638,12 @@ classdef roiData < matlab.mixin.Copyable
                 
                 % cluster mean initialization (100 clusters max)
                 r.c_mean = zeros(length(r.avg_times), r.totClusterNum);
-                  
-                % default smoothing or smoothed traces
-                %r.smoothing_method = 'movmean';
-                r.smoothing_size = r.smoothing_size_init;
-                    
+                      
                 % whitenoise stim?
                 if nargin > 5
                     r.stim_movie = stim_movie;
                     r.stim_fliptimes = stim_fliptimes;
-                elseif strfind(r.ex_name, 'whitenoise')
+                elseif contains(r.ex_name, 'whitenoise')
                     r.load_h5;
                     % stim size?
                     if isempty(r.stim_size) || (r.stim_size == 0)
@@ -632,10 +672,11 @@ classdef roiData < matlab.mixin.Copyable
                         fprintf('ROI%3d: corr between trials %5.2f\n', good_cells(ss), corr(ss));
                     end
                     % plot
-                    r.plot_repeat;
-                    print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
-                    make_im_figure;
-                    r.plot_roi(good_cells(1:numCell));
+                    
+%                     r.plot_repeat;
+%                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
+%                     make_im_figure;
+%                     r.plot_roi(good_cells(1:numCell));
                 else
                     % single trial case 
                     [mean_f, good_cells] = sort(r.stat.mean_f, 'descend');
@@ -648,56 +689,51 @@ classdef roiData < matlab.mixin.Copyable
                     r.plot(r.roi_good);
                     print([r.ex_name, '_plot'], '-dpng', '-r300');
                 end
-
+                
+                % save 'cc' whenever roiData is created. 
+                r.save;
             end
         end
         
         function set.avg_every(r, n_every)
-                
-                if n_every == 0
-                    r.avg_FLAG = false;
-                    r.avg_every = 0;
-                    disp('Average analysis OFF..');
-                    return;
-                end
-                    
-                %
-                r.avg_FLAG  = true;
-                r.avg_every = n_every;
-                disp('Average analysis ON..');
-                
-                % avg trigger times: automatically invokes
-                % update_smoothed_trace
-                if r.avg_every > 1 
-                    id_trigger = mod(1:numel(r.stim_trigger_times), r.avg_every) == 1; % logical array
-                    r.avg_trigger_times = r.stim_trigger_times(id_trigger);
-                else
-                    r.avg_trigger_times = r.stim_trigger_times;
-                end
-  
-                % Given avg_trigger_times and avg_trigger_interval, update
-                % traces. p_corr is computed.
-                % in set method of avg_trigger_times.
-                %r.update_smoothed_trace;
-                
-                % stim events within one avg
-                r.avg_stim_times = r.stim_trigger_times(1:r.avg_every) - r.stim_trigger_times(1);
-                
-                % times for avg traces
-                n = floor(r.avg_trigger_interval*(1./r.ifi)); % same as qx in align_rows_to_events function
-                r.avg_times = ((1:n)-0.5)*r.ifi;
-                
-                % times (x-axis) setting for avg plot: shifted and
-                % repeated.
-                r.a_times = r.timesForAvgPlot; % New version will be 'timesAvgPlot'
-                
-                % cell array for tags
-                r.avg_stim_tags = cell(1, n_every);
-                % struct for the plot properties of each stim trigger time
-                r.avg_stim_plot = struct('tag', [], 'middleline',[], 'shade', []);
-                r.avg_stim_plot(n_every) = r.avg_stim_plot; % struct array
-                    [r.avg_stim_plot(:).middleline] = deal(true);
-                    [r.avg_stim_plot(:).shade]      = deal(false);
+            % Every among stim_trigger_times which is usually given by PD triggers. 
+            if n_every == 0
+                r.avg_every = 0;
+                r.avg_FLAG = false;
+                disp('Average analysis OFF..');
+                return;
+            end
+            %
+            r.avg_FLAG  = true;
+            r.avg_every = n_every;
+            disp('Average analysis ON..');
+
+            % Assign triggers for avg analysis: 'avg_trigger_times'
+            % Set method for 'avg>trigger_times' should do every jobs for
+            % avg analysis.
+            if r.avg_every > 1 
+                id_trigger = mod(1:numel(r.stim_trigger_times), r.avg_every) == 1; % logical array
+                r.avg_trigger_times = r.stim_trigger_times(id_trigger);
+            else
+                r.avg_trigger_times = r.stim_trigger_times;
+            end
+
+            % What's in Set method for 'avg_trigger_times'?
+            % 'update_smoothed_trace' method.
+            % Given avg_trigger_times and avg_trigger_interval, 
+            % update traces. p_corr is computed.
+            
+            % One session can be consisted of multiple stimuli.
+            % stim events within one avg period
+            r.avg_stim_times = r.stim_trigger_times(1:r.avg_every) - r.stim_trigger_times(1);
+
+            % cell array for tags
+            r.avg_stim_tags = cell(1, n_every);
+            % struct for the plot properties of each stim trigger time
+            r.avg_stim_plot = struct('tag', [], 'middleline',[], 'shade', []);
+            r.avg_stim_plot(n_every) = r.avg_stim_plot; % struct array
+                [r.avg_stim_plot(:).middleline] = deal(true);
+                [r.avg_stim_plot(:).shade]      = deal(false);
         end
         
         function set.avg_trigger_times(r, new_times)
@@ -706,6 +742,7 @@ classdef roiData < matlab.mixin.Copyable
             
             % Avg trigger interval & stim end
             if numel(r.avg_trigger_times) > 1
+                
                 r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
                 disp(['Avg trigger interval: ', num2str(r.avg_trigger_interval), ' secs.']);
 
@@ -726,8 +763,8 @@ classdef roiData < matlab.mixin.Copyable
             fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
             fprintf('Num of full repeats: %d.\n', numRepeat);
             
-            % update traces
-            r.update_smoothed_trace;
+            % (avg_trigger_times, avg_trigger_interval) --> avg analysis.
+            r.average_analysis;
         end
         
         % Function for phase shift and multiply for vector

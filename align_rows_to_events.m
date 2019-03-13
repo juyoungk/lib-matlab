@@ -19,30 +19,42 @@ end
 
 % calculate ifi fusing the first two time points
 ifi = x(2)-x(1);
+
 %
 n_sampling = floor(duration*(1./ifi));
 
 % 
 [n_times, n_cells] = size(y);
-% # of trials
+if n_times ~= length(x)
+    error('time mismatch.');
+end
+
+% Events number given by user.
 n_events = length(events);
 
-% 
-y_aligned = zeros(n_sampling, n_cells, n_events);
+% Count only available events. 
+n_repeats = floor((x(end) - events(1))/duration);
 
-for i=1:length(events)
+if n_repeats < n_events
+    str = fprintf('Event duraion = %.2f. Last data timepoint = %.1f, Last event timestamp = %.1f. Only %d repeats was in dataset (y).', duration, x(end), events(end), n_repeats);
+    disp(str);
+end
+
+% Create zero array for output.
+y_aligned = zeros(n_sampling, n_cells, n_repeats);
+
+for i=1:n_repeats
     
     % index for the onset of the event
     a = events(i);
     idx = find(x>=a);
     id = idx(1);
 
-    %qx = x(idx);
-    if (id+n_sampling-1) > n_times
-        disp('ERROR: Event +duration goes over the recorded signal. ');
-        disp([num2str(i-1), ' repeats were aligned relative to event times. (supposed to be ', num2str(length(events)),' repeats)']);
-        break; 
-    end
+%     if (id+n_sampling-1) > n_times
+%         disp('ERROR: Event +duration goes over the recorded signal. ');
+%         disp([num2str(i-1), ' repeats were aligned relative to event times. (supposed to be ', num2str(length(events)),' repeats)']);
+%         break; 
+%     end
     
     qy = y(id:id+n_sampling-1,:);
 
@@ -50,6 +62,8 @@ for i=1:length(events)
     
 end
 
-qx = (1:n_sampling)*ifi;
+qx = ((1:n_sampling)-0.5)*ifi;
+% why -0.5? 
+% First index after the event can have a delay of (0 ifi).
 
 end

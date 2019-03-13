@@ -55,24 +55,24 @@ function update_filtered_trace(r)
             r.roi_filtered_norm(:,i) = y_filtered_norm;
     end
 
-    if r.avg_FLAG
-       % Align roi traces to stim_times
-       [roi_aligned_fil, ~]           = align_rows_to_events(r.roi_filtered, r.f_times_fil, r.avg_trigger_times, r.avg_trigger_interval);
-       [roi_aligned_smoothed_norm, ~] = align_rows_to_events(r.roi_smoothed_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
-       [roi_aligned_filtered_norm, ~] = align_rows_to_events(r.roi_filtered_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
-
-        % Avg. & Stat. over trials (dim 3)
-        [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil);
-        [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
-        [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
-        
-        % Pearson correlation over repeats
-        r.p_corr.smoothed_norm = corr_avg(roi_aligned_smoothed_norm);
-        r.p_corr.filtered = corr_avg(roi_aligned_fil);
-        r.p_corr.filtered_norm = corr_avg(roi_aligned_filtered_norm);
-        %
-        r.stat.smoothed_norm = stat_smoothed_norm;
-        r.stat.filtered_norm = stat_filtered_norm;
-    end
+%     if r.avg_FLAG
+%        Align roi traces to trigger times for average analysis
+%        [roi_aligned_fil, ~]           = align_rows_to_events(r.roi_filtered, r.f_times_fil, r.avg_trigger_times, r.avg_trigger_interval);
+%        [roi_aligned_smoothed_norm, ~] = align_rows_to_events(r.roi_smoothed_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
+%        [roi_aligned_filtered_norm, ~] = align_rows_to_events(r.roi_filtered_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
+% 
+%         Avg. & Stat. over trials (dim 3)
+%         [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil);
+%         [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
+%         [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
+%         
+%         Pearson correlation over repeats
+%         r.p_corr.smoothed_norm = corr_avg(roi_aligned_smoothed_norm);
+%         r.p_corr.filtered = corr_avg(roi_aligned_fil);
+%         r.p_corr.filtered_norm = corr_avg(roi_aligned_filtered_norm);
+%         
+%         r.stat.smoothed_norm = stat_smoothed_norm;
+%         r.stat.filtered_norm = stat_filtered_norm;
+%     end
 
 end

@@ -78,13 +78,16 @@ classdef gdata < handle
                 filename = strrep(filename, '00', '');
             end
             
-            function vol = imdrift(g, ch)
+            function vol = imdrift(g, ch, snapframes)
                 % See if the cells were drift over imaging session
                 % 1000 frames more case
                 % Output vol: 2 frames. Before and After. Last available
                 % channel.
-                if nargin > 1
+                if nargin < 3
                     snapframes = 1000;
+                end
+                
+                if nargin > 1
                     n = min(snapframes, g.nframes);
                     fprintf('Total frame numbers; %d. imdrift(): %d frames were compared. (Green-Magenta false color)\n', g.nframes, n);
  
@@ -128,6 +131,15 @@ classdef gdata < handle
                             J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', true);
                         end
                     end
+                end
+            end
+            
+            function hf = figure(g)
+                % create figure with appropriate size.
+                if g.size(1) == g.size(2)
+                    hf = figure('Position',[2 50 850 893]);
+                else
+                    hf = figure('Position',[2 50 850 1200]);
                 end
             end
             
@@ -331,20 +343,17 @@ classdef gdata < handle
                         s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
 
                         % plot mean images
-                        if g.size(1) == g.size(2)l
-                            hf = figure('Position',[2 50 850 893]);
-                        else
-                            hf = figure('Position',[2 50 850 1200]);
-                        end
-                            %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                            imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
+                        hf = g.figure;
+                        %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
+                        imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
                     end
                     
                     % drift check if frame numbers are more than 1000
                     if ch_frames > 999
                         before_after = g.imdrift;
                         % combined image for ROI segmentation.
-                        imvol(mean(before_after, 3), 'title', 'first and last 2000 frames', 'scanZoom', g.header.scanZoomFactor);
+                        images = cat(3, before_after, mean(before_after, 3));
+                        imvol(images, 'hfig', g.figure, 'title', 'first, last, and mean of two over 2000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
 
                     % load cc struct if exist

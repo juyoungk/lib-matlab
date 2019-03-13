@@ -112,7 +112,7 @@ function plot2(r, I, varargin)
                 c = colorbar;
                 c.TickLabels = {};
             else
-                y = plot_avg(r, k);
+                y = r.plot_avg(k);
                 y = normc(y);
                 ax =gca;
                 hold on
