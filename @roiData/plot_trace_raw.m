@@ -15,15 +15,19 @@ function ax = plot_trace_raw(r, id_roi)
             ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
             axis tight
+            
         % stimulus lines
-        ev = r.stim_trigger_times;
+        ev = r.stim_trigger_times; % all 
+        
         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
         if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400
-            for i=1:length(ev)
+            i_last = length(ev);
+            for i=1:i_last
+                % all stim trigger times 
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line
-                if strfind(r.ex_name, 'flash')
-                    interval = r.s_times(end);
+                if strfind(r.ex_name, 'flash') && i < i_last 
+                    interval = ev(i+1) - ev(i);
                     plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
                 end
             end

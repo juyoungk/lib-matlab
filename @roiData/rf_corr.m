@@ -37,6 +37,7 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
             
         elseif contains(traceType, 'smoothed_norm')
             y = r.roi_smoothed_norm(:, id_roi);
+            y = y(r.f_times>r.ignore_sec);
         
         elseif contains(traceType, 'filtered')    
             y = r.roi_filtered(:, id_roi);

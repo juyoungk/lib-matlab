@@ -91,7 +91,12 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 duration = r.avg_trigger_interval;
                 
                 % Adjust for plot (phase & cycles)
-                [y, times] = r.traceAvgPlot(y);
+                %[y, times] = r.traceAvgPlot(y);
+                %
+                % 2019 0313 no more need for adjusting phase & cycle when
+                % plotting since the avg data was collected accordingly in
+                % advance.
+                times = r.a_times;
                 
                 % Do you want to have more control on color? Use ColorOrderIndex.
                 if contains(PlotType, 'tiled') || contains(PlotType, 'mean')

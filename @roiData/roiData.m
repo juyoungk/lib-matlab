@@ -19,7 +19,7 @@ classdef roiData < matlab.mixin.Copyable
         stim_trigger_times % Absolute times when stims (or PD) were triggered. Fine triggers.
         sess_trigger_times % Absolute times of session (or major) triggers. Should be a subset of stim_triggers, but the value can be a little off from it.
         sess_trigger_ids   % Session triggers as ids of stim_trigger_times. Used in select_data().
-        stim_end
+        stim_end    % End time of stimulus. Last avg_trigger_time + interval. 
         %
         stim_movie
         stim_fliptimes     % relative times between whitenoise flip times. Should start from 0.
@@ -28,16 +28,21 @@ classdef roiData < matlab.mixin.Copyable
         % 
         numFrames
         numRoi
+        
+        % times = r.f_times
+        f_times         % frame times
         roi_trace       % raw trace (bg substracted. No other post-processing)
         roi_smoothed    % smoothed raw trace
-        roi_smoothed_detrend % trend substracted
-        roi_smoothed_norm    % norm by trend of detrended: dF/F
-        roi_filtered    % lowpass filtered
-        roi_trend       % trend for normalization
-        roi_filtered_norm % dF/F @ dF = filtered - detrended, F = detrended_trace
+        roi_smoothed_norm    % baseline substracted and normalized by it again. dF/F.
         
-        roi_mean_f      % mean fluorescnece level during the stimulus
-        f_times         % frame times
+        % times = r.f_times_norm
+        roi_smoothed_detrend % trend substracted
+        roi_smoothed_detrend_norm % norm by trend. dF/F
+        roi_filtered    % lowpass filtered
+        roi_trend       % trend for normalization. Very lowpass filter used. 
+        roi_baseline    % baseline fluorescence level (usually right before stimulus)
+        roi_filtered_norm % dF/F @ dF = filtered - detrended, F = detrended_trace
+        %
         ignore_sec      % ignore first few secs for filtering. SHould be updated before updateing filtering. (default: until 1st trigger)
         f_times_fil     % Times for all traces except raw and smoothed traces.
         f_times_norm    % Currently, same as f_times_fil.
@@ -81,6 +86,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
         a_times     % times for avg plot. Full cycles (e.g. 2 cycles). Phase shifted.
+        AVG_FIRST_EXCLUDE = true
         t_range = [-1.5, 100] % Time filter for avg plot range (last filter). can be arbitrarily time points. [secs]
         
         % whitenoise responses
@@ -366,6 +372,8 @@ classdef roiData < matlab.mixin.Copyable
             %s.avg_stim_tags = r.avg_stim_tags;
             s.avg_stim_plot  = r.avg_stim_plot;
             s.avg_stim_times = r.avg_stim_times;
+            s.stim_trigger_times = r.stim_trigger_times;
+            s.sess_trigger_times = r.sess_trigger_times;
             % cluster info
             s.c = r.c;
             s.c_note = r.c_note;
@@ -466,7 +474,7 @@ classdef roiData < matlab.mixin.Copyable
 %             r.n_cycle = n;
 %             r.average_analysis;
 %         end
-                        
+%                         
         % constructor
         function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_movie, stim_fliptimes)
             % ifi: inter-frame interval or log-frames-period
@@ -499,7 +507,10 @@ classdef roiData < matlab.mixin.Copyable
                 r.ex_name = ex_str;
                 r.ifi = ifi;
                 r.f_times = ((1:r.numFrames)-0.5)*ifi; % frame times. in the middle of the frame
-                r.stim_end = r.f_times(end); % used also for stat.
+                % Final time 
+                r.stim_end = r.f_times(end); 
+                % stim_end time will be finely adjusted by assigning avg_trigger_times.
+                % stim_end will be used for computing statistics.
                 
                 % Bg PMT level in images (vol)
                 a = sort(vec(vol(:,:,1))); % inferred from 1st frame
@@ -515,14 +526,16 @@ classdef roiData < matlab.mixin.Copyable
                 end
                 disp('ROI traces were extracted..');
                 
+                % Import stimulus trigger information
+                
                 % stim_triger_times can be a cell array
                 % {1} : events1 - Major events. ~ sess_trigger_times
                 % {2} : events2 - Finer evetns. ~ stim_trigger_times
                 % {3} : ...
                 % or simple array.
-                if iscell(stim_trigger_times)
+                if iscell(stim_trigger_times) % since 2018 Aug.
                     switch numel(stim_trigger_times)
-                        case 2 % since 2018 Aug.
+                        case 2 
                             r.stim_trigger_times = stim_trigger_times{2}; % minor trigger events
                             r.sess_trigger_times = stim_trigger_times{1}; % major trigger events
                             %
@@ -547,7 +560,6 @@ classdef roiData < matlab.mixin.Copyable
                                 if n == 1 % exception
                                     r.sess_trigger_ids = ids;
                                 end
-                                
 %                                 % Session as repeated stimulus?
 %                                 fprintf('%d stim triggers in one session.\n', n);
 %                                 str_input = sprintf('\nAre they repeated by %d times (every %d triggers) [Y]?\n(or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers, n);
@@ -580,7 +592,10 @@ classdef roiData < matlab.mixin.Copyable
                     n_every = n; % case default number
                 end
                 
-                % stim_trigger_times --> trace filtering after the first PD event.
+                %% baseline estimation just before the first stimulus
+                r.baseline;
+                
+                % stim_trigger_times --> signal filtering after the first PD event.
                 % default smoothing
                 r.smoothing_size = r.smoothing_size_init;
 
@@ -603,7 +618,7 @@ classdef roiData < matlab.mixin.Copyable
                     avg_every = 2;
                 end
                 
-                % Now, do average analysis.
+                %% Do average analysis by assigning avg_every.
                 r.avg_every = n_every;
                     
                 % load ex struct?
@@ -612,7 +627,6 @@ classdef roiData < matlab.mixin.Copyable
                 if r.avg_FLAG==false && ~isempty(r.stim_trigger_times) && numel(r.stim_trigger_times) > 1
                         %
                         avg_every = 1;
-                        
                         % special cases
 %                         if contains(r.ex_name, 'typing')
 %                             % copy the trace in (-) times.
@@ -637,7 +651,7 @@ classdef roiData < matlab.mixin.Copyable
                 end
                 
                 % cluster mean initialization (100 clusters max)
-                r.c_mean = zeros(length(r.avg_times), r.totClusterNum);
+                r.c_mean = zeros(length(r.a_times), r.totClusterNum);
                       
                 % whitenoise stim?
                 if nargin > 5
@@ -657,33 +671,37 @@ classdef roiData < matlab.mixin.Copyable
                 r.c_hfig = [];
                 r.roi_review = [];
                 
-                % stat
-                r.stat.mean_f = mean( r.roi_trace(r.f_times > r.stim_trigger_times(1) & r.f_times < r.stim_end, :), 1);
+                %% Statistics
+                % mean fluorescence level
+                r.stat.mean_start = mean( r.roi_trace( r.f_times < 10, :), 1); % mean over first 10s
+                if ~isempty(r.stim_trigger_times)
+                    %r.stat.mean_f is an old name of mean_stim.
+                    r.stat.mean_stim = mean( r.roi_trace(r.f_times > r.stim_trigger_times(1) & r.f_times < r.stim_end, :), 1); % mean during stimulus. ~ baseline?
+                    r.stat.mean_baseline = r.roi_baseline;
+                end
                 
+                %% Statistics under identical stimulus if possible.
+                numCell = 12; % Print top 10 cells.
                 % Plot several (avg) traces
-                numCell = min(21, r.numRoi);
                 if r.avg_every > 0
                     % ROIs exhibiting hiested correlations between traces
                     % under repeated stimulus
                     [corr, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
                     r.roi_good = good_cells;
-                    % summary
-                    for ss = 1:numCell
-                        fprintf('ROI%3d: corr between trials %5.2f\n', good_cells(ss), corr(ss));
-                    end
-                    % plot
+                    % Print top 10 cells
+                    fprintf('ROI%3d: corr between trials %5.2f\n', good_cells(1:numCell), corr(1:numCell));
                     
-%                     r.plot_repeat;
-%                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
-%                     make_im_figure;
-%                     r.plot_roi(good_cells(1:numCell));
+                    % plot                    
+                    r.plot_repeat;
+                    print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
+                    make_im_figure;
+                    r.plot_roi(good_cells(1:numCell));
                 else
                     % single trial case 
-                    [mean_f, good_cells] = sort(r.stat.mean_f, 'descend');
+                    [mean_f, good_cells] = sort(r.stat.mean_stim, 'descend');
                     % summary
-                    for ss = 1:numCell
-                        fprintf('ROI %d: mean fluorescence level %5.2f\n',good_cells(ss), mean_f(ss));
-                    end
+                    fprintf('ROI %d: mean fluorescence level %5.2f\n',good_cells(1:numCell), mean_f(1:numCell));
+
                     % plot
                     r.roi_good = good_cells;
                     r.plot(r.roi_good);
@@ -693,6 +711,26 @@ classdef roiData < matlab.mixin.Copyable
                 % save 'cc' whenever roiData is created. 
                 r.save;
             end
+        end
+        
+        function baseline(r)
+            % Estimate baseline of the ROI (fluorecence) signal.
+            % 2019 0313 wrote.
+            duration = 5; %sec
+            
+            r.roi_baseline = zeros(1, r.numRoi);
+            
+            if isempty(r.stim_trigger_times)
+                disp('No stim trigger time. Baseline level was estimated by the first 5s imaging.');
+                id = r.f_times < duration;
+            else
+                % Data index for 5s before the 1st stim trigger.
+                upper = r.f_times < r.stim_trigger_times(1);
+                lower = r.f_times > (r.stim_trigger_times(1) - duration); % 5 sec
+                id = upper & lower;
+            end
+            
+            r.roi_baseline = mean( r.roi_trace(id, :), 1);
         end
         
         function set.avg_every(r, n_every)
@@ -737,6 +775,11 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function set.avg_trigger_times(r, new_times)
+            % Average analysis will be called if the trigger times for
+            % average (or session) are given. 
+            % THE FINAL information for avaerage analysis.
+            % avg_trigger_interval and stim_end will be computed.
+            
             % Assign new times
             r.avg_trigger_times = new_times;
             
@@ -768,38 +811,38 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         % Function for phase shift and multiply for vector
-        function yy = traceForAvgPlot(obj, y)
-            % initial & old version.
-            [row, col] = size(y);
-            if row == 1
-                yy = circshift(y, round( obj.s_phase * col ) );
-                yy = repmat(yy, [1, obj.n_cycle]);
-%             elseif col == 1 
+%         function yy = traceForAvgPlot(obj, y)
+%             % initial & old version.
+%             [row, col] = size(y);
+%             if row == 1
+%                 yy = circshift(y, round( obj.s_phase * col ) );
+%                 yy = repmat(yy, [1, obj.n_cycle]);
+% %             elseif col == 1 
+% %                 yy = circshift(y, round( obj.s_phase * row ) );
+% %                 yy = repmat(yy, [obj.n_cycle, 1]);
+%             else
+%                 % assume Dim1 is time series.
 %                 yy = circshift(y, round( obj.s_phase * row ) );
 %                 yy = repmat(yy, [obj.n_cycle, 1]);
-            else
-                % assume Dim1 is time series.
-                yy = circshift(y, round( obj.s_phase * row ) );
-                yy = repmat(yy, [obj.n_cycle, 1]);
-            end
-            
-        end
- 
-        function tt = timesForAvgPlot(obj, ev_times)
-            % Event times for average plot
-            % if event times are not given, output (tt) is times (x-axis) for avg plot. 
-            if nargin < 2
-                ev_times = obj.avg_times;
-            end
-            N = length(ev_times);
-            % extend times
-            tt = repmat(ev_times, [1, obj.n_cycle]);
-            c = meshgrid(0:(obj.n_cycle-1), 1:N);
-            tt = tt + (vec(c).')*obj.avg_times(end);
-            % phase shift
-            tt = tt - obj.s_phase * obj.avg_times(end);
-        end
-        
+%             end
+%             
+%         end
+%  
+%         function tt = timesForAvgPlot(obj, ev_times)
+%             % Event times for average plot
+%             % if event times are not given, output (tt) is times (x-axis) for avg plot. 
+%             if nargin < 2
+%                 ev_times = obj.avg_times;
+%             end
+%             N = length(ev_times);
+%             % extend times
+%             tt = repmat(ev_times, [1, obj.n_cycle]);
+%             c = meshgrid(0:(obj.n_cycle-1), 1:N);
+%             tt = tt + (vec(c).')*obj.avg_times(end);
+%             % phase shift
+%             tt = tt - obj.s_phase * obj.avg_times(end);
+%         end
+%         
         function set.stim_trigger_times(obj, value)
             obj.stim_trigger_times = value;
             obj.stim_times = value; % old name

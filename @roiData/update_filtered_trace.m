@@ -4,7 +4,7 @@ function update_filtered_trace(r)
     % calculating filters
     %fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  .3,  'StopbandFrequency', .5, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % default
     fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  r.w_filter_low_pass,  'StopbandFrequency', r.w_filter_low_stop, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
-    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .0002, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % 2018 1022. Narutal movies are more dynamic
+    %fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .0002, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % 2018 1022. Narutal movies are more dynamic
     fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .002, 'StopbandFrequency', .008, 'PassbandRipple', 1, 'StopbandAttenuation', 60);  % Short repeat(e.g. flash 0223 data) 2018 1023
     %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     
@@ -22,7 +22,7 @@ function update_filtered_trace(r)
     r.roi_normalized = zeros(numframes, r.numRoi);
     r.roi_trend = zeros(numframes, r.numRoi);
     r.roi_smoothed_detrend = zeros(numframes, r.numRoi);
-    r.roi_smoothed_norm = zeros(numframes, r.numRoi);
+    r.roi_smoothed_detrend_norm = zeros(numframes, r.numRoi);
     r.roi_filtered_norm = zeros(numframes, r.numRoi);
 
     for i=1:r.numRoi
@@ -39,11 +39,11 @@ function update_filtered_trace(r)
             y_filtered = y_filtered(r.f_times > t); 
             
             % High-pass filter
-            y_trend = filtfilt(fil_trend, y_filtered); 
+            y_trend = filtfilt(fil_trend, y_filtered);
 
             % detrend & normalization
             y_smoothed_detrend = y_smoothed - y_trend; 
-            y_smoothed_norm = ((y_smoothed - y_trend)./y_trend)*100;
+            y_smoothed_detrend_norm = ((y_smoothed - y_trend)./y_trend)*100;
             y_filtered_norm = ((y_filtered - y_trend)./y_trend)*100;
 
             %
@@ -51,28 +51,9 @@ function update_filtered_trace(r)
             r.roi_trend(:,i) = y_trend;
             %
             r.roi_smoothed_detrend(:,i) = y_smoothed_detrend;
-            r.roi_smoothed_norm(:,i) = y_smoothed_norm;
+            r.roi_smoothed_detrend_norm(:,i) = y_smoothed_detrend_norm;
             r.roi_filtered_norm(:,i) = y_filtered_norm;
     end
 
-%     if r.avg_FLAG
-%        Align roi traces to trigger times for average analysis
-%        [roi_aligned_fil, ~]           = align_rows_to_events(r.roi_filtered, r.f_times_fil, r.avg_trigger_times, r.avg_trigger_interval);
-%        [roi_aligned_smoothed_norm, ~] = align_rows_to_events(r.roi_smoothed_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
-%        [roi_aligned_filtered_norm, ~] = align_rows_to_events(r.roi_filtered_norm, r.f_times_norm, r.avg_trigger_times, r.avg_trigger_interval);
-% 
-%         Avg. & Stat. over trials (dim 3)
-%         [r.avg_trace_fil,  ~]      = stat_over_repeats(roi_aligned_fil);
-%         [r.avg_trace_smooth_norm, stat_smoothed_norm] = stat_over_repeats(roi_aligned_smoothed_norm); 
-%         [                      ~, stat_filtered_norm] = stat_over_repeats(roi_aligned_filtered_norm); 
-%         
-%         Pearson correlation over repeats
-%         r.p_corr.smoothed_norm = corr_avg(roi_aligned_smoothed_norm);
-%         r.p_corr.filtered = corr_avg(roi_aligned_fil);
-%         r.p_corr.filtered_norm = corr_avg(roi_aligned_filtered_norm);
-%         
-%         r.stat.smoothed_norm = stat_smoothed_norm;
-%         r.stat.filtered_norm = stat_filtered_norm;
-%     end
 
 end

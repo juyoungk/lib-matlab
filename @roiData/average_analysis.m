@@ -1,6 +1,10 @@
-function average_analysis(r)
+function average_analysis(r, FIRST_EXCLUDE)
 % Relative to avg_trigger_times, it samples and compute various statistics.
 % Also, set times for average traces.
+    
+    if nargin < 2
+        FIRST_EXCLUDE = r.AVG_FIRST_EXCLUDE;
+    end
     
     if r.avg_FLAG == 0
         disp('roiData average anlysis: avg_FLAG is off.');
@@ -18,6 +22,24 @@ function average_analysis(r)
     [roi_aligned_fil,       ~] = r.align_trace_to_avg_triggers('filtered');
     [roi_aligned_smoothed_norm, t_aligned] = r.align_trace_to_avg_triggers('smoothed_norm');
     [roi_aligned_filtered_norm,         ~] = r.align_trace_to_avg_triggers('filtered_norm');
+    
+    % Number of repeats
+    [~,~,n_repeats] = size(roi_aligned_smoothed_norm);
+    
+    
+    % Exclude 1st response? 
+    if FIRST_EXCLUDE 
+        if n_repeats > 1
+        
+            roi_aligned_smoothed = roi_aligned_smoothed(:,:,2:end);
+            roi_aligned_fil      = roi_aligned_fil(:,:,2:end);
+            roi_aligned_smoothed_norm = roi_aligned_smoothed_norm(:,:,2:end);
+            roi_aligned_filtered_norm = roi_aligned_filtered_norm(:,:,2:end);
+            
+        else
+            disp('You can''t exclude the 1st response since there is only one repeat.');
+        end
+    end
     
     % Avg. & Stat. over trials (dim 3)
     [r.avg_trace,             r.stat.smoothed]      = stat_over_repeats(roi_aligned_smoothed);

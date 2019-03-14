@@ -108,11 +108,18 @@ function ids = plot_repeat(r, I, varargin)
 %     c_list_num = numel(c_list);
 %     color = jet(c_list_num); 
     
-    
     % roi rgb image
     labeled = labelmatrix(r.roi_cc);
     RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
-        
+    
+    % All repaets for all ROIs
+    [y_aligned, x] = r.align_trace_to_avg_triggers('smoothed_norm');
+    disp('Trace type: smoothed_norm.');
+    
+    % Exclude 1st response.
+    y_aligned = y_aligned(:,:,2:end);
+    disp('First response was ignored.');
+            
     function redraw()   
         % delete all objects
         delete(hfig.Children);
@@ -128,34 +135,23 @@ function ids = plot_repeat(r, I, varargin)
             % x y position given cell id
             x_ax = m/2. + (J_plot(i)-1) * w_ax;
             y_ax = m/2. + (I_plot(i)-1) * h_ax;
-             
-            % Algin single cell trace. Which trace? smoothed norm
-            if i == 1
-                disp('Trace type: smoothed_norm.'); 
-            end
-            y = r.roi_smoothed_norm(:, k);
-           
-            %
-            [y_aligned, ~] = align_rows_to_events(y, r.f_times_norm, r.avg_trigger_times, r.n_cycle*r.avg_trigger_interval);
-            y_aligned = reshape(y_aligned, size(y_aligned, 1), []); % times (row) x repeats (cols) 
-            %
-            [y_aligned, x] = r.traceAvgPlot(y_aligned);
-  
+            
+            % Individual traces
+            y = y_aligned(:,k,:);
+            y = squeeze(y);            
+            % norm by col?
+            y = normc(y); % should norm the avg trace too. 
+
             % 2. Draw Mean (& std) trace
             axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.8*w_ax  0.9*h_ax_mean], 'Visible', 'off');
                 
             if contains(PlotType, 'overlaid')
                 
-                % Individual traces
-                
-                % norm by col?
-                %y_aligned = normc(y_aligned);
-                
                 % Draw mean and freeze axis?, then update..
                 
                 % Plot individual traces
-                plot(x, y_aligned, 'Color', 0.6*[1 1 1], 'LineWidth', 0.7); hold on 
-                % plot(x, y_aligned, 'LineWidth', 0.7); hold on
+                plot(x, y, 'Color', 0.6*[1 1 1], 'LineWidth', 0.7); hold on 
+                % plot(x, y, 'LineWidth', 0.7); hold on
                 xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                 
                 % Plot avg trace
@@ -163,7 +159,7 @@ function ids = plot_repeat(r, I, varargin)
                 [~, s] = r.plot_avg(k, 'traceType', 'normalized',...
                                         'PlotType', PlotType,...
                                         'LineWidth', 2., 'Color', color_line,... 
-                                        'Label', true, 'Lines', true);
+                                        'Label', true, 'Lines', true, 'NormByCol', true);
                 hold on % axis freeze
                 
                 %title('Mean response');
@@ -179,12 +175,12 @@ function ids = plot_repeat(r, I, varargin)
                 %axis off
                 title('Mean response');
                 
-                n_repeats = size(y_aligned, 2);
+                n_repeats = size(y, 2);
                 h_ax_one_trace = 0.90*(h_ax_repeat)/n_repeats;
                 % individual traces
                 for ii = 1:n_repeats
                     ax = axes('Position', [x_ax,  y_ax + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
-                    y_single = y_aligned(:,ii);
+                    y_single = y(:,ii);
                     
                     plot(x, y_single, 'LineWidth', 1.2); hold on
                     xlim([ max(r.t_range(1),r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);

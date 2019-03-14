@@ -16,7 +16,7 @@ function [aligned, t_aligned] = align_trace_to_avg_triggers(r, Trace, times)
 
     if nargin < 2 
         Trace = r.roi_smoothed_norm;
-        times = r.f_times_norm;
+        times = r.f_times;
     end
     
     if ischar(Trace)
@@ -29,6 +29,9 @@ function [aligned, t_aligned] = align_trace_to_avg_triggers(r, Trace, times)
                 times = r.f_times;
             case 'smoothed_norm'
                 Trace = r.roi_smoothed_norm;
+                times = r.f_times;
+            case 'smoothed_detrend_norm'
+                Trace = r.roi_smoothed_detrend_norm;
                 times = r.f_times_norm;
             case 'filtered'
                 Trace = r.roi_filtered;
@@ -47,7 +50,7 @@ function [aligned, t_aligned] = align_trace_to_avg_triggers(r, Trace, times)
     [num_data, ~] = size(Trace);
     
     if num_data ~= length(times)
-        error('Mismatch bwetween trace and times.');
+        error('Mismatch bwetween trace (%d) and times (%d).', num_data, length(times));
     end
     
     duration = r.n_cycle * r.avg_trigger_interval;

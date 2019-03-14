@@ -3,7 +3,9 @@ function ax = plot_trace_norm(r, id_roi)
 
     if nargin>1 && numel(id_roi) == 1
         % plot single roi trace (smoothed)
-        plot(r.f_times_norm, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
+        plot(r.f_times, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
+        % or use detrend_norm  
+        %plot(r.f_times_norm, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
         title('Normalized trace');
             ylabel('dF/F [%]'); axis auto;
             ax = gca; 
@@ -20,7 +22,7 @@ function ax = plot_trace_norm(r, id_roi)
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line
                 if strfind(r.ex_name, 'flash')
-                    interval = r.s_times(end);
+                    interval = ev(2)-ev(1);
                     plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
                 end
             end

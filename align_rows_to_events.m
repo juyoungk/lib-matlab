@@ -33,18 +33,17 @@ end
 n_events = length(events);
 
 % Count only available events. 
-n_repeats = floor((x(end) - events(1))/duration);
+%n_repeats = floor((x(end) - events(1))/duration);
+n_repeats = sum((events + duration) < x(end));
 
 if n_repeats < n_events
-    str = fprintf('Event duraion = %.2f. Last data timepoint = %.1f, Last event timestamp = %.1f. Only %d repeats was in dataset (y).', duration, x(end), events(end), n_repeats);
-    disp(str);
+    fprintf('Event duraion = %.2f. Last data timepoint = %.1f, Last event timestamp = %.1f. Only %d repeats was in dataset (y).\n', duration, x(end), events(end), n_repeats);
 end
 
 % Create zero array for output.
 y_aligned = zeros(n_sampling, n_cells, n_repeats);
 
 for i=1:n_repeats
-    
     % index for the onset of the event
     a = events(i);
     idx = find(x>=a);

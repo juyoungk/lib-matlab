@@ -26,6 +26,7 @@ end
 
 % Which trace? 
 %y = r.roi_smoothed_norm(:, ids);
+%t = r.f_times;
 
 % y = r.roi_smoothed_detrend(:, ids);
 % disp('Smoothed_detrend (trend substracted, but not normalized) was used for data.');
@@ -39,8 +40,9 @@ end
 
 y = r.roi_filtered_norm(:, ids);
 disp('Filtered normalized trace was used for data.');
+disp('For smoothed_norm? use f_times instead of f_times_norm');
 
-t = r.f_times_norm;
+t = r.f_times_norm; % only for detrend normalized or filtered trace. 
 t = t - r.stim_trigger_times(1); % Align t with respect to the 1st trigger time [-xx, .. , 0, xx, .. ]
 
 % First, upsample stim movie

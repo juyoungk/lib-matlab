@@ -78,25 +78,25 @@ classdef gdata < handle
                 filename = strrep(filename, '00', '');
             end
             
-            function vol = imdrift(g, ch, snapframes)
+            function vol = imdrift(g, ch, nframes)
+                % imshowpair and save.
                 % See if the cells were drift over imaging session
-                % 1000 frames more case
                 % Output vol: 2 frames. Before and After. Last available
-                % channel.
+                % Channel should be specified.
                 if nargin < 3
-                    snapframes = 1000;
+                    nframes = 1000;
                 end
                 
                 if nargin > 1
-                    n = min(snapframes, g.nframes);
+                    n = min(nframes, g.nframes);
                     fprintf('Total frame numbers; %d. imdrift(): %d frames were compared. (Green-Magenta false color)\n', g.nframes, n);
  
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
                     %
-                    make_im_figure;
+                    g.figure;
                     imshowpair(myshow(AI_mean_early, 0.2), myshow(AI_mean_late, 0.2)); % contrast adjust by myshow()
-                    title('Is it drifted? (Green-Magenta)', 'FontSize', 15, 'Color', 'w');
+                    title('Is it drifted? (Green-Magenta)', 'FontSize', 18, 'Color', 'w');
                     print([g.getFigFileName(ch),'_drift.png'], '-dpng', '-r300'); %high res
                     vol = cat(3, AI_mean_early, AI_mean_late);
                 else
@@ -136,11 +136,16 @@ classdef gdata < handle
             
             function hf = figure(g)
                 % create figure with appropriate size.
+                %pos = get(0, 'DefaultFigurePosition');
                 if g.size(1) == g.size(2)
                     hf = figure('Position',[2 50 850 893]);
                 else
                     hf = figure('Position',[2 50 850 1200]);
                 end
+                hf.Color = 'none';
+                hf.PaperPositionMode = 'auto';
+                hf.InvertHardcopy = 'off';
+                axes('Position', [0  0  1  0.9524], 'Visible', 'off'); % space for title
             end
             
             function setting_pd_event_params(g)
@@ -310,7 +315,7 @@ classdef gdata < handle
                     % Check if acq was sync with triggers.
                     disp(['SI.extTrigEnable = ', h.extTrigEnable]);
                     if contains(h.extTrigEnable, 'false')
-                        disp('!!! Be aware that Scanimage was not triggered by stimulus trigger. !!!');
+                        disp('!!! Be aware that Scanimage was not triggered by stimulus trigger (e.g. WaveSurfer). !!!');
                     end
                     
                     % channel initialization
@@ -353,7 +358,7 @@ classdef gdata < handle
                         before_after = g.imdrift;
                         % combined image for ROI segmentation.
                         images = cat(3, before_after, mean(before_after, 3));
-                        imvol(images, 'hfig', g.figure, 'title', 'first, last, and mean of two over 2000 frames', 'scanZoom', g.header.scanZoomFactor);
+                        imvol(images, 'hfig', g.figure, 'title', 'first, last, and mean of two over 1000 frames', 'scanZoom', g.header.scanZoomFactor);
                     end
 
                     % load cc struct if exist
