@@ -35,6 +35,7 @@ function average_analysis(r, FIRST_EXCLUDE)
             roi_aligned_fil      = roi_aligned_fil(:,:,2:end);
             roi_aligned_smoothed_norm = roi_aligned_smoothed_norm(:,:,2:end);
             roi_aligned_filtered_norm = roi_aligned_filtered_norm(:,:,2:end);
+            disp('The 1st reponse was excluded for average anlysis. Change AVG_FIRST_EXCLUDE to flase to include.'); 
             
         else
             disp('You can''t exclude the 1st response since there is only one repeat.');

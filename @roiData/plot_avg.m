@@ -161,7 +161,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                             continue;
                         end
                         % Lines for avg trigger times
-                        plot([x x], [ax.YLim(1) ax.YLim(end)], 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
+                        plot([x x], ax.YLim, 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
                     end
 
                     % within one repeat, stim trigger events

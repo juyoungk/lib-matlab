@@ -10,7 +10,8 @@ classdef roiData < matlab.mixin.Copyable
 %    
     properties
         ex_name
-        image       % Snapshot of the vol (mean)
+        mean        % 2 mean image's'. The first and last 1000 (or less) frames.
+        image       % mean of mean images.
         header      % Imaging condition
         ex_stim     % Stim parameters struct
         %
@@ -31,6 +32,7 @@ classdef roiData < matlab.mixin.Copyable
         
         % times = r.f_times
         f_times         % frame times
+         bg_trace       % trace of background (detect non-fluorecent pixels by thresholding)
         roi_trace       % raw trace (bg substracted. No other post-processing)
         roi_smoothed    % smoothed raw trace
         roi_smoothed_norm    % baseline substracted and normalized by it again. dF/F.
@@ -65,7 +67,8 @@ classdef roiData < matlab.mixin.Copyable
         
         % average analysis parameters
         avg_FLAG = false
-        avg_every
+        AVG_FIRST_EXCLUDE = true
+        avg_every         % Spacing of stim triggers for average analysis (avg_tigger_times)
         avg_trigger_times % Times for aligning between trials for average analysis. 
                           % A subset of stim_trigger_times. 
                           % (usually, same as sess_trigger_times)
@@ -86,7 +89,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_pca_score   % roi# x dim
         avg_times   % times for one stim cycle
         a_times     % times for avg plot. Full cycles (e.g. 2 cycles). Phase shifted.
-        AVG_FIRST_EXCLUDE = true
+        
         t_range = [-1.5, 100] % Time filter for avg plot range (last filter). can be arbitrarily time points. [secs]
         
         % whitenoise responses
@@ -475,8 +478,9 @@ classdef roiData < matlab.mixin.Copyable
 %             r.average_analysis;
 %         end
 %                         
-        % constructor
+        %% Constructor
         function r = roiData(vol, cc, ex_str, ifi, stim_trigger_times, stim_movie, stim_fliptimes)
+            % vol: 3-D image stack data
             % ifi: inter-frame interval or log-frames-period
             if nargin > 0 % in order to create an array with no input arguments.
                 disp('roiData..');
@@ -487,10 +491,6 @@ classdef roiData < matlab.mixin.Copyable
                 r.roi_smoothed = zeros(r.numFrames, r.numRoi);
                 r.rf = cell(1, r.numRoi);
                 
-                % mean image
-                [row, col, n_frames] = size(vol);
-                n_frames_snap = min(n_frames, round(512*512*1000/row/col));
-                r.image = mean(vol(:,:,1:n_frames_snap), 3);
                 %
                 if nargin < 5 
                     stim_trigger_times = 0;
@@ -512,19 +512,52 @@ classdef roiData < matlab.mixin.Copyable
                 % stim_end time will be finely adjusted by assigning avg_trigger_times.
                 % stim_end will be used for computing statistics.
                 
-                % Bg PMT level in images (vol)
-                a = sort(vec(vol(:,:,1))); % inferred from 1st frame
+                % Background PMT level in image stack (vol)
+                % PMT-amp output level for with no activity.    
+                % PMT-amp output level for dark count activity.
+                % --> Take 0.5% lowest pixels of mean image.
+                % --> or prepare multiple bg traces as varing percentages.
+                a = sort(vec(vol(:,:,1))); % 1st frame activity.
                 N = ceil(size(vol, 1)/10);
-                bg_PMT = mean(a(1:(N*N)));
-                    
-                % Extract roi trace from vol.
+                bg_PMT = mean(a(1:(N*N))); % PMT level for with no activity.    
+                fprintf('Background PMT level was estimated to be %.1f.\n', bg_PMT);
+                
+                % Mean images
+                [~, ~, nframes] = size(vol);
+                n = min(1000, nframes); % 20 Hz save --> 50s
+                %nframes_snap = min(nframes, round(512*512*1000/row/col));
+                mean_laser_on = mean(vol(:,:,1:n), 3);
+                mean_stim_end = mean(vol(:,:,(end-n+1:end)), 3);
+                r.mean  = cat(3, mean_laser_on, mean_stim_end);
+                r.image = mean(r.mean, 3);
+                   
+                % reshaped vol
                 vol_reshaped = reshape(vol, [], r.numFrames);
+                
+                % BG trace (for cross-talk and timing inspection)
+                % Non-fluorecence bg pixels = pixels of the low-end c%.
+                % Exclude pixels if it is inside the 'cc'.
+                cc_pixels = cc_to_bwmask(cc); % roi pixels (logical)
+                contrast = [0.5 1.0 2.0 4.0];
+                r.bg_trace = zeros(nframes, length(contrast));
+                for i = 1:length(contrast) % contrast values (%)
+                    c = contrast(i);
+                    bw1 = lowerpixels(mean_laser_on, c);
+                    bw2 = lowerpixels(mean_stim_end, c);
+                    bw = bw1 & bw2 & ~cc_pixels;
+                    r.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
+                end
+                figure; plot(r.f_times, r.bg_trace); 
+                r.plot_stim_lines;
+                %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
+                
+                % Extract roi trace from vol.
                 for i=1:r.numRoi
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
-                    y = y - bg_PMT;       % bg substraction
+                    y = y - bg_PMT;       % No-activity PMT level substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
                 end
-                disp('ROI traces were extracted..');
+                disp('ROI traces were extracted. PMT bg level was substracted..');
                 
                 % Import stimulus trigger information
                 
@@ -689,7 +722,9 @@ classdef roiData < matlab.mixin.Copyable
                     [corr, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
                     r.roi_good = good_cells;
                     % Print top 10 cells
-                    fprintf('ROI%3d: corr between trials %5.2f\n', good_cells(1:numCell), corr(1:numCell));
+                    for i = 1:numCell
+                        fprintf('ROI%4d: corr between trials %5.2f\n', good_cells(i), corr(i));
+                    end
                     
                     % plot                    
                     r.plot_repeat;
@@ -714,7 +749,7 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function baseline(r)
-            % Estimate baseline of the ROI (fluorecence) signal.
+            % Estimate baseline of the ROI (fluorecence) signal just before stimulus.
             % 2019 0313 wrote.
             duration = 5; %sec
             
@@ -878,4 +913,49 @@ end % classdef
 function aa = vec(a)
     aa = a(:);
 end
+
+function [bw_selected, bw_array] = cc_to_bwmask(cc, id_selected)
+% convert cc to bwmask array and totla bw for selected IDs.
+
+    if nargin < 2
+        id_selected = 1:cc.NumObjects;
+    end
+
+    bw_array = false([cc.ImageSize, cc.NumObjects]);
+
+    for i = 1:cc.NumObjects
+        grain = false(cc.ImageSize);
+        grain(cc.PixelIdxList{i}) = true;
+        bw_array(:,:,i) = grain;
+    end
+    % Total bw for selected IDs
+    bw_selected = max( bw_array(:,:,id_selected), [], 3);
+end
+
+function [J, MinMax] = myadjust(I, c)
+% Contrast-enhanced mapping to [0 1] of matrix I
+% Input: contrast value (%)
+    I = mat2gray(I); % Normalize to [0 1]. 
+    Tol = [c*0.01 1-c*0.01];
+    MinMax = stretchlim(I,Tol);
+    J = imadjust(I, MinMax);
+end
+
+function J = myshow(I, c)
+%imshow with contrast value (%)
+    if nargin < 2
+        c = 0.2;
+    end
+    J = myadjust(I, c);
+    imshow(J);
+end
+
+function bw = lowerpixels(I, c) % 2D matrix, percentage. Output is logical array.
+    if nargin < 2
+        c = 0.5;
+    end
+    [J, ~] = myadjust(I, c); % J is the clipped-image by the given contrast (%).
+    bw = (J ==0);            % Pixel value is 0 if value was in the lowest value group clipped by the contrast. 
+end
+
 

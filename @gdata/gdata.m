@@ -355,7 +355,7 @@ classdef gdata < handle
                     
                     % drift check if frame numbers are more than 1000
                     if ch_frames > 999
-                        before_after = g.imdrift;
+                        before_after = g.imdrift; % only for last channel?
                         % combined image for ROI segmentation.
                         images = cat(3, before_after, mean(before_after, 3));
                         imvol(images, 'hfig', g.figure, 'title', 'first, last, and mean of two over 1000 frames', 'scanZoom', g.header.scanZoomFactor);

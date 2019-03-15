@@ -150,9 +150,9 @@ function ids = plot_repeat(r, I, varargin)
                 % Draw mean and freeze axis?, then update..
                 
                 % Plot individual traces
-                plot(x, y, 'Color', 0.6*[1 1 1], 'LineWidth', 0.7); hold on 
-                % plot(x, y, 'LineWidth', 0.7); hold on
-                xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+                plot(x, y, 'Color', 0.6*[1 1 1], 'LineWidth', 0.8); hold on
+                xlim( [r.a_times(1), r.a_times(end)] );
+                %xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
                 
                 % Plot avg trace
                 color_line = 'k'; %color_line = [0 0.45 0.74];
@@ -160,10 +160,6 @@ function ids = plot_repeat(r, I, varargin)
                                         'PlotType', PlotType,...
                                         'LineWidth', 2., 'Color', color_line,... 
                                         'Label', true, 'Lines', true, 'NormByCol', true);
-                hold on % axis freeze
-                
-                %title('Mean response');
-                
                 %ylim(s.YLim);
                 hold off;
                 axis off
