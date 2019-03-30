@@ -93,7 +93,6 @@ function ids = plot_repeat(r, I, varargin)
         
     %
     n_plots_per_fig = n_col * n_row;
-    [I_plot, J_plot] = ind2sub([n_row, n_col], 1:n_plots_per_fig);
     
     %
     n_figs = ceil(n_ROI/n_plots_per_fig);
@@ -124,7 +123,8 @@ function ids = plot_repeat(r, I, varargin)
         % delete all objects
         delete(hfig.Children);
                
-        for i = 1:n_plots_per_fig % loop over axes position(~ cell id) in given single figure
+        for i = 1:n_plots_per_fig % loop over cell
+            % i : index for axes position in the figure. --> i_cell --> ROI id (k), axis position (p, q) 
             
             i_cell = (i_fig - 1) * n_plots_per_fig + i;
             if i_cell > n_ROI
@@ -132,37 +132,47 @@ function ids = plot_repeat(r, I, varargin)
             end
             k = I(i_cell); % real ROI index
             
-            % x y position given cell id
-            x_ax = m/2. + (J_plot(i)-1) * w_ax;
-            y_ax = m/2. + (I_plot(i)-1) * h_ax;
-            
+            % i (roi id) --> (p, q) position
+            p = rem(i-1, n_col); % i = 1 should be p = 0.
+            q = ceil(i/n_col);
+            %
+            x_ax = m/2. + p * w_ax;
+            y_ax = 1 - m/2. - q * h_ax;
+
             % Individual traces
             y = y_aligned(:,k,:);
             y = squeeze(y);            
-            % norm by col?
+            % norm by col: mean substraction and normalization
+            %(only for plotting)
+            y = y - mean(y, 1);
             y = normc(y); % should norm the avg trace too. 
+            
 
             % 2. Draw Mean (& std) trace
-            axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.8*w_ax  0.9*h_ax_mean], 'Visible', 'off');
+            ax = axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.9*w_ax  0.9*h_ax_mean], 'Visible', 'off');
                 
             if contains(PlotType, 'overlaid')
                 
                 % Draw mean and freeze axis?, then update..
                 
                 % Plot individual traces
-                plot(x, y, 'Color', 0.6*[1 1 1], 'LineWidth', 0.8); hold on
+                plot(x, y, 'Color', 0.6*[1 1 1], 'LineWidth', 0.8); 
+                axis off
+                hold on
                 xlim( [r.a_times(1), r.a_times(end)] );
                 %xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
+                if i == 1
+                    yrange = ax.YLim; % apply same range for all ROIs since all has been centered & normalized. 
+                end
                 
                 % Plot avg trace
                 color_line = 'k'; %color_line = [0 0.45 0.74];
                 [~, s] = r.plot_avg(k, 'traceType', 'normalized',...
                                         'PlotType', PlotType,...
                                         'LineWidth', 2., 'Color', color_line,... 
-                                        'Label', true, 'Lines', true, 'NormByCol', true);
-                %ylim(s.YLim);
+                                        'Label', false, 'Lines', true, 'NormByCol', true);
+                ylim(yrange);
                 hold off;
-                axis off
                 ylabel ''; % or 'dF/F'
 
             else

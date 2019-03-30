@@ -3,7 +3,7 @@ function average_analysis(r, FIRST_EXCLUDE)
 % Also, set times for average traces.
     
     if nargin < 2
-        FIRST_EXCLUDE = r.AVG_FIRST_EXCLUDE;
+        FIRST_EXCLUDE = r.avg_FIRST_EXCLUDE;
     end
     
     if r.avg_FLAG == 0

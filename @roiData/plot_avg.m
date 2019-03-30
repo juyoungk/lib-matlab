@@ -69,8 +69,9 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 y = r.avg_trace(:, id_roi);
             end
             
-            if NormByCol
-                y = normc(y);
+            if NormByCol  
+                y = y - mean(y,1); % mean substraction.
+                y = normc(y);      % scaling.
             end
             
             if contains(PlotType,'mean')
@@ -109,8 +110,6 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     y_mean = mean(y, 2);
                     argPlot = {'Color', 0.6*[1 1 1]};
                 end
-            
-                ax = gca;  Fontsize = 10;
 
                 % Plot
                 if isempty(h_axes)
@@ -131,6 +130,9 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     ylabel('a.u.');
                 end
                 
+                ax = gca;  Fontsize = 10;
+                
+                
                 if Label == true % many kinds of labels.    
                     % ROI id
                     if numel(id_roi) == 1 %&& strcmp(PlotType,'tiled')
@@ -149,19 +151,22 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                                 'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
                 end
                 
+                
                 if Lines == true
-                    %% Additional lines first
+                    
+                    y_line = ax.YLim;
+                    
+                    % Additional lines first
                     % event does not need to shift
                     % avg trigger events
-                    %tt = r.timesForAvgPlot( 0 );
-                    tt = ((1:(r.n_cycle))-1)*duration;
+                    tt = ((1:ceil(r.n_cycle))-1)*duration;
                     for n = 1:length(tt)
                         x = tt(n);
                         if x < r.t_range(1) && x > r.t_range(2)
                             continue;
                         end
                         % Lines for avg trigger times
-                        plot([x x], ax.YLim, 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
+                        plot([x x], y_line, 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
                     end
 
                     % within one repeat, stim trigger events
@@ -171,7 +176,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                             continue;
                         end
                         if k ~= 1
-                            plot([x x], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
+                            plot([x x], y_line, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
                         end
 
                         kk = mod(k, r.avg_every); % kk-th stimulus within one repeat.
@@ -191,7 +196,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                                 next_stim = r.avg_stim_times(kk+1);
                             end
                             x = x + 0.5*(next_stim-r.avg_stim_times(kk));
-                            plot([x x], ax.YLim, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                            plot([x x], y_line, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
                         end
 
                     end
@@ -205,7 +210,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
         %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
                 xtickformat('%.0f');
-                s.YLim = ax.YLim; % save current YLim
+                s.YLim = y_line; % save current YLim
 
                 hold off;
             end

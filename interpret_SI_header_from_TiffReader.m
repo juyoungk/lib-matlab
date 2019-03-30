@@ -28,6 +28,11 @@ h = get_float_number_to_new_field(h, t, 'logAverageFactor',[]);
 h.logFramePeriod = h.scanFramePeriod * h.logAverageFactor;
 h.logFrameRate   = h.scanFrameRate / h.logAverageFactor;
 
+% check scanFramePeriod precision.
+str_line = get_line(t, 'scanFramePeriod'); disp(str_line);
+fprintf('scanFramePeriod : %.7f (imported)\n', h.scanFramePeriod);
+fprintf(' logFramePeriod : %.7f (imported)\n',  h.logFramePeriod);
+
 % stack parameters
 h = get_float_number_to_new_field(h, t, 'numSlices', 1); % not actual slice numbers in stored file
 h = get_float_number_to_new_field(h, t, 'framesPerSlice', []);
@@ -53,6 +58,11 @@ if nargin > 1
     %
     h.n_frames = n_frames;
     h.n_frames_ch = n_frames/h.n_channelSave;
+    
+    if rem(n_frames, h.n_channelSave)
+        disp('Total frame number is not divisible by channel number saved.');
+    end
+    
     if isempty(h.logFramesPerSlice)
         h.logNumSlices = [];
         disp('logFramesPerSlice was not defined.');
@@ -137,7 +147,7 @@ loc = strfind(text, str);
 str_lines = splitlines(text(loc:end));
 str_line = str_lines{1};
 
-a = sscanf(str_line, [str, '%f']);
+a = sscanf(str_line, [str, '%f']); % precision is enough?
 
 if isnumeric(a)
     % do nothing

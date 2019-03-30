@@ -14,12 +14,15 @@ classdef gdata < handle
             % Imaging data [Scanimage TIF]
             n_channels = 4; % max channel #
             AI_chSave
-            AI
-            AI_mean  % mean up to 1000 frames
+            AI       % raw data
+            AI_mean  % mean over snaps. 
+            AI_snaps % snaps over first and last xxx frames.
+            
             nframes  % per channel (e.g. PMT)
-            size
+            size     % size of frame [pixels, lines]
             numSlices % stack is more than 1 numSlices.
             ifi
+            f_times
             header
             metadata % raw header file
             
@@ -28,14 +31,16 @@ classdef gdata < handle
             h5_srate
             h5_AI
             h5_times
+            h5_pd_raw % raw pd trace from WaveSurfer h5
+            pd_AI_name = 'photodiode';
             
             % pd events info
-            pd_AI_name = 'photodiode';
+            pd_trace
+            pd_times
             pd_threshold1 = 0.85 % Major events
             pd_threshold2 = 0.35 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
-            pd_trace
             
             % stimulus events
             pd_events1  % trigger times
@@ -51,6 +56,14 @@ classdef gdata < handle
             rr
             cc          % ROI connectivity structure
             roi_channel
+            
+            % bg noise analysis
+            bg_trace
+            bg_event    % times
+            bg_event_id % frame ids
+            
+            % average analysis
+            avg_triggers % can be pd_events or bg_event
     end   
 
     methods
@@ -78,13 +91,15 @@ classdef gdata < handle
                 filename = strrep(filename, '00', '');
             end
             
-            function vol = imdrift(g, ch, nframes)
+            function snaps = imdrift(g, ch, nframes)
                 % imshowpair and save.
                 % See if the cells were drift over imaging session
-                % Output vol: 2 frames. Before and After. Last available
+                % Output vol: 3 frames. Before, After and of their mean.
                 % Channel should be specified.
                 if nargin < 3
-                    nframes = 1000;
+                    row = g.size(1);
+                    col = g.size(2);
+                    nframes = min(g.nframes, round(512*512*1000/row/col));
                 end
                 
                 if nargin > 1
@@ -98,11 +113,12 @@ classdef gdata < handle
                     imshowpair(myshow(AI_mean_early, 0.2), myshow(AI_mean_late, 0.2)); % contrast adjust by myshow()
                     title('Is it drifted? (Green-Magenta)', 'FontSize', 18, 'Color', 'w');
                     print([g.getFigFileName(ch),'_drift.png'], '-dpng', '-r300'); %high res
-                    vol = cat(3, AI_mean_early, AI_mean_late);
+                    snaps = cat(3, AI_mean_early, AI_mean_late);
+                    snaps = cat(3, AI_mean_early, AI_mean_late, mean(snaps, 3));
                 else
                     for PMT_ch=g.header.channelSave
                         if PMT_ch==4; continue; end;
-                        vol = imdrift(g, PMT_ch);
+                        snaps = imdrift(g, PMT_ch);
                     end
                 end
             end
@@ -165,6 +181,19 @@ classdef gdata < handle
                 end
             end
             
+            function ch = get.roi_channel(g)
+                if ~isempty(g.roi_channel)
+                    ch = g.roi_channel;
+                elseif g.header.n_channelSave == 1
+                    ch = g.header.channelSave(1);
+                    disp(['ROI analysis ch: ',num2str(ch),' is selected.']);
+                else
+                    commandwindow
+                    ch = input([g.ex_name, ': PMT channel # for main recording (Available: ', num2str(g.header.channelSave),') ? ']);
+                end
+                g.roi_channel = ch;
+            end
+                
             function set.min_interval_secs(g, value)
                 % print value
                 disp(['Min time interval between stim triggers [secs]: ', num2str(value)]);
@@ -186,23 +215,24 @@ classdef gdata < handle
             function set.cc(obj, cc)
             % will create roiData structure for only one channel. 
                 
-                % ROI channel should be assigned.
-                if ~isempty(obj.roi_channel)
-                    ch = obj.roi_channel;
-                elseif obj.header.n_channelSave == 1
-                    ch = obj.header.channelSave(1);
-                    disp(['ROI analysis ch: ',num2str(ch),' is selected.']);
-                else
-                    commandwindow
-                    ch = input([obj.ex_name, ': PMT channel # for maing recording (Available: ', num2str(obj.header.channelSave),') ? ']);
-                end
-                obj.roi_channel = ch;
+%                 % ROI channel should be assigned.
+%                 if ~isempty(obj.roi_channel)
+%                     ch = obj.roi_channel;
+%                 elseif obj.header.n_channelSave == 1
+%                     ch = obj.header.channelSave(1);
+%                     disp(['ROI analysis ch: ',num2str(ch),' is selected.']);
+%                 else
+%                     commandwindow
+%                     ch = input([obj.ex_name, ': PMT channel # for maing recording (Available: ', num2str(obj.header.channelSave),') ? ']);
+%                 end
+%                 obj.roi_channel = ch;
+                ch = obj.roi_channel;
+                disp(['Create roiData object for Ch#', num2str(ch), '...']); % it calls
                 obj.cc = cc;
-                
+
                 % create roiData object (as many as numStimulus? No. roiData will handle it.)
                 % 1. extract roi traces, 2. split into numStimulus
                 if ~isempty(cc)
-                    disp(['Create roiData object for Ch#',num2str(obj.roi_channel),'...']);
                     r = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, {obj.pd_events1, obj.pd_events2}); %{ avg triggers, stim triggers }
                     r.header = obj.header;
                     obj.rr = r;
@@ -233,10 +263,10 @@ classdef gdata < handle
             end
             
             function set.roi_channel(obj, ch)
-                if ch > 0 && ch <=obj.n_channels
+                if any(obj.AI_chSave == ch)
                     obj.roi_channel = ch;
                 else
-                    error('Not available channel number for roi analysis');
+                    error('Not available channel number for roi analysis.');
                 end
             end
 
@@ -247,6 +277,7 @@ classdef gdata < handle
                 % cell array for AI channels.
                 g.AI            = cell(g.n_channels, 1); % n_channels is defined at gdata properties.
                 g.AI_mean       = cell(g.n_channels, 1);
+                g.AI_snaps       = cell(g.n_channels, 1);
                 %g.AI_mean_slice = cell(g.n_channels, 1);
 
                 if nargin > 0     
@@ -294,7 +325,7 @@ classdef gdata < handle
                     g.tif_filename = name_tif{end};
                     g.ex_name = get_ex_name(g.tif_filename);
                     
-                    % Open h5 file
+                    % Open h5 file. Get pd events from h5.
                     g.h5FileOpenForStimTrigger(h5_filename);
                     
                     % import Tif file
@@ -311,6 +342,7 @@ classdef gdata < handle
                     g.ifi = g.header.logFramePeriod;
                     g.size = [g.header.pixelsPerLine, g.header.linesPerFrame];
                     g.numSlices = g.header.numSlices;
+                    g.nframes = h.n_frames_ch;
                     
                     % Check if acq was sync with triggers.
                     disp(['SI.extTrigEnable = ', h.extTrigEnable]);
@@ -333,16 +365,17 @@ classdef gdata < handle
                     % loop over channels
                     for j=1:n
                         % de-interleave
-                        ch = vol(:,:,id_ch==j); % de-interleave frames
-                        g.AI{h.channelSave(j)} = ch;
-                        [row, col, ch_frames] = size(ch);
-                        g.nframes = ch_frames;
+                        vol_ch = vol(:,:,id_ch==j); % vol for single ch: de-interleave frames
+                        ch = h.channelSave(j);      % ch number
+                        g.AI{ch} = vol_ch;
+%                         [~, ~, ch_frames] = size(vol_ch);
+%                         g.nframes = ch_frames;
                         
-                        % mean image: first 1000 frames (for 512x512 pixels)
-                        n_frames_snap = min(ch_frames, round(512*512*1000/row/col));
-                        ch_mean = mean(ch(:,:,1:n_frames_snap), 3);
-                        g.AI_mean{h.channelSave(j)} = ch_mean;
-
+                        % mean image: first and last 1000 frames (for 512x512 pixels)
+                        snaps = g.imdrift(ch);
+                        g.AI_snaps{ch} = snaps;
+                        g.AI_mean{ch} = mean(snaps, 3);
+                        
                         % title name
                         t_filename = strrep(g.tif_filename, '_', '  ');
                         s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
@@ -350,17 +383,32 @@ classdef gdata < handle
                         % plot mean images
                         hf = g.figure;
                         %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                        imvol(ch_mean, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
-                    end
-                    
-                    % drift check if frame numbers are more than 1000
-                    if ch_frames > 999
-                        before_after = g.imdrift; % only for last channel?
-                        % combined image for ROI segmentation.
-                        images = cat(3, before_after, mean(before_after, 3));
-                        imvol(images, 'hfig', g.figure, 'title', 'first, last, and mean of two over 1000 frames', 'scanZoom', g.header.scanZoomFactor);
+                        imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
                     end
 
+                    % frame times (~ ch frame times)
+                    g.f_times = ((1:g.nframes)-0.5)*g.ifi;
+                    
+                    % If Ch2 is not empty, Regard it as pd trace.
+                    if isempty(g.AI{2})
+                        col1_trace = [];
+                    else
+                        col1_trace = g.AI{2}(1, :, :);
+                        col1_trace = mean(col1_trace, 2);
+                        col1_trace = col1_trace(:);
+                        % event detect
+                        g.pd_events_detect(col1_trace, g.f_tiems);
+                        disp('AI CH2 was used as stimulus trigger signal, and trigger events were detected.');
+                    end
+                    
+                    
+                    % ROI channel
+                    ch = g.roi_channel;
+                    
+                    % background noise analysis for ROI channel. 
+                    timeafter = 0;
+                    g.plot_bg_pixels(ch, timeafter); % detect bg_event only after the timeafter.
+                    
                     % load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
                     if ~isempty(cc_filenames)
@@ -425,3 +473,4 @@ function str_ex_name = get_ex_name(tif_filename)
     %str_by_space = strsplit(str_ex_name, ' ');
     %str_ex_name = sprintf('%s ', str_by_space{1:end-1});
 end
+

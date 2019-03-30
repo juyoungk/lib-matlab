@@ -1,13 +1,17 @@
-function hfig = makeFigBlack(hfig)
+function hfig = makeFigBlack(hfig, color)
 %
 % Copy Figure to clipboard for black background
 % See also the function 'ccc' for just copying the figure to the clipboard
 % 
-%
+% 2019 0315 color can be given by input argument.
+
+if nargin < 2
+    color = [0.9 0.9 0.1];
+    color = [1 1 1];
+    %color = [0.1 0.1 0.1];
+end
+
 Fontsize = 22;
-color = [0.9 0.9 0.1];
-color = [1 1 1];
-%color = [0.1 0.1 0.1];
 axis_Linewidth = 2.4;
 %
 

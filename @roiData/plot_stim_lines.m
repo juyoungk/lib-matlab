@@ -1,10 +1,14 @@
-function plot_stim_lines(r)
+function plot_stim_lines(r, shift)
+
+    if nargin < 2
+        shift = 0;
+    end
     
     hold on
     
     ax = gca;
     
-    times = r.stim_trigger_times;
+    times = r.stim_trigger_times + shift;
     n = length(times);
     
     for i = 1:n

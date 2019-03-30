@@ -1,5 +1,5 @@
 function plot_hist(r, id, num_bin)
-
+% Histogram of ROI trace. Output statistics.
 % default trace type: Smoothed trace.
 
 if nargin <3 

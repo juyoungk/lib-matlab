@@ -10,8 +10,8 @@ classdef roiData < matlab.mixin.Copyable
 %    
     properties
         ex_name
-        mean        % 2 mean image's'. The first and last 1000 (or less) frames.
-        image       % mean of mean images.
+        snaps        % 2 mean image's'. The first and last 1000 (or less) frames.
+        image       % mean of snap images.
         header      % Imaging condition
         ex_stim     % Stim parameters struct
         %
@@ -67,7 +67,7 @@ classdef roiData < matlab.mixin.Copyable
         
         % average analysis parameters
         avg_FLAG = false
-        AVG_FIRST_EXCLUDE = true
+        avg_FIRST_EXCLUDE = false
         avg_every         % Spacing of stim triggers for average analysis (avg_tigger_times)
         avg_trigger_times % Times for aligning between trials for average analysis. 
                           % A subset of stim_trigger_times. 
@@ -528,8 +528,8 @@ classdef roiData < matlab.mixin.Copyable
                 %nframes_snap = min(nframes, round(512*512*1000/row/col));
                 mean_laser_on = mean(vol(:,:,1:n), 3);
                 mean_stim_end = mean(vol(:,:,(end-n+1:end)), 3);
-                r.mean  = cat(3, mean_laser_on, mean_stim_end);
-                r.image = mean(r.mean, 3);
+                r.snaps  = cat(3, mean_laser_on, mean_stim_end);
+                r.image = mean(r.snaps, 3);
                    
                 % reshaped vol
                 vol_reshaped = reshape(vol, [], r.numFrames);
@@ -751,17 +751,19 @@ classdef roiData < matlab.mixin.Copyable
         function baseline(r)
             % Estimate baseline of the ROI (fluorecence) signal just before stimulus.
             % 2019 0313 wrote.
+            % 2019 0315 prepare_duration added.
+            prepare_duration = 4; 
             duration = 5; %sec
             
             r.roi_baseline = zeros(1, r.numRoi);
             
-            if isempty(r.stim_trigger_times)
-                disp('No stim trigger time. Baseline level was estimated by the first 5s imaging.');
+            if isempty(r.avg_trigger_times)
+                disp('No avg trigger time. Baseline level was estimated by the first 5s imaging.');
                 id = r.f_times < duration;
             else
                 % Data index for 5s before the 1st stim trigger.
-                upper = r.f_times < r.stim_trigger_times(1);
-                lower = r.f_times > (r.stim_trigger_times(1) - duration); % 5 sec
+                upper = r.f_times < (r.avg_trigger_times(1) - prepare_duration);
+                lower = r.f_times > (r.avg_trigger_times(1) - prepare_duration - duration); % 5 sec
                 id = upper & lower;
             end
             
@@ -842,6 +844,11 @@ classdef roiData < matlab.mixin.Copyable
             fprintf('Num of full repeats: %d.\n', numRepeat);
             
             % (avg_trigger_times, avg_trigger_interval) --> avg analysis.
+            r.average_analysis;
+        end
+        
+        function set.avg_FIRST_EXCLUDE(r, value)
+            r.avg_FIRST_EXCLUDE = value;
             r.average_analysis;
         end
         
