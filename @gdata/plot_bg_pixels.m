@@ -1,12 +1,18 @@
 function plot_bg_pixels(g, ch, timeafter)
-% background noise anlysis
+% Background noise anlysis. 
+% timeafter - detect cross-talk events only after 'timeafter'.  
 % update bg_trace
-% detect bg_event (from contrast level xx)
+% detect bg_events (from contrast level xx)
 % plot after normalization with stim ev lines.
 
     if nargin < 3
-        timeafter = 0;
+        if isempty(g.pd_events2)
+            timeafter = 0;
+        else
+            timeafter = g.pd_events2(1) - 5; % 5s before the 1st pd trigger event.
+        end
     end
+    fprintf('Background cross-talk events will be examined after %f sec.\n', timeafter);
 
     if nargin < 2
         ch = g.roi_channel;
@@ -29,10 +35,7 @@ function plot_bg_pixels(g, ch, timeafter)
         g.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
     end
     
-    %figure; 
-    %plot(g.f_times, g.bg_trace);
-    
-    % norm
+    % Normalized the bg trace
     i_contrast = 2;
     bg = scaled(g.bg_trace(:,i_contrast)); % trace for evennt detection.
     
@@ -42,21 +45,25 @@ function plot_bg_pixels(g, ch, timeafter)
     
     % detect crosstalk events
     threshold = 0.45;
-    ev_idx = th_crossing(bg(i_timeafter:end), threshold, g.min_interval_secs / g.ifi);
-    g.bg_event_id = ev_idx + i_timeafter;
-    ev = g.f_times(g.bg_event_id);
-    g.bg_event = ev;
+    bg_for_events = bg(g.f_times > timeafter);
+    times_for_events = g.f_times(g.f_times > timeafter);
+    
+    ev_idx = th_crossing(bg_for_events, threshold, g.min_interval_secs / g.ifi);
+    ev = times_for_events(ev_idx);
+    g.bg_events = ev;
+    g.bg_events_id = sum(g.f_times <= timeafter) + ev_idx;
+    
     fprintf('Background (cross-talk) events were identified with contrast level %.1f, threshold %.2f, timeafter = timeafter.\n',...
                                 contrast(i_contrast), threshold, timeafter);
     
-    % normalized plot
+    % Normalized plot
     figure;
     plot(g.f_times, bg); hold on
     plot(ev, threshold, 'o');
     xlim([timeafter, g.f_times(end)]);
     
     % pd event lines
-    g.plot_pd_lines; % pd_events2 (minor) plot
+    g.plot_pd_events2_lines; % pd_events2 (minor) plot
     
     hold off
 

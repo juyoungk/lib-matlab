@@ -33,6 +33,7 @@ function pd_events_detect(g, trace, times)
     ev = times_for_events(ev_idx);
     g.pd_events2 = ev;
     
-    % plot?
+    % plot
+    g.plot_pd;
 
 end

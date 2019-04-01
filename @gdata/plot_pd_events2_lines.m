@@ -1,4 +1,4 @@
-function plot_pd_lines(g, shift)
+function plot_pd_events2_lines(g, shift)
 % pd_event2 (minor events) plot
 
     if nargin < 2

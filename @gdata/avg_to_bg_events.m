@@ -1,4 +1,6 @@
 function avg_vol = avg_to_bg_events(g)
+% Avgeraged image stack over repeats relative to (bg cross-talk) triggers.
+%
 % Currently, avg over bg_event
 
 %     if isempty(g.avg_trigger)

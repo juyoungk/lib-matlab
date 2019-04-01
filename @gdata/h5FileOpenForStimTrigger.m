@@ -39,7 +39,7 @@ function h5FileOpenForStimTrigger(g, h5_filename)
         end
         g.h5_pd_raw = pd;
         
-        % detect events in the trace
+        % Detect events in the trace
         g.pd_events_detect(pd, times);
 
         % Stimulus cluster for multiple events (using only events1)

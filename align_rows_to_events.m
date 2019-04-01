@@ -8,7 +8,7 @@ function [y_aligned, qx] = align_rows_to_events(y, x, events, duration)
     % y - signal of interest (row index ~ time-varying signal, col ~
     % roi#)
     % x - timestamps of signal
-    % events   - array of timestamps
+    % events   - timestamps of events. 1D array.
     % duration - for which you want to copy after the event
 % Output:
     % y_aligned - (n_sampling(e.g. time), n_cells, n_events) matrix 

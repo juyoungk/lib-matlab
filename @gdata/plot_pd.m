@@ -1,18 +1,19 @@
 function plot_pd(g)
-    
-    pos = gdata.figure_setting();
-    
-    i_start = g.ignore_secs * g.h5_header.srate + 1; % first pd data point index for thresholding.
-    
-    % plot pd % event stamps
+% plot pd_trace, pd_times with detected thresholding events. 
 
-%     n = g.header.n_channelSave;
-%     n = 3;
-%     pos_plot = [pos(1)+pos(3)*n, pos(2), pos(3), pos(3)*2./3.];
-    
+    if isempty(g.pd_trace)
+        disp('No trace was assigned to pd_trace.');
+        return;
+    end
+
+    pos = gdata.figure_setting();
     pos_plot = [1800,            pos(2), pos(3), pos(3)*2./3.];
     figure; set(gcf, 'Position', pos_plot);
-    plot(g.h5_times(i_start:end), g.pd_trace(i_start:end)); hold on; % PD trace
+    
+    % Plot pd_trace
+    times = g.pd_times;
+    plot(times(times > g.ignore_secs), g.pd_trace(times > g.ignore_secs)); 
+    hold on; % PD trace
     
     % PD trigger events 1
     for ii = 1:g.numStimulus % color coding for clustered PD events.    

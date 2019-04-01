@@ -34,7 +34,7 @@ classdef gdata < handle
             h5_pd_raw % raw pd trace from WaveSurfer h5
             pd_AI_name = 'photodiode';
             
-            % pd events info
+            % pd events (can be recorded by WaveSurfer or by Scanimage CH2)
             pd_trace
             pd_times
             pd_threshold1 = 0.85 % Major events
@@ -51,19 +51,19 @@ classdef gdata < handle
             stim_fliptimes  % trigger events or fliptimes. up to 10 differnet cell arrays
             stim_whitenoise        % whitenoise stim pattern
             
+            % bg noise analysis
+            bg_trace
+            bg_events    % times
+            bg_events_id % frame ids
+            
+            % average analysis
+            avg_triggers % can be pd_events or bg_event
+            
             % roi response data per stimulus
             numStimulus % and initialize roiDATA objects. Should be initialized at least 1.
             rr
             cc          % ROI connectivity structure
             roi_channel
-            
-            % bg noise analysis
-            bg_trace
-            bg_event    % times
-            bg_event_id % frame ids
-            
-            % average analysis
-            avg_triggers % can be pd_events or bg_event
     end   
 
     methods
@@ -328,7 +328,7 @@ classdef gdata < handle
                     % Open h5 file. Get pd events from h5.
                     g.h5FileOpenForStimTrigger(h5_filename);
                     
-                    % import Tif file
+                    % Import Tif file
                     SI_data = ScanImageTiffReader(tif_filename);
                     g.metadata = SI_data.metadata;
                     
@@ -358,18 +358,15 @@ classdef gdata < handle
                     % AI channel info
                     g.AI_chSave = h.channelSave;
 
-                    % channel de-interleave and save sanpshots
+                    % Channel de-interleave and save sanpshots
                     n     = h.n_channelSave;
                     id_ch = mod((1:h.n_frames)-1, n)+1;
-
                     % loop over channels
                     for j=1:n
                         % de-interleave
                         vol_ch = vol(:,:,id_ch==j); % vol for single ch: de-interleave frames
                         ch = h.channelSave(j);      % ch number
                         g.AI{ch} = vol_ch;
-%                         [~, ~, ch_frames] = size(vol_ch);
-%                         g.nframes = ch_frames;
                         
                         % mean image: first and last 1000 frames (for 512x512 pixels)
                         snaps = g.imdrift(ch);
@@ -389,25 +386,22 @@ classdef gdata < handle
                     % frame times (~ ch frame times)
                     g.f_times = ((1:g.nframes)-0.5)*g.ifi;
                     
-                    % If Ch2 is not empty, Regard it as pd trace.
+                    % PD trace recording via Scanimage AI Ch2.
                     if isempty(g.AI{2})
-                        col1_trace = [];
+                        disp('AI CH2 is empty. No direct pd signal was given.');
                     else
+                        % If it is not empty, regard it as pd trace.
                         col1_trace = g.AI{2}(1, :, :);
-                        col1_trace = mean(col1_trace, 2);
+                        col1_trace = mean(col1_trace, 2); % average over 1 pixel along the lines in frame.
                         col1_trace = col1_trace(:);
                         % event detect
                         g.pd_events_detect(col1_trace, g.f_tiems);
                         disp('AI CH2 was used as stimulus trigger signal, and trigger events were detected.');
                     end
                     
-                    
-                    % ROI channel
+                    % BG crosstalk analysis.
                     ch = g.roi_channel;
-                    
-                    % background noise analysis for ROI channel. 
-                    timeafter = 0;
-                    g.plot_bg_pixels(ch, timeafter); % detect bg_event only after the timeafter.
+                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events.
                     
                     % load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
@@ -416,9 +410,7 @@ classdef gdata < handle
                         reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
                         if isempty(reply); reply = 'Y'; end
                         if reply == 'Y'
-                            
                             g.load_roiData_save(cc_filenames{1});
-
                         else
                             g.cc = [];
                         end
