@@ -12,7 +12,7 @@ function plot_bg_pixels(g, ch, timeafter)
             timeafter = g.pd_events2(1) - 5; % 5s before the 1st pd trigger event.
         end
     end
-    fprintf('Background cross-talk events will be examined after %f sec.\n', timeafter);
+    fprintf('Background cross-talk events will be examined after %.2f sec.\n', timeafter);
 
     if nargin < 2
         ch = g.roi_channel;
@@ -39,10 +39,6 @@ function plot_bg_pixels(g, ch, timeafter)
     i_contrast = 2;
     bg = scaled(g.bg_trace(:,i_contrast)); % trace for evennt detection.
     
-    % events only after the given timeafter
-    i_timeafter = find(g.f_times > timeafter);
-    i_timeafter = i_timeafter(1);
-    
     % detect crosstalk events
     threshold = 0.45;
     bg_for_events = bg(g.f_times > timeafter);
@@ -53,7 +49,7 @@ function plot_bg_pixels(g, ch, timeafter)
     g.bg_events = ev;
     g.bg_events_id = sum(g.f_times <= timeafter) + ev_idx;
     
-    fprintf('Background (cross-talk) events were identified with contrast level %.1f, threshold %.2f, timeafter = timeafter.\n',...
+    fprintf('Background (cross-talk) events were identified with contrast level %.1f, threshold %.2f, timeafter = %.1f.\n',...
                                 contrast(i_contrast), threshold, timeafter);
     
     % Normalized plot
@@ -61,6 +57,7 @@ function plot_bg_pixels(g, ch, timeafter)
     plot(g.f_times, bg); hold on
     plot(ev, threshold, 'o');
     xlim([timeafter, g.f_times(end)]);
+    title('Background pixel avg trace.');
     
     % pd event lines
     g.plot_pd_events2_lines; % pd_events2 (minor) plot

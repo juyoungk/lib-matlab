@@ -16,16 +16,14 @@ function plot_pd(g)
     hold on; % PD trace
     
     % PD trigger events 1
-    for ii = 1:g.numStimulus % color coding for clustered PD events.    
+    plot( g.pd_events1, g.pd_threshold1, 'o');
+    plot( g.pd_events2, g.pd_threshold2, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
+    
+    % Color coding for clustered PD events.
+    for ii = 1:g.numStimulus     
         %plot( g.pd_events1(g.stims_ids{ii}), g.pd_threshold1, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
-        plot( g.pd_events1, g.pd_threshold1, 'o');
     end
-    
-    % PD trigger events 2
-    for ii = 1:g.numStimulus % color coding for clustered PD events.    
-        plot( g.pd_events2, g.pd_threshold2, 'o'); %g.pd_trace( ev_idx(g.stims_ids{ii})
-    end
-    
+     
     text = sprintf('Trigger Event 1: %d\nTrigger Event 2: %d', length(g.pd_events1), length(g.pd_events2));
     legend(text, 'Location', 'southeast');
     

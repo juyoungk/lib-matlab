@@ -4,7 +4,7 @@ function pd_events_detect(g, trace, times)
 
     % Rectified & normed PD trace
     % baseline: first 5 sec average
-    baseline = mean( trace(1:(5*header.srate)) );
+    baseline = mean( trace(times < 5.0) );
     trace = max(trace - baseline, 0);
     trace = scaled(trace);
     
@@ -33,7 +33,7 @@ function pd_events_detect(g, trace, times)
     ev = times_for_events(ev_idx);
     g.pd_events2 = ev;
     
-    % plot
+    % plot detected events with pd trace.
     g.plot_pd;
 
 end

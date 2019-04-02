@@ -12,12 +12,16 @@ classdef gdata < handle
              h5_filename
             
             % Imaging data [Scanimage TIF]
-            n_channels = 4; % max channel #
+            n_channels = 4 % max channel number
             AI_chSave
             AI       % raw data
             AI_mean  % mean over snaps. 
             AI_snaps % snaps over first and last xxx frames.
-            
+            AI_trace % Averaged trace over the first pixel of all lines in each frame.
+                     % CH 2 is often regarded as PD signal.
+            AI_trigger_ch = 2 % Channel for direct recording of PD triggers.
+                              % If emptty, default trigger will be from
+                              % WaveSurfer h5.
             nframes  % per channel (e.g. PMT)
             size     % size of frame [pixels, lines]
             numSlices % stack is more than 1 numSlices.
@@ -37,7 +41,7 @@ classdef gdata < handle
             % pd events (can be recorded by WaveSurfer or by Scanimage CH2)
             pd_trace
             pd_times
-            pd_threshold1 = 0.85 % Major events
+            pd_threshold1 = 0.70 % Major events
             pd_threshold2 = 0.35 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
@@ -184,13 +188,18 @@ classdef gdata < handle
             function ch = get.roi_channel(g)
                 if ~isempty(g.roi_channel)
                     ch = g.roi_channel;
-                elseif g.header.n_channelSave == 1
-                    ch = g.header.channelSave(1);
-                    disp(['ROI analysis ch: ',num2str(ch),' is selected.']);
+                    return;
+                end
+                % 
+                available_channels = g.AI_chSave(g.AI_chSave ~= g.AI_trigger_ch);
+                
+                if length(available_channels) == 1
+                    ch = available_channels;
                 else
                     commandwindow
-                    ch = input([g.ex_name, ': PMT channel # for main recording (Available: ', num2str(g.header.channelSave),') ? ']);
+                    ch = input([g.ex_name, ': PMT channel # for main recording (Available: ', num2str(available_channels),') ? ']);
                 end
+                disp(['ROI analysis CH: ',num2str(ch),' is selected.']);
                 g.roi_channel = ch;
             end
                 
@@ -277,8 +286,8 @@ classdef gdata < handle
                 % cell array for AI channels.
                 g.AI            = cell(g.n_channels, 1); % n_channels is defined at gdata properties.
                 g.AI_mean       = cell(g.n_channels, 1);
-                g.AI_snaps       = cell(g.n_channels, 1);
-                %g.AI_mean_slice = cell(g.n_channels, 1);
+                g.AI_snaps      = cell(g.n_channels, 1);
+                g.AI_trace      = cell(g.n_channels, 1);
 
                 if nargin > 0     
                     % single string input: string filter in current directory.
@@ -344,9 +353,12 @@ classdef gdata < handle
                     g.numSlices = g.header.numSlices;
                     g.nframes = h.n_frames_ch;
                     
+                    % frame times (~ ch frame times)
+                    g.f_times = ((1:g.nframes)-0.5)*g.ifi;
+                    
                     % Check if acq was sync with triggers.
                     disp(['SI.extTrigEnable = ', h.extTrigEnable]);
-                    if contains(h.extTrigEnable, 'false')
+                    if contains(h.extTrigEnable, 'false') || contains(h.extTrigEnable, '0')
                         disp('!!! Be aware that Scanimage was not triggered by stimulus trigger (e.g. WaveSurfer). !!!');
                     end
                     
@@ -357,7 +369,7 @@ classdef gdata < handle
 
                     % AI channel info
                     g.AI_chSave = h.channelSave;
-
+                                        
                     % Channel de-interleave and save sanpshots
                     n     = h.n_channelSave;
                     id_ch = mod((1:h.n_frames)-1, n)+1;
@@ -368,35 +380,38 @@ classdef gdata < handle
                         ch = h.channelSave(j);      % ch number
                         g.AI{ch} = vol_ch;
                         
-                        % mean image: first and last 1000 frames (for 512x512 pixels)
-                        snaps = g.imdrift(ch);
-                        g.AI_snaps{ch} = snaps;
-                        g.AI_mean{ch} = mean(snaps, 3);
-                        
-                        % title name
-                        t_filename = strrep(g.tif_filename, '_', '  ');
-                        s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
-
-                        % plot mean images
-                        hf = g.figure;
-                        %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                        imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
-                    end
-
-                    % frame times (~ ch frame times)
-                    g.f_times = ((1:g.nframes)-0.5)*g.ifi;
-                    
-                    % PD trace recording via Scanimage AI Ch2.
-                    if isempty(g.AI{2})
-                        disp('AI CH2 is empty. No direct pd signal was given.');
-                    else
-                        % If it is not empty, regard it as pd trace.
-                        col1_trace = g.AI{2}(1, :, :);
+                        % AI trace: averaged over 1st pixel of all lines in
+                        % frame
+                        col1_trace = g.AI{ch}(1, :, :);
                         col1_trace = mean(col1_trace, 2); % average over 1 pixel along the lines in frame.
                         col1_trace = col1_trace(:);
-                        % event detect
-                        g.pd_events_detect(col1_trace, g.f_tiems);
-                        disp('AI CH2 was used as stimulus trigger signal, and trigger events were detected.');
+                        g.AI_trace{ch} = col1_trace;
+                        
+                        if ch ~= g.AI_trigger_ch
+                            % mean image: first and last 1000 frames (for 512x512 pixels)
+                            snaps = g.imdrift(ch);
+                            g.AI_snaps{ch} = snaps;
+                            g.AI_mean{ch} = mean(snaps, 3);
+
+                            % title name
+                            t_filename = strrep(g.tif_filename, '_', '  ');
+                            s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
+
+                            % plot mean images
+                            hf = g.figure;
+                            %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
+                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
+                        end
+                    end
+                    
+                    % PD trace recording via Scanimage AI Ch2.
+                    if isempty(g.AI{g.AI_trigger_ch})
+                        fprintf('AI trigger channel %d is empty. No direct pd signal was given to ScanImage.\n', g.AI_trigger_ch);
+                    else 
+                        % event detect (+ plot)
+                        g.pd_events_detect(g.AI_trace{g.AI_trigger_ch}, g.f_times);
+                        title('Scanimage recording of photodiode signal');
+                        fprintf('CH %d was used as stimulus trigger signal, and trigger events were detected.\n', g.AI_trigger_ch);
                     end
                     
                     % BG crosstalk analysis.
