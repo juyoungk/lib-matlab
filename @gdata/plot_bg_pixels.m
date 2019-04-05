@@ -49,7 +49,7 @@ function plot_bg_pixels(g, ch, timeafter)
     g.bg_events = ev;
     g.bg_events_id = sum(g.f_times <= timeafter) + ev_idx;
     
-    fprintf('Background (cross-talk) events were identified with contrast level %.1f, threshold %.2f, timeafter = %.1f.\n',...
+    fprintf('Background cross-talk events were identified with contrast level %.1f, threshold %.2f, timeafter = %.1f.\n',...
                                 contrast(i_contrast), threshold, timeafter);
     
     % Normalized plot

@@ -77,6 +77,9 @@ function move_conex_xyz_stage(src, evt)
         pos_top_ref(1) = pos_top_ref(1) + 40; % (+) moves VS right
         pos_top_ref(2) = pos_top_ref(2) + 170; % (+) moves VS down
         
+        % 2019 0404
+        pos_top_ref(1) = pos_top_ref(1) + 90; % (+) moves VS right
+        pos_top_ref(2) = pos_top_ref(2) + 120; % (+) moves VS down
         
     % offset between 2p and VS focal planes: 
     % always 150 um below imaging plane(e.g. GCL)

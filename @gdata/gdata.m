@@ -41,8 +41,8 @@ classdef gdata < handle
             % pd events (can be recorded by WaveSurfer or by Scanimage CH2)
             pd_trace
             pd_times
-            pd_threshold1 = 0.70 % Major events
-            pd_threshold2 = 0.35 % Minnor events
+            pd_threshold1 = 0.60 % Major events
+            pd_threshold2 = 0.10 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
             
@@ -169,20 +169,19 @@ classdef gdata < handle
             end
             
             function setting_pd_event_params(g)
-                
-                if contains(g.ex_name, 'flash')
-                    g.pd_threshold1 = 0.8;
-                    g.min_interval_secs = 0.8;
-                elseif contains(g.ex_name, 'movingbar')
-                    g.pd_threshold1 = 0.4;
-                    g.min_interval_secs = 1.2;
-                elseif contains(g.ex_name, 'jitter')
-                    g.pd_threshold1 = 0.4;
-                    g.min_interval_secs = 1;
-                elseif contains(g.ex_name, 'whitenoise')
-                    g.pd_threshold1 = 0.4;
-                    g.min_interval_secs = 0.25;
-                end
+%                 if contains(g.ex_name, 'flash')
+%                     g.pd_threshold1 = 0.8;
+%                     g.min_interval_secs = 0.8;
+%                 elseif contains(g.ex_name, 'movingbar')
+%                     g.pd_threshold1 = 0.4;
+%                     g.min_interval_secs = 1.2;
+%                 elseif contains(g.ex_name, 'jitter')
+%                     g.pd_threshold1 = 0.4;
+%                     g.min_interval_secs = 1;
+%                 elseif contains(g.ex_name, 'whitenoise')
+%                     g.pd_threshold1 = 0.4;
+%                     g.min_interval_secs = 0.25;
+%                 end
             end
             
             function ch = get.roi_channel(g)
@@ -412,6 +411,15 @@ classdef gdata < handle
                         g.pd_events_detect(g.AI_trace{g.AI_trigger_ch}, g.f_times);
                         title('Scanimage recording of photodiode signal');
                         fprintf('CH %d was used as stimulus trigger signal, and trigger events were detected.\n', g.AI_trigger_ch);
+                        
+                        % Was there any cross-talk between AI channels due
+                        % to the direct PD recording?
+%                         figure;
+%                         for ch = g.AI_chSave
+%                             plot(g.AI_trace{ch}); hold on
+%                         end
+%                         title('1st pixel trace for all saved channels.');
+%                         hold off
                     end
                     
                     % BG crosstalk analysis.
