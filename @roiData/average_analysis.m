@@ -1,5 +1,5 @@
 function average_analysis(r, FIRST_EXCLUDE)
-% Relative to avg_trigger_times, it samples and compute various statistics.
+% Relative to avg_trigger_times, it samples snippet of data relative to the trigger times, and compute various statistics.
 % Also, set times for average traces.
     
     if nargin < 2
@@ -15,6 +15,9 @@ function average_analysis(r, FIRST_EXCLUDE)
         disp('No trigger times for average analysis,');
         return;
     end
+    
+    % Compute the baseline level just before the first average tigger time.
+    r.baseline;
 
     % Align and sample. Output is 3D tensor.
     %[roi_aligned_raw, ~] = r.align_trace_to_avg_triggers('raw');

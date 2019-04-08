@@ -10,6 +10,8 @@ classdef gdata < handle
             dirpath
             tif_filename
              h5_filename
+            header
+            metadata % raw header file
             
             % Imaging data [Scanimage TIF]
             n_channels = 4 % max channel number
@@ -18,18 +20,18 @@ classdef gdata < handle
             AI_mean  % mean over snaps. 
             AI_snaps % snaps over first and last xxx frames.
             AI_trace % Averaged trace over the first pixel of all lines in each frame.
-                     % CH 2 is often regarded as PD signal.
+                     % CH 2 is often regarded as PD signal. Can be
+                     % upsampled than frame rate.
             AI_trigger_ch = 2 % Channel for direct recording of PD triggers.
                               % If emptty, default trigger will be from
                               % WaveSurfer h5.
             nframes  % per channel (e.g. PMT)
+            ifi
+            f_times % frame times
+            t_times % trace times 
             size     % size of frame [pixels, lines]
             numSlices % stack is more than 1 numSlices.
-            ifi
-            f_times
-            header
-            metadata % raw header file
-            
+
             % Recording (pd & e-phys) data [WaveSurfer H5]
             h5_header
             h5_srate
@@ -377,14 +379,23 @@ classdef gdata < handle
                         % de-interleave
                         vol_ch = vol(:,:,id_ch==j); % vol for single ch: de-interleave frames
                         ch = h.channelSave(j);      % ch number
+                        
+                        % AI vol data
                         g.AI{ch} = vol_ch;
                         
                         % AI trace: averaged over 1st pixel of all lines in
                         % frame
                         col1_trace = g.AI{ch}(1, :, :);
-                        col1_trace = mean(col1_trace, 2); % average over 1 pixel along the lines in frame.
-                        col1_trace = col1_trace(:);
-                        g.AI_trace{ch} = col1_trace;
+                        % 2 (or multiple) samplings by dividing lines.
+                        nlines = g.size(2);
+                        nlines_half = round(nlines/2.);
+                        a1 = mean(col1_trace(1, 1:nlines_half, :), 2); 
+                        a2 = mean(col1_trace(1, nlines_half+1:end, :), 2);
+                        a1=a1(:);
+                        a2=a2(:);
+                        aa = [a1.'; a2.'];
+                        g.AI_trace{ch} = aa(:);
+                        % times for AI_trace
                         
                         if ch ~= g.AI_trigger_ch
                             % mean image: first and last 1000 frames (for 512x512 pixels)
@@ -403,12 +414,15 @@ classdef gdata < handle
                         end
                     end
                     
+                    n_sampling_per_frame = 2.;
+                    g.t_times = ((1:n_sampling_per_frame*g.nframes)-0.75)*(g.ifi/n_sampling_per_frame);
+                    
                     % PD trace recording via Scanimage AI Ch2.
                     if isempty(g.AI{g.AI_trigger_ch})
                         fprintf('AI trigger channel %d is empty. No direct pd signal was given to ScanImage.\n', g.AI_trigger_ch);
                     else 
                         % event detect (+ plot)
-                        g.pd_events_detect(g.AI_trace{g.AI_trigger_ch}, g.f_times);
+                        g.pd_events_detect(g.AI_trace{g.AI_trigger_ch}, g.t_times);
                         title('Scanimage recording of photodiode signal');
                         fprintf('CH %d was used as stimulus trigger signal, and trigger events were detected.\n', g.AI_trigger_ch);
                         
