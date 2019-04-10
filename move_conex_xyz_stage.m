@@ -39,6 +39,9 @@ function move_conex_xyz_stage(src, evt)
         pos_bot_ref = [6.314, 13.340, 21.965];
         % 1221 2018 new origin
         pos_bot_ref = [6.314, 13.340, 22.6150];
+        
+        % 1221 2018 new origin
+        pos_bot_ref = [5.92, 13.340, 21.8350];
     
     % Align 2P (not VS focus) to MEA 0416 201
        % w/ 2 PMTs, 920 laser
@@ -73,13 +76,12 @@ function move_conex_xyz_stage(src, evt)
         % 2019 0228 (reference to 2P scanning, not MEA)
         pos_top_ref = [60 -382.5000 1.1228e+04];
         
-        % 2019 0228 (w/ just glass surface. need to be confirmed?)
-        pos_top_ref(1) = pos_top_ref(1) + 40; % (+) moves VS right
-        pos_top_ref(2) = pos_top_ref(2) + 170; % (+) moves VS down
-        
+        % 2019 0409
+        pos_top_ref = [-179.2000 -214 1.1058e+04];
+           
         % 2019 0404
-        pos_top_ref(1) = pos_top_ref(1) + 90; % (+) moves VS right
-        pos_top_ref(2) = pos_top_ref(2) + 120; % (+) moves VS down
+        %pos_top_ref(1) = pos_top_ref(1) + 90; % (+) moves VS right
+        %pos_top_ref(2) = pos_top_ref(2) + 120; % (+) moves VS down
         
     % offset between 2p and VS focal planes: 
     % always 150 um below imaging plane(e.g. GCL)

@@ -26,7 +26,7 @@ function ax = plot_trace_raw(r, id_roi)
                 % all stim trigger times 
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.0, 'Color',0.6*[1 1 1]);
                 % middle line
-                if strfind(r.ex_name, 'flash') && i < i_last 
+                if contains(r.ex_name, 'flash') && i < i_last 
                     interval = ev(i+1) - ev(i);
                     plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
                 end

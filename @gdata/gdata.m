@@ -43,7 +43,7 @@ classdef gdata < handle
             % pd events (can be recorded by WaveSurfer or by Scanimage CH2)
             pd_trace
             pd_times
-            pd_threshold1 = 0.60 % Major events
+            pd_threshold1 = 0.55 % Major events
             pd_threshold2 = 0.10 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.

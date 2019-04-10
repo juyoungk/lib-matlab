@@ -17,18 +17,18 @@ function r_avg = corr_avg(y)
             [~, n_trace] = size(y);
             
             % correlation to mean 0314 2019
-            m = mean(y, 2);
-            y = [y m]; % mean vector as last column
-            R = corrcoef(y);
-            % Correlation of individual col vector to mean vector (last),
-            % then mean over correalations.
-            r_avg = mean(R(:,end));
+%             m = mean(y, 2);
+%             y = [y m]; % mean vector as last column
+%             R = corrcoef(y);
+%             % Correlation of individual col vector to mean vector (last),
+%             % then mean over correalations.
+%             r_avg = mean(R(:,end));
 
-%             % Correlation between all possible pairs.
-%             A = corrcoef(y);
-%             A = (A-eye(n_trace));
-%             r_avg = sum(A(:))/( n_trace*(n_trace-1));
-%             
+            % Correlation between all possible pairs.
+            A = corrcoef(y);
+            A = (A-eye(n_trace));
+            r_avg = sum(A(:))/( n_trace*(n_trace-1));
+            
         elseif n == 3
             
             [ n_variables, n_cells, n_repeats ] = size(y);
