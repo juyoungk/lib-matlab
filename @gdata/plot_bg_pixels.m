@@ -55,7 +55,11 @@ function plot_bg_pixels(g, ch, timeafter)
     % Normalized plot
     figure;
     plot(g.f_times, bg); hold on
-    plot(ev, threshold, 'o');
+    if isempty(ev)
+        disp('No events from bg analysis.');
+    else
+        plot(ev, threshold, 'o');
+    end
     xlim([timeafter, g.f_times(end)]);
     title('Background pixel avg trace.');
     

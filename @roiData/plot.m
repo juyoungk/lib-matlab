@@ -87,7 +87,8 @@ function plot(r, I)
                 c = colorbar;
                 c.TickLabels = {};
             else
-                ax = plot_avg_fil(r, k);
+                plot_avg_fil(r, k);
+                ax = gca;
                 title('Avg response (filtered) over trials');
                 if ~isempty(ax) && ~isempty(ex_info)
                     text(ax.XLim(end), ax.YLim(1), ex_info, 'FontSize', 11, 'Color', 'k', ...
