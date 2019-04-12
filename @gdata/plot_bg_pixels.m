@@ -1,5 +1,6 @@
 function plot_bg_pixels(g, ch, timeafter)
-% Background noise anlysis. 
+% Background noise anlysis.
+% Background pixel detection at snap1 & 2.
 % timeafter - detect cross-talk events only after 'timeafter'.  
 % update bg_trace
 % detect bg_events (from contrast level xx)
@@ -27,6 +28,7 @@ function plot_bg_pixels(g, ch, timeafter)
     snap1 = g.AI_snaps{ch}(:,:,1);
     snap2 = g.AI_snaps{ch}(:,:,2);
     
+    % Pick pixels based on PMT average intensity at snaps.
     for i = 1:length(contrast) % contrast values (%)
         c = contrast(i);
         bw1 = lowerpixels(snap1, c);

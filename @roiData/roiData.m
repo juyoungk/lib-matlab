@@ -486,7 +486,6 @@ classdef roiData < matlab.mixin.Copyable
                 r.roi_trace    = zeros(r.numFrames, r.numRoi);
                 r.roi_smoothed = zeros(r.numFrames, r.numRoi);
                 r.rf = cell(1, r.numRoi);
-                
                 %
                 if nargin < 5 
                     stim_trigger_times = 0;
@@ -530,9 +529,11 @@ classdef roiData < matlab.mixin.Copyable
                 % reshaped vol
                 vol_reshaped = reshape(vol, [], r.numFrames);
                 
-                % BG trace (for cross-talk and timing inspection)
-                % Non-fluorecence bg pixels = pixels of the low-end c%.
-                % Exclude pixels if it is inside the 'cc'.
+                % Estimate BG trace (for cross-talk and timing inspection)
+                % Non-fluorecence bg pixels = pixels of the low-end c% excluding pixels in
+                % predefined cc.
+                % Defined in the constructor since vol_reshaped will not be
+                % stored in roiData.
                 cc_pixels = cc_to_bwmask(cc); % roi pixels (logical)
                 contrast = [0.5 1.0 2.0 4.0];
                 r.bg_trace = zeros(nframes, length(contrast));
@@ -542,11 +543,14 @@ classdef roiData < matlab.mixin.Copyable
                     bw2 = lowerpixels(mean_stim_end, c);
                     bw = bw1 & bw2 & ~cc_pixels;
                     r.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
+                    
                 end
-                figure; plot(r.f_times, r.bg_trace); 
-                r.plot_stim_lines;
+                % plot bg trace if needed.
+%                 figure; 
+%                 plot(r.f_times, r.bg_trace); 
+%                 r.plot_stim_lines;
                 %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
-                
+
                 % Extract roi trace from vol.
                 for i=1:r.numRoi
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
@@ -716,7 +720,6 @@ classdef roiData < matlab.mixin.Copyable
             n_session = numel(r.sess_trigger_times);
             
             if isempty(sess_id)
-                
                 str = sprintf('There are %d session triggers. Which session do you want to get for stim triggers? 1-%d [%d]\n', n_session, n_session, n_session); 
                 sess_id = input(str);
                 if isempty(sess_id); sess_id = n_session; end
@@ -726,12 +729,13 @@ classdef roiData < matlab.mixin.Copyable
             session_on  = r.sess_trigger_times(sess_id);
             if sess_id < n_session
                 session_off = r.sess_trigger_times(sess_id+1);
+                % 
             else
                 session_off = r.f_times(end);
             end
             % triggers during the session
-            triggers = r.stim_trigger_times(r.stim_trigger_times > session_on);
-            triggers = [session_on; triggers(:)]; % add the session_on time.
+            triggers = r.stim_trigger_times(r.stim_trigger_times >= session_on);
+            %triggers = [session_on; triggers(:)]; % add the session_on time.
             triggers = triggers(triggers < session_off);
         end
         
@@ -882,24 +886,6 @@ function aa = vec(a)
     aa = a(:);
 end
 
-function [bw_selected, bw_array] = cc_to_bwmask(cc, id_selected)
-% convert cc to bwmask array and totla bw for selected IDs.
-
-    if nargin < 2
-        id_selected = 1:cc.NumObjects;
-    end
-
-    bw_array = false([cc.ImageSize, cc.NumObjects]);
-
-    for i = 1:cc.NumObjects
-        grain = false(cc.ImageSize);
-        grain(cc.PixelIdxList{i}) = true;
-        bw_array(:,:,i) = grain;
-    end
-    % Total bw for selected IDs
-    bw_selected = max( bw_array(:,:,id_selected), [], 3);
-end
-
 function [J, MinMax] = myadjust(I, c)
 % Contrast-enhanced mapping to [0 1] of matrix I
 % Input: contrast value (%)
@@ -916,6 +902,24 @@ function J = myshow(I, c)
     end
     J = myadjust(I, c);
     imshow(J);
+end
+
+function [bw_selected, bw_array] = cc_to_bwmask(cc, id_selected)
+% convert cc to bwmask array and totla bw for selected IDs.
+
+    if nargin < 2
+        id_selected = 1:cc.NumObjects;
+    end
+
+    bw_array = false([cc.ImageSize, cc.NumObjects]);
+
+    for i = 1:cc.NumObjects
+        grain = false(cc.ImageSize);
+        grain(cc.PixelIdxList{i}) = true;
+        bw_array(:,:,i) = grain;
+    end
+    % Total bw for selected IDs
+    bw_selected = max( bw_array(:,:,id_selected), [], 3);
 end
 
 function bw = lowerpixels(I, c) % 2D matrix, percentage. Output is logical array.

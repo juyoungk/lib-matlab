@@ -28,7 +28,7 @@ classdef gdata < handle
             nframes  % per channel (e.g. PMT)
             ifi
             f_times % frame times
-            t_times % trace times 
+            t_times % trace times. Used for multi-sampling of PD from a single frame. 
             size     % size of frame [pixels, lines]
             numSlices % stack is more than 1 numSlices.
 
@@ -58,12 +58,13 @@ classdef gdata < handle
             stim_whitenoise        % whitenoise stim pattern
             
             % bg noise analysis
-            bg_trace
+            bg_trace     % unnormalized raw trace for 'bg' pixels.
             bg_events    % times
             bg_events_id % frame ids
             
             % average analysis
-            avg_triggers % can be pd_events or bg_event
+            avg_trigger_times
+            avg_vol
             
             % roi response data per stimulus
             numStimulus % and initialize roiDATA objects. Should be initialized at least 1.
@@ -136,21 +137,23 @@ classdef gdata < handle
                 end
                 
                 for i = ch
-                    s_title = sprintf('%s  (CH:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
-                    if numel(varargin) > 0
-                        if ischar(varargin{1})
-                            s_title = varargin{1};
+                    if ch ~= g.AI_trigger_ch
+                        s_title = sprintf('%s  (CH:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
+                        if numel(varargin) > 0
+                            if ischar(varargin{1})
+                                s_title = varargin{1};
+                            end
                         end
-                    end
 
-                    if contains(g.ex_name, 'stack') || g.numSlices > 1
-                        J = imvol(g.AI{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'z_step_um', g.header.stackZStepSize);
-                    else
-                        if isempty(g.cc)
-                            J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
+                        if contains(g.ex_name, 'stack') || g.numSlices > 1
+                            J = imvol(g.AI{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'z_step_um', g.header.stackZStepSize);
                         else
-                            disp('''cc'' was given to imvol().');
-                            J = imvol(g.AI_mean{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', true);
+                            if isempty(g.cc)
+                                J = imvol(g.AI_snaps{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
+                            else
+                                disp('''cc'' was given to imvol().');
+                                J = imvol(g.AI_snaps{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', true);
+                            end
                         end
                     end
                 end
@@ -246,27 +249,6 @@ classdef gdata < handle
                     r = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, {obj.pd_events1, obj.pd_events2}); %{ avg triggers, stim triggers }
                     r.header = obj.header;
                     obj.rr = r;
-%                     if obj.numStimulus == 1
-%                         obj.rr = r;
-%                     elseif obj.numStimulus >1
-%                         for i=1:obj.numStimulus
-%                             % select the part of the roi traces using event
-%                             % ids.
-%                             obj.rr(i) = r.select_data( obj.stims_ids{i} );
-% 
-%                             %obj.rr(i) = roiData(obj.AI{ch}, cc, [obj.ex_name,' [ch',num2str(ch),']'], obj.ifi, obj.stims{i});
-%                             %obj.rr(i).header = obj.header;
-% 
-%                             % ex specific executions 
-%                             if strfind(obj.ex_name, 'whitenoise')
-%                                 % update stim repo    
-%                                 % import stimulus.h5
-%                                     %load(filename,'-mat',variables) 
-%                             else
-% 
-%                             end
-%                         end
-%                     end
                 else
                     disp('The given cc structure is empty. No roiDATA object was assigned.');
                 end
@@ -278,6 +260,12 @@ classdef gdata < handle
                 else
                     error('Not available channel number for roi analysis.');
                 end
+            end
+            
+            function id = frameid(g, time)
+                % first id after the given time
+                ids = find(g.f_times >= time);
+                id = ids(1);
             end
 
             function g = gdata(tif_filename, h5_filename)
@@ -374,7 +362,6 @@ classdef gdata < handle
                     % Channel de-interleave and save sanpshots
                     n     = h.n_channelSave;
                     id_ch = mod((1:h.n_frames)-1, n)+1;
-                    % loop over channels
                     for j=1:n
                         % de-interleave
                         vol_ch = vol(:,:,id_ch==j); % vol for single ch: de-interleave frames
@@ -395,23 +382,6 @@ classdef gdata < handle
                         a2=a2(:);
                         aa = [a1.'; a2.'];
                         g.AI_trace{ch} = aa(:);
-                        % times for AI_trace
-                        
-                        if ch ~= g.AI_trigger_ch
-                            % mean image: first and last 1000 frames (for 512x512 pixels)
-                            snaps = g.imdrift(ch);
-                            g.AI_snaps{ch} = snaps;
-                            g.AI_mean{ch} = mean(snaps, 3);
-
-                            % title name
-                            t_filename = strrep(g.tif_filename, '_', '  ');
-                            s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
-
-                            % plot mean images
-                            hf = g.figure;
-                            %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
-                        end
                     end
                     
                     n_sampling_per_frame = 2.;
@@ -436,11 +406,34 @@ classdef gdata < handle
 %                         hold off
                     end
                     
+                    % Make snaps for major trigger times.
+                    for j=1:n % over channels
+                        ch = h.channelSave(j);      % ch number
+                        if ch ~= g.AI_trigger_ch
+                            % mean image: first and last 1000 frames (for 512x512 pixels)
+                            snaps = g.imdrift(ch);
+                            g.AI_snaps{ch} = snaps;
+                            g.AI_mean{ch} = mean(snaps, 3);
+                            
+                            % title name
+                            t_filename = strrep(g.tif_filename, '_', '  ');
+                            s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
+
+                            % plot mean images
+                            hf = g.figure;
+                            %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
+                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
+                        end
+                    end
+                    
                     % BG crosstalk analysis.
                     ch = g.roi_channel;
-                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events.
+                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Snap images are needed.
                     
-                    % load cc struct if exist
+                    % base snaps
+                    
+                    
+                    % Load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
                     if ~isempty(cc_filenames)
                         commandwindow

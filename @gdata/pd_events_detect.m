@@ -23,16 +23,25 @@ function pd_events_detect(g, trace, times)
     interval = sum((times - times(1)) < g.min_interval_secs); % num of data points.
     % interval = g.min_interval_secs * rate ;
     
-    % major events
-    ev_idx = th_crossing(trace_for_events, g.pd_threshold1, interval);
-    ev = times_for_events(ev_idx);
-    g.pd_events1 = ev;
-
-    % minnor events
+    % Minnor events
     ev_idx = th_crossing(trace_for_events, g.pd_threshold2, interval);
     ev = times_for_events(ev_idx);
     g.pd_events2 = ev;
     
+    % Pick major events among minor.
+    ev_idx = th_crossing(trace_for_events, g.pd_threshold1, interval);
+    ev = times_for_events(ev_idx); % Detection by thresholding. Can be behind the corresponding minor trigger.
+    
+    n_major_ev = length(ev);
+    ev_major = zeros(1,n_major_ev);
+    for i=1:n_major_ev
+        % Select previous or coincident events.
+        prev_ev = g.pd_events2(g.pd_events2 - ev(i) <= 0);
+        % Choose the latest event among previous events.
+        ev_major(i) = max(prev_ev);
+    end
+    g.pd_events1 = ev_major;
+
     % plot detected events with pd trace.
     g.plot_pd;
 
