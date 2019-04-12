@@ -42,7 +42,6 @@ function avg_to_pd_events(g)
     
     % smoothing ..
     
-    
      
     n_repeat = length(g.avg_trigger_times);
     interval = g.frameid(g.avg_trigger_times(2) - g.avg_trigger_times(1)); % in terms of num of frames.
