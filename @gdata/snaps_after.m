@@ -26,6 +26,6 @@ function vol = snaps_after(g, times, duration)
         vol(:,:,i) = mean(g.AI{ch}(:,:,range), 3);
     end
 
-    imvol(vol, 'globalContrast', true);
+    %imvol(vol, 'globalContrast', true);
 
 end

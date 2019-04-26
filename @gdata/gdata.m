@@ -137,7 +137,7 @@ classdef gdata < handle
                 end
                 
                 for i = ch
-                    if ch ~= g.AI_trigger_ch
+                    if i ~= g.AI_trigger_ch
                         s_title = sprintf('%s  (CH:%d, ScanZoom:%.1f)', g.ex_name, i, g.header.scanZoomFactor);
                         if numel(varargin) > 0
                             if ischar(varargin{1})
@@ -428,10 +428,7 @@ classdef gdata < handle
                     
                     % BG crosstalk analysis.
                     ch = g.roi_channel;
-                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Snap images are needed.
-                    
-                    % base snaps
-                    
+                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Snap images are needed.  
                     
                     % Load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);

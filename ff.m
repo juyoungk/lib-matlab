@@ -3,8 +3,10 @@ function ff
 
 color = [1 1 1];
 color = [0 0 0]; % black
-Fontsize = 20;
-axis_Linewidth = 2.4;
+disp('Current color is black');
+
+Fontsize = 28;
+axis_Linewidth = 1.2;
 line_Linewidth = 1.2;
 
 hfig = get(groot,'CurrentFigure');

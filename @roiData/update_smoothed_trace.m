@@ -1,8 +1,13 @@
 function update_smoothed_trace(r)
-    % initialize array
-    r.roi_smoothed = zeros(size(r.roi_trace));
+    
+    if isempty(r.smoothing_size)
+        r.smoothing_size = r.smoothing_size_init;
+    end
     disp(['Smoothing size = ', num2str(r.smoothing_size)]);
 
+    % initialize array
+    r.roi_smoothed = zeros(size(r.roi_trace));
+    
     % smooth trace
     for i=1:r.numRoi
         

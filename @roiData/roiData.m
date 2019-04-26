@@ -744,7 +744,7 @@ classdef roiData < matlab.mixin.Copyable
             % Usually, called by avaerage anlaysis.
             % 2019 0313 wrote.
             % 2019 0315 prepare_duration added.
-            prepare_duration = 0; %secs. skip during this period.
+            prepare_duration = 5; %secs. skip during this period.
             duration = 5; %sec
             
             r.roi_baseline = zeros(1, r.numRoi);

@@ -167,6 +167,11 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         end
                         % Lines for avg trigger times
                         plot([x x], y_line, 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
+                        
+                        if contains(r.ex_name, 'flash')
+                            x = x + r.avg_trigger_interval/2.;
+                            plot([x x], y_line, '-.', 'LineWidth', 1, 'Color', 0.8*[1 1 1]); hold on
+                        end
                     end
 
                     % within one repeat, stim trigger events
