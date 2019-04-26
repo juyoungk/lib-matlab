@@ -393,11 +393,11 @@ classdef gdata < handle
                     else 
                         % event detect (+ plot)
                         g.pd_events_detect(g.AI_trace{g.AI_trigger_ch}, g.t_times);
-                        title('Scanimage recording of photodiode signal');
+                        title('Scanimage direct recording of photodiode signal');
                         fprintf('CH %d was used as stimulus trigger signal, and trigger events were detected.\n', g.AI_trigger_ch);
                         
                         % Was there any cross-talk between AI channels due
-                        % to the direct PD recording?
+                        % to the direct PD recording? Usually, not really.
 %                         figure;
 %                         for ch = g.AI_chSave
 %                             plot(g.AI_trace{ch}); hold on
@@ -428,7 +428,7 @@ classdef gdata < handle
                     
                     % BG crosstalk analysis.
                     ch = g.roi_channel;
-                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Snap images are needed.  
+                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Bg pixels are selected from snap images.
                     
                     % Load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);

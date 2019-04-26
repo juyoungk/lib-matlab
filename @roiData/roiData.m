@@ -543,12 +543,12 @@ classdef roiData < matlab.mixin.Copyable
                     bw2 = lowerpixels(mean_stim_end, c);
                     bw = bw1 & bw2 & ~cc_pixels;
                     r.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
-                    
                 end
                 % plot bg trace if needed.
 %                 figure; 
 %                 plot(r.f_times, r.bg_trace); 
 %                 r.plot_stim_lines;
+%                 title('Trace of bg pixels excluding roi regions.');  
                 %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
 
                 % Extract roi trace from vol.
@@ -610,10 +610,10 @@ classdef roiData < matlab.mixin.Copyable
                     % 2. Sess triggers are avg tiggers, minor
                     % tiggers distinguish multiple kinds of stimuli
                     % withing one cyle.
-                    disp('Average analysis..');
-                    disp(['0. Major triggers (', num2str(numSessTriggers),').']);
+                    disp('Average analysis between..');
+                    disp(['0. Major triggers (', num2str(numSessTriggers),' sessions).']);
                     for i_sess = 1:numSessTriggers
-                        fprintf('%d. Minor triggers within session trigger %d (at %.1f sec).\n', i_sess, i_sess, r.sess_trigger_times(i_sess));
+                        fprintf('%d. Minor triggers within one session trigger %d (at %.1f sec).\n', i_sess, i_sess, r.sess_trigger_times(i_sess));
                     end
                     str = sprintf('Which average analysis do you want? 0-%d [%d] or enter 99 for no average analysis.\n', i_sess, i_sess);
                     which_avg = input(str);
@@ -630,7 +630,6 @@ classdef roiData < matlab.mixin.Copyable
                             r.avg_trigger_times = r.stim_triggers_within(which_avg);
                     end
                 end
-                    
 %                 if rem(numStimTriggers, numSessTriggers) ~= 0
 %                     fprintf('Not divisible, You would want to check the alignmennt between them.\n');
 %                 else

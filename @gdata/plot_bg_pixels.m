@@ -1,6 +1,6 @@
 function plot_bg_pixels(g, ch, timeafter)
 % Background noise anlysis.
-% Background pixel detection at snap1 & 2.
+% Background pixel detection at snap (1 & 2) images.
 % timeafter - detect cross-talk events only after 'timeafter'.  
 % update bg_trace
 % detect bg_events (from contrast level xx)
@@ -39,7 +39,8 @@ function plot_bg_pixels(g, ch, timeafter)
     
     % Normalized the bg trace
     i_contrast = 2;
-    bg = scaled(g.bg_trace(:,i_contrast)); % trace for evennt detection.
+    bg_raw = g.bg_trace(:,i_contrast);
+    bg = scaled(bg_raw); % normalized trace for evennt detection.
     
     % detect crosstalk events
     threshold = 0.45;
@@ -63,9 +64,9 @@ function plot_bg_pixels(g, ch, timeafter)
         plot(ev, threshold, 'o');
     end
     xlim([timeafter, g.f_times(end)]);
-    title('Background pixel avg trace.');
+    title(['Background pixel avg trace. Min: ', num2str(min(bg_raw)), ', Max: ', num2str(max(bg_raw))]);
     
-    % pd event lines
+    % pd event lines on bg trace plot.
     g.plot_pd_events2_lines; % pd_events2 (minor) plot
     
     hold off
