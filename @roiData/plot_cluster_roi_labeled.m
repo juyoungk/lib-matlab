@@ -10,6 +10,10 @@ end
 
 c_max = max(r.c(r.c~=0));
 
+if c_max < 1
+    error('Max cluster id is 0. Not clustered yet or no cluster info.');
+end
+
 %
 bw = zeros([r.roi_cc.ImageSize, r.dispClusterNum]);
 bw_labeled = false(r.roi_cc.ImageSize);

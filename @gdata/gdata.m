@@ -345,12 +345,6 @@ classdef gdata < handle
                     % frame times (~ ch frame times)
                     g.f_times = ((1:g.nframes)-0.5)*g.ifi;
                     
-                    % Check if acq was sync with triggers.
-                    disp(['SI.extTrigEnable = ', h.extTrigEnable]);
-                    if contains(h.extTrigEnable, 'false') || contains(h.extTrigEnable, '0')
-                        disp('!!! Be aware that Scanimage was not triggered by stimulus trigger (e.g. WaveSurfer). !!!');
-                    end
-                    
                     % channel initialization
                     for i = 1:g.n_channels
                         g.AI_mean{i} = zeros(size_vol(1), size_vol(2));
@@ -390,6 +384,15 @@ classdef gdata < handle
                     % PD trace recording via Scanimage AI Ch2.
                     if isempty(g.AI{g.AI_trigger_ch})
                         fprintf('AI trigger channel %d is empty. No direct pd signal was given to ScanImage.\n', g.AI_trigger_ch);
+                        
+                        % Check if acq was sync with triggers.
+                        disp(['SI.extTrigEnable = ', h.extTrigEnable]);
+                        if contains(h.extTrigEnable, 'false') || contains(h.extTrigEnable, '0')
+                            disp('!!! Be aware that Scanimage was not triggered by stimulus trigger (e.g. WaveSurfer). !!!');
+                        end
+                        
+                        % pd events were already detected if h5 file
+                        % exists. 
                     else 
                         % event detect (+ plot)
                         g.pd_events_detect(g.AI_trace{g.AI_trigger_ch}, g.t_times);

@@ -72,14 +72,14 @@ function plot2(r, I, varargin)
             plot_trace_raw(r, k);       
 
         % 3.Projected scores onto (PCA) space dims
-        axes('Position', [0.53  0.39  0.4  0.36], 'Visible', 'off');
+        ax_pca = axes('Position', [0.53  0.39  0.4  0.36], 'Visible', 'off');
                 
                 %
                 i = 1; j = 2; % first 2 scores of PCA
                 
                 % Scatter plot of pca projection onto i,j dims.
-                r.pca_plot(i, j);
-        
+                r.pca_plot(i, j); % will plot the colorbar, too.
+                
                 % all avg traces
                 X = r.avg_pca_score; % can be empty when ..
                 
@@ -97,7 +97,7 @@ function plot2(r, I, varargin)
                         k_color = c0_color;
                     end
                     %scatter(X(k, i),X(k, j), 18, color(c_list==r.c(k), :), 'filled');
-                    plot(X(k, i),X(k, j), 'kd', 'MarkerSize', 13, 'LineWidth', 1.8, 'Color', k_color); 
+                    plot(ax_pca, X(k, i),X(k, j), 'kd', 'MarkerSize', 13, 'LineWidth', 1.8, 'Color', k_color); 
                                         
                     hold off
 
@@ -189,14 +189,11 @@ function plot2(r, I, varargin)
                     c_suggested = i_sorted(i_c);
                 end
                 
-                roi_clustered = find(c==c_suggested);
-                r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.4, 'Label', false);
+                %roi_clustered = find(c==c_suggested);
+                %r.plot_avg(roi_clustered, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.4, 'Label', false); hold on
+                r.plot_avg(c==c_suggested, 'PlotType', 'mean', 'NormByCol', true, 'LineWidth', 1.4, 'Label', false); hold on
+                plot(r.a_times, y, 'LineWidth', 0.7); hold off
                 
-                hold on
-                yy = r.traceForAvgPlot(y);
-                plot(r.a_times, yy, 'LineWidth', 0.7);
-                
-                hold off
                 %axis tight
                 ax = gca;
                 

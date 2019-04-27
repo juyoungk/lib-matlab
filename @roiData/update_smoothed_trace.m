@@ -7,6 +7,7 @@ function update_smoothed_trace(r)
 
     % initialize array
     r.roi_smoothed = zeros(size(r.roi_trace));
+    r.roi_smoothed_norm = zeros(size(r.roi_trace));
     
     % smooth trace
     for i=1:r.numRoi

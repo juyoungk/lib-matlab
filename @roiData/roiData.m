@@ -405,6 +405,7 @@ classdef roiData < matlab.mixin.Copyable
         function set.c(r, value)
             n_prev = numel(find(r.c~=0));
             r.c = value;
+            r.totClusterNum = max(r.c);
             n_new = numel(find(r.c~=0));
             if n_new ~= n_prev
                 % c_mean (avg trace) update

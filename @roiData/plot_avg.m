@@ -215,7 +215,9 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
         %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
                 xtickformat('%.0f');
-                s.YLim = y_line; % save current YLim
+                if Lines == true
+                    s.YLim = y_line; % save current YLim
+                end
 
                 hold off;
             end
