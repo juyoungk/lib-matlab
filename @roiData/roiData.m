@@ -26,7 +26,7 @@ classdef roiData < matlab.mixin.Copyable
         stim_fliptimes     % relative times between whitenoise flip times. Should start from 0.
         stim_size          % spatial size [mm]
         stim_disp          % stimulus disp params
-        % 
+        %
         numFrames
         numRoi
         
@@ -552,15 +552,21 @@ classdef roiData < matlab.mixin.Copyable
 %                 title('Trace of bg pixels excluding roi regions.');  
                 %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
 
-                % Extract roi trace from vol.
+                %% Extract roi trace from vol.
                 for i=1:r.numRoi
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;       % No-activity PMT level substraction
                     r.roi_trace(:,i) = y; % raw data (bg substracted)
+                    % roi trace using dynamic cc(x,y)
+                    %r.roi_trace(:,i) = roitrace(vol, cc.PixelIdxList{i}, x, y);  
                 end
                 disp('ROI traces were extracted. PMT bg level was substracted..');
                 
-                % Import stimulus trigger information
+                % Dynamic cc : loop over times ?? 
+                % for 
+                % interporaltion of x, y. average over multiple pixels? 
+                
+                %% Import stimulus trigger information
                 % stim_triger_times can be a cell array
                 % {1} : events1 - Major events. ~ sess_trigger_times
                 % {2} : events2 - Finer evetns. ~ stim_trigger_times

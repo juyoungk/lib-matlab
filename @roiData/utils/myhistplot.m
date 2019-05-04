@@ -33,7 +33,4 @@ ax.XAxis.FontSize = Fontsize;
 ax.YAxis.FontSize = Fontsize;
 
 
-
-
-
 end

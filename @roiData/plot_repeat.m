@@ -22,7 +22,7 @@ function ids = plot_repeat(r, I, varargin)
     disp ('');
     n_plots_per_fig = 64;
     switch PlotType
-        case 'overlaid'
+        case 'overlaid' % default mode
             n_col=6;
             n_row=3;
             %hfig = figure('Position', [10 55 900 450]);

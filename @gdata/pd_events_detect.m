@@ -2,16 +2,20 @@ function pd_events_detect(g, trace, times)
 % 1. Preprocess the trace and assign it as 'pd_trace'
 % 2. Detect events from the trace after g.ignore_secs.
     
-    if nargin < 3 && ~isempty(g.pd_times)
-        times = g.pd_times;
-    else
-        error('no input for times.');
+    if nargin < 3 
+        if ~isempty(g.pd_times)
+            times = g.pd_times;
+        else
+            error('no input for times.');
+        end
     end
     
-    if nargin < 2 && ~isempty(g.pd_trace)
-        trace = g.pd_trace;
-    else
-        error('no input for trace.');
+    if nargin < 2
+        if ~isempty(g.pd_trace)
+            trace = g.pd_trace;
+        else
+            error('no input for trace.');
+        end
     end
         
     % Rectified & normed PD trace
