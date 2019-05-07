@@ -10,12 +10,19 @@ classdef roiData < matlab.mixin.Copyable
 %    
     properties
         ex_name
-        snaps        % 2 mean image's'. The first and last 1000 (or less) frames.
-        image       % mean of snap images.
         header      % Imaging condition
+        image       % mean (or primary) image (over snaps).
+        snap_ref    % reference snap for no shift case. 
+        snaps       % snaps for every major events
+        snaps_times % times for snap images
         ex_stim     % Stim parameters struct
         %
         roi_cc      % roi information (struct 'cc')
+        %
+        roi_images
+        roi_shift       % Shift or drift [px] of each ROI in each frame time by interpolating snaps' shifts.
+        roi_shift_snaps % Shift or drift [px] of each ROI between snap images.
+        %
         ifi         % inter-frame interval of vol (data)
         stim_trigger_times % Absolute times when stims (or PD) were triggered. Fine triggers.
         sess_trigger_times % Absolute times of session (or major) triggers. Should be a subset of stim_triggers, but the value can be a little off from it.
@@ -32,6 +39,7 @@ classdef roiData < matlab.mixin.Copyable
         
         % times = r.f_times
         f_times         % frame times
+        traces          % Libraries of roi traces with all possible integer shifts.
          bg_trace       % trace of background (detect non-fluorecent pixels by thresholding)
         roi_trace       % raw trace (bg substracted. No other post-processing)
         roi_smoothed    % smoothed raw trace
@@ -517,56 +525,8 @@ classdef roiData < matlab.mixin.Copyable
                 N = ceil(size(vol, 1)/10);
                 bg_PMT = mean(a(1:(N*N))); % PMT level for with no activity.    
                 fprintf('Background PMT level was estimated to be %.1f.\n', bg_PMT);
-                
-                % Mean images
-                [~, ~, nframes] = size(vol);
-                n = min(1000, nframes); % 20 Hz save --> 50s
-                %nframes_snap = min(nframes, round(512*512*1000/row/col));
-                mean_laser_on = mean(vol(:,:,1:n), 3);
-                mean_stim_end = mean(vol(:,:,(end-n+1:end)), 3);
-                r.snaps  = cat(3, mean_laser_on, mean_stim_end);
-                r.image = mean(r.snaps, 3);
-                   
-                % reshaped vol
-                vol_reshaped = reshape(vol, [], r.numFrames);
-                
-                % Estimate BG trace (for cross-talk and timing inspection)
-                % Non-fluorecence bg pixels = pixels of the low-end c% excluding pixels in
-                % predefined cc.
-                % Defined in the constructor since vol_reshaped will not be
-                % stored in roiData.
-                cc_pixels = cc_to_bwmask(cc); % roi pixels (logical)
-                contrast = [0.5 1.0 2.0 4.0];
-                r.bg_trace = zeros(nframes, length(contrast));
-                for i = 1:length(contrast) % contrast values (%)
-                    c = contrast(i);
-                    bw1 = lowerpixels(mean_laser_on, c);
-                    bw2 = lowerpixels(mean_stim_end, c);
-                    bw = bw1 & bw2 & ~cc_pixels;
-                    r.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
-                end
-                % plot bg trace if needed.
-%                 figure; 
-%                 plot(r.f_times, r.bg_trace); 
-%                 r.plot_stim_lines;
-%                 title('Trace of bg pixels excluding roi regions.');  
-                %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
 
-                %% Extract roi trace from vol.
-                for i=1:r.numRoi
-                    y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
-                    y = y - bg_PMT;       % No-activity PMT level substraction
-                    r.roi_trace(:,i) = y; % raw data (bg substracted)
-                    % roi trace using dynamic cc(x,y)
-                    %r.roi_trace(:,i) = roitrace(vol, cc.PixelIdxList{i}, x, y);  
-                end
-                disp('ROI traces were extracted. PMT bg level was substracted..');
-                
-                % Dynamic cc : loop over times ?? 
-                % for 
-                % interporaltion of x, y. average over multiple pixels? 
-                
-                %% Import stimulus trigger information
+                %% Import stimulus trigger information: Average analysis and Define snap images
                 % stim_triger_times can be a cell array
                 % {1} : events1 - Major events. ~ sess_trigger_times
                 % {2} : events2 - Finer evetns. ~ stim_trigger_times
@@ -587,15 +547,146 @@ classdef roiData < matlab.mixin.Copyable
                     % not cell array.
                     r.stim_trigger_times = stim_trigger_times;
                     r.sess_trigger_times = stim_trigger_times;
-                    n = 1;
                 end
-                
                 numStimTriggers = numel(r.stim_trigger_times);
                 numSessTriggers = numel(r.sess_trigger_times);
                 fprintf('%d session (major) triggers, %d stim (minor) triggers are given.\n', numSessTriggers, numStimTriggers);
                 % Num of stim triggers within one session on
                 % average
                 %n = floor(numStimTriggers/numSessTriggers);
+                
+                %% Snap images (first session ... last moment)
+                [rows, cols, nframes] = size(vol);
+                % major session events.
+                numSnaps = numSessTriggers + 1; % + last snap
+                r.snaps = zeros(rows, cols, numSnaps); 
+                r.snaps_times = zeros(1, numSnaps);
+                for i = 1:numSessTriggers
+                    t_event = r.sess_trigger_times(i);
+                    i_frame = find(r.f_times>=t_event, 1);
+                    % duration for each snap
+                    n = min(1000, nframes-i_frame); % 20 Hz save --> 50s
+                    duration = r.ifi * n;
+                    %
+                    r.snaps(:,:,i) = mean(vol(:,:,i_frame:i_frame+n-1), 3);
+                    r.snaps_times(i) = t_event + duration/2.;
+                end
+                % Last snap
+                r.snaps(:,:,end) = mean(vol(:,:,(end-n+1:end)), 3);
+                r.snaps_times(end) = r.f_times(end) - duration/2.;
+                
+                % define reference snap imge - 1st image
+                r.snap_ref = r.snaps(:,:,1);
+                r.roi_images = utils.getPatchesFromPixelLists(r.snap_ref, cc.PixelIdxList, 10);
+                disp('1st snap image is set for reference image for offset parameters.');
+                
+                % mean over snaps
+                r.image = mean(r.snaps, 3);
+               
+                %% Image patches around the given ROIs
+%                 for s = 1:numSnaps
+%                     %
+%                 end
+                
+                %% Estimate shift (x, y) of individual ROIs across snap images
+                padding = 10;
+                roi_ref = utils.getPatchesFromPixelLists(r.snap_ref, cc.PixelIdxList, padding);
+                %r.roi_shift_snaps = cell(1,r.numRoi); 
+                % r.roi_shift_snaps{k} = [numSnaps x 2] vector
+                % r.roi_shift_snaps{x or y}(shift@snap, roi)..?
+                r.roi_shift_snaps.x = zeros(numSnaps, r.numRoi);
+                r.roi_shift_snaps.y = zeros(numSnaps, r.numRoi);
+                
+                disp('UNDER TEST - only first 10 ROIs are used for estimating for x&y shifts.');
+                rois_under_test = 1:10;
+                for k = rois_under_test % for test    
+                %for k = 1:r.numRoi
+                    for s = 1:numSnaps
+                        roi_drifted = utils.getPatchFromPixelList(r.snaps(:,:,s), cc.PixelIdxList{k}, padding);
+                        offset = utils.getSingleImageShift(roi_ref{k}, roi_drifted);
+                        r.roi_shift_snaps.x(s, k) = offset(1); 
+                        r.roi_shift_snaps.y(s, k) = offset(2);
+                    end
+                end
+                % all possible offset vectors & linearize
+                % (i,j) = (x,y) + (xnum-xmax, ynum-ymax)
+                % (i,j) to shift array index : sub2ind
+                
+                %% reshaped vol
+                vol_reshaped = reshape(vol, [], r.numFrames);
+                
+                %% Library of roi mean traces with all possible integer shifts (must be in constructor)
+                
+                r.traces = cell(1, r.numRoi);
+                % r.traces{roi}(values, shift_id) - comparisons between
+                % shifted params would be convinient.
+                
+                [xlist, ylist] = r.shift_integer_xy_combinations;
+                numIntegerShifts = length(xlist);
+                
+                for k = rois_under_test
+                    % All possible integer combination
+                    
+                    r.traces{k} = zeros(r.numFrames, numIntegerShifts);
+                    
+                    for i = 1:numIntegerShifts % all integer x,y combinations        
+                        % new pixel list with shift by integer x & y
+                        shiftedPixelIdxList = utils.getShiftedPixelList(cc.PixelIdxList{k}, [xlist(i), ylist(i)], rows, cols);
+                        % compute mean for the selected pixel
+                        trace_shifted = mean(vol_reshaped(shiftedPixelIdxList, :), 1);
+                        trace_shifted = trace_shifted - bg_PMT; % No-activity PMT level substraction
+                        r.traces{k}(:,i) = trace_shifted;
+                    end
+                end
+                
+                % Interpolation of trajectories across times of snaps.
+%                 x; % length(x) = numframes. x(frame id)
+%                 y; 
+                
+                
+                %% Dynamic ROI mode
+                % roi mean with shifted trajectories
+                
+                % Trajectories of rois: (x, y)
+                % Interpolating roi mean as a function of x & y from trace
+                % libraries.
+%                 for i=1:r.numRoi
+%                     r.roi_trace(:,i) = r.shifted_roi_mean_interpolated(i);
+%                 end
+%                 
+                %% Estimate BG trace (for cross-talk and timing inspection)
+                % Non-fluorecence bg pixels = pixels of the low-end c% excluding pixels in
+                % predefined cc.
+                % Defined in the constructor since vol_reshaped will not be
+                % stored in roiData.
+                cc_pixels = cc_to_bwmask(cc); % roi pixels (logical)
+                contrast = [0.5 1.0 2.0 4.0];
+                r.bg_trace = zeros(nframes, length(contrast));
+                for i = 1:length(contrast) % contrast values (%)
+                    c = contrast(i);
+                    bw1 = lowerpixels(mean_laser_on, c);
+                    bw2 = lowerpixels(mean_stim_end, c);
+                    bw = bw1 & bw2 & ~cc_pixels;
+                    r.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
+                end
+                % plot bg trace if needed.
+%                 figure; 
+%                 plot(r.f_times, r.bg_trace); 
+%                 r.plot_stim_lines;
+%                 title('Trace of bg pixels excluding roi regions.');  
+                %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
+                
+                %% Extract roi trace from vol.
+                for i=1:r.numRoi
+                    y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
+                    y = y - bg_PMT;       % No-activity PMT level substraction
+                    r.roi_trace(:,i) = y; % raw data (bg substracted)
+                    
+                    % estimating roi trace under dynamic trajectories
+                    %r.roi_trace(:,i) = roitrace(vol_reshaped, cc.PixelIdxList{i}, x, y);  
+                end
+                disp('ROI traces were extracted. PMT bg level was substracted..');
+                
                 
                 %% Average analysis setting (currently, use default setting)
 %                 r.n_cycle = 1.5;
@@ -720,6 +811,20 @@ classdef roiData < matlab.mixin.Copyable
             end
         end
         
+        function [xlist, ylist] = shift_integer_xy_combinations(r)
+            % Assumption: monotonic increase or decrease
+            if isempty(r.roi_shift_snaps.x)
+                error('Image shifts between snap images have not yet been estimated.');
+            end
+            x_all = r.roi_shift_snaps.x(:);
+            y_all = r.roi_shift_snaps.y(:);
+            xgrid = floor(min(x_all)):ceil(max(x_all));
+            ygrid = floor(min(y_all)):ceil(max(y_all));
+            [xlist, ylist] = meshgrid(xgrid, ygrid);
+            xlist = xlist(:); % vectorize
+            ylist = ylist(:); % vectorize
+        end
+                        
         function triggers = stim_triggers_within(r, sess_id)
             % Returns minor stim trigger times under session trigger id.
             
