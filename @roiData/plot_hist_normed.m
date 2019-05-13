@@ -45,7 +45,7 @@ else
     ax = gca;
     
     % Line plot: mean value of raw trace 
-%     m = r.stat.mean_f(id);
+%     m = r.stat.mean_stim(id);
 %     plot([m m], ax.YLim, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
 %     text( 1.1*m, 0.95*ax.YLim(end), sprintf('%.0f',m), 'FontSize', 12, 'Color', 'k', ...
 %                                 'VerticalAlignment', 'top', 'HorizontalAlignment','left');

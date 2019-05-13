@@ -39,19 +39,19 @@ function bw_k = plot_roi(r, ids, varargin)
             colormap gray;
             axis off;
         elseif contains(imageType, 'image')
-            r.myshow;
-            
+            r.myshow;   
+            % myshow vs imvol?
         end
         hold on
         
         % Contour (k cluster only, not k2)
         visboundaries(bw_k,'Color','r','LineWidth', 0.7); 
-        
                
         % Covert logical array to index array
         if islogical(ids)
             ids = I(ids);
         end
+        
         % ROI number display
         if FLAG_label
             s = regionprops(r.roi_cc, 'extrema');
@@ -64,6 +64,14 @@ function bw_k = plot_roi(r, ids, varargin)
             end
         end
         hold off
+        
+        % Boundingbox
+
+        
+        % Add countour
+        %visboundaries(bw,'Color','r','LineWidth', 0.7); 
+        
+            
 end
 
 

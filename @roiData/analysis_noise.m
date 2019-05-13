@@ -29,7 +29,7 @@ title(['Smoothed Normed trace. ROI ', num2str(id)], 'FontSize', 18);
 ids = r.roi_good(1:10);
 Fontsize = 16;
 
-%ids = find(r.stat.mean_f > 250 & r.p_corr.smoothed_norm > 0.5);
+%ids = find(r.stat.mean_stim > 250 & r.p_corr.smoothed_norm > 0.5);
 figure;
 for id = ids
 

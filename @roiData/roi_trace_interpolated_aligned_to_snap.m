@@ -1,0 +1,24 @@
+function trace = roi_trace_interpolated_aligned_to_snap(r, snap_id, rois)
+% roi trace with drifted ROI pixellist aligned with one of the snap iamges
+% saved in roiData class.
+        
+    if nargin < 3
+        rois = 1:r.numRoi;
+    end
+    numRoi = length(rois);
+    
+    trace = zeros(r.numFrames, numRoi);
+    
+    for i = 1:numRoi
+        
+        roi = rois(i);
+        
+        x = r.roi_shift_snaps.x(snap_id, roi);
+        y = r.roi_shift_snaps.y(snap_id, roi);
+        
+        trace(:, i) = r.roi_trace_interpolated(roi, x, y);
+
+    end
+    
+end
+

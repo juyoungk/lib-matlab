@@ -97,7 +97,7 @@ hold off
 % Normalize the whole trace in [0 1] and then compare
 r.smoothing_size = 5;  
 %[~, ids] = sort(r.p_corr.smoothed_norm, 'descend');
-[~, ids] = sort(r.stat.mean_f, 'descend');
+[~, ids] = sort(r.stat.mean_stim, 'descend');
 ids = ids(1:20);
 %
 h = figure;

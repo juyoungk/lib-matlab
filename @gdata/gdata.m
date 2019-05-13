@@ -436,14 +436,14 @@ classdef gdata < handle
                     % Load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
                     if ~isempty(cc_filenames)
-                        commandwindow
-                        reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
-                        if isempty(reply); reply = 'Y'; end
-                        if reply == 'Y'
-                            g.load_roiData_save(cc_filenames{1});
-                        else
-                            g.cc = [];
-                        end
+%                         commandwindow
+%                         reply = input(['Do you want to load ''',cc_filenames{1},''' for ROI analysis? Y/N [Y]: '],'s');
+%                         if isempty(reply); reply = 'Y'; end
+%                         if reply == 'Y'
+%                             g.load_roiData_save(cc_filenames{1});
+%                         else
+%                             g.cc = [];
+%                         end
                     else
                         disp(['No .mat file for ''', ex_str, ''' (e.g. ''cc'' structure for ROI segmentation)']);
                         %g.cc = []; % initialize cc struct. No need to

@@ -51,7 +51,7 @@ s_label ={  'mean fluorescence',...
             '',...
             ''};
         
-s(:, 1) = r.stat.mean_f(I);                            % Mean flu. level  
+s(:, 1) = r.stat.mean_stim(I);                         % Mean flu. level over stimulus period
 s(:, 2) = r.stat.smoothed_norm.avg_amp(I);             % Responsovity 
 s(:, 3) = r.stat.smoothed_norm.trace_normc_std_avg(I); % Pattern reliability.
 
@@ -67,6 +67,6 @@ disp(['Mean STA for completely random traces w/ normalization: ', num2str(aa)]);
 mycluscatter(s(:, 1:3), 'Cluster', idx, 'Label', s_label);
 
 % Any cluster bias in expression level or responsiveness (~spiking)
-% mean_f :: amplitude :: std of repeats ??
+% mean_stim :: amplitude :: std of repeats ??
 
 end

@@ -185,7 +185,7 @@ function plot_cluster(r, i_cluster, n_trace, PlotType)
            % See if specific cluster has distinively high dF (~spiking)
                 ax = axes('Parent', h, 'OuterPosition', [x0+(j-1)*x_width (1-y0)-i_row*y_spacing x_width y_width]);
                
-                scatter(r.p_corr.smoothed_norm(roi_clustered), r.stat.mean_f(roi_clustered), 8);
+                scatter(r.p_corr.smoothed_norm(roi_clustered), r.stat.mean_stim(roi_clustered), 8);
                 %ax.Color = 'k'; % background color
                 xlabel('corr');
                 ylabel(['mean f']);

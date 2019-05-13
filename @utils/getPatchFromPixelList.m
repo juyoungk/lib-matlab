@@ -1,4 +1,4 @@
-function patch = getPatchFromPixelList(img, pixelIdxList, padding)
+function [patch_img, patch_bw] = getPatchFromPixelList(img, pixelIdxList, padding)
 % Get image patches (with padding) from pixel indices. ex) cc.PixelIdxList
 %
 % first wrote by Dongsoo Lee (19-04-29)
@@ -8,9 +8,11 @@ function patch = getPatchFromPixelList(img, pixelIdxList, padding)
     [N, M] = size(img);          % ex)[N, M] = [512 380]
     P = padding;
 
-    flatten = reshape(zeros(N, M), [N * M, 1]);
+    flatten = reshape(zeros(N, M), [N * M, 1]); % zero image
     flatten(pixelIdxList) = 1;
-    s = regionprops(reshape(flatten, [N, M]), 'BoundingBox');
+    bw = reshape(flatten, [N, M]);
+    
+    s = regionprops(bw, 'BoundingBox');
     ymin = ceil(s.BoundingBox(2));
     ymax = ymin + ceil(s.BoundingBox(4)) - 1;
     xmin = ceil(s.BoundingBox(1));
@@ -29,7 +31,8 @@ function patch = getPatchFromPixelList(img, pixelIdxList, padding)
         xmax = M - P;
     end
     
-    patch = img(ymin-P:ymax+P, xmin-P:xmax+P);
+    patch_img = img(ymin-P:ymax+P, xmin-P:xmax+P);
+    patch_bw = bw(ymin-P:ymax+P, xmin-P:xmax+P);
     
 end
 

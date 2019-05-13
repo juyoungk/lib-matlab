@@ -7,7 +7,7 @@ function offset = getSingleImageShift(img1, img2, resize_factor)
 % nargin added 19-05-06 Juyoung
 
 if nargin < 3
-    resize_factor = 4;
+    resize_factor = 5;
 end
     
 if size(img1) == size(img2)
