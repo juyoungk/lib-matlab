@@ -1,6 +1,16 @@
-function plot_roi_patch_snap_offset(r, roi_id, snap_id)
-% Check whether the estimated offset pruduces the shifted set of
-% PixelIdxList and aligns well with the snap image accordingly.
+function plot_roi_patch_snap_offset(r, roi_id, snap_id, NO_SHIFT)
+% Apply shifted roi pixellist. 
+% Check whether the shifted (or offset) roi pixellist 
+% aligns well with the snap image accordingly.
+%
+% inputs: 
+%
+%       NO_SHIFT - if true, 
+
+
+if nargin < 4
+    NO_SHIFT = false;
+end
 
 if nargin < 3
     snap_id = 1;
@@ -15,7 +25,7 @@ if roi_id > r.numRoi
     error('roi id is out of range.');
 end
 
-padding = 18;
+padding = 20;
 
 img = r.snaps(:,:,snap_id);
 
@@ -25,18 +35,23 @@ y = r.roi_shift_snaps.y(snap_id, roi_id);
 fprintf('snap %d offset [x, y] = %.1f, %.1f \n', snap_id, x, y);
 
 % shifted pixel list
-pixelIdxList = r.getShiftedPixelList(roi_id, [x, y]);
-
+if NO_SHIFT
+    pixelIdxList = r.getShiftedPixelList(roi_id, [0, 0]);
+    fprintf('Original roi pixellist is selected (NO_SHIFT option).\n');
+else
+    pixelIdxList = r.getShiftedPixelList(roi_id, [x, y]);
+end
 
 [patch_img, patch_bw] = utils.getPatchFromPixelList(img, pixelIdxList, padding);
 
+% Plot
 contrast = 0.2;
-J = utils.myshow(patch_img, contrast);
-%J = utils.myshow(patch_bw, contrast);
+utils.myshow(patch_img, contrast);
+%utils.myshow(patch_bw, contrast);
 hold on
 
-% add contour
-visboundaries(patch_bw,'Color','r','LineWidth', 0.7); 
+% Add contour
+visboundaries(patch_bw,'Color','r','LineWidth', 1.7); 
 
 hold off
 

@@ -116,8 +116,8 @@ function ids = plot_repeat(r, I, varargin)
     disp('Trace type: smoothed_norm.');
     
     % Exclude 1st response.
-    y_aligned = y_aligned(:,:,2:end);
-    disp('First response was ignored.');
+    %y_aligned = y_aligned(:,:,2:end);
+    %disp('First response was ignored.');
             
     function redraw()   
         % delete all objects

@@ -1,4 +1,4 @@
-function plot_shift(r, roi)
+function plot_shifted_traces(r, roi)
 % Compare traces of various shift values.
 
     if nargin < 2
@@ -25,6 +25,5 @@ function plot_shift(r, roi)
     
     % roi boundaries
     
-    
-
+   
 end

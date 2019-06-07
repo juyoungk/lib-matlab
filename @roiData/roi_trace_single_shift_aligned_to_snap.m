@@ -1,9 +1,10 @@
-function trace = roi_trace_interpolated_aligned_to_snap(r, snap_id, rois)
-% roi trace with drifted ROI pixellist aligned with one of the snap iamges
+function trace = roi_trace_single_shift_aligned_to_snap(r, snap_id, rois)
+% ROI trace with drifted ROI pixellist aligned with one of the snap iamges
 % saved in roiData class.
         
     if nargin < 3
         rois = 1:r.numRoi;
+        disp('All ROIs are selected for estimating the interpolated traces.');
     end
     numRoi = length(rois);
     
@@ -21,4 +22,3 @@ function trace = roi_trace_interpolated_aligned_to_snap(r, snap_id, rois)
     end
     
 end
-

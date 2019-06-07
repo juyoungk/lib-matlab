@@ -1,5 +1,5 @@
 function J = plot_roi_patch(r, roi_id, padding)
-% Draw roi boundary with cropped image of snap_ref.
+% Draw roi boundary with cropped image of "snap_ref" (no shift).
 
 if nargin < 3
     padding = 18;

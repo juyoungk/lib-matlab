@@ -14,7 +14,7 @@ classdef roiData < matlab.mixin.Copyable
         image       % mean (or primary) image (over snaps).
         snap_ref    % reference snap for no shift case. 
         snaps       % snaps for every major events
-        snaps_trigger_times
+        snaps_trigger_times % Currently, session trigger times.
         snaps_middle_times % times for snap images
         ex_stim     % Stim parameters struct
         %
@@ -583,37 +583,31 @@ classdef roiData < matlab.mixin.Copyable
                 padding = 10;
                 r.roi_patch = utils.getPatchesFromPixelLists(r.snap_ref, cc.PixelIdxList, padding);
                 
-                %% Image patches around the given ROIs
-%                 for s = 1:numSnaps
-%                     %
-%                 end
-                
+
                 %% Estimate shift (x, y) of individual ROIs across snap images
-                
                 
                 % shift at snaps from ref image
                 r.roi_shift_snaps = utils.roi_shift_from_ref(r.snap_ref, r.snaps, cc.PixelIdxList, 1:r.numRoi, padding);
                
+                % Interpolate x,y of each roi for all frame times
+                % (roi_shift will be updated)
+                r.roi_shift_xy_interpolation;
                 
-                %% Library of roi mean traces (must be in constructor)
-                [r.traces_xlist, r.traces_ylist] = utils.integer_xy_offset_lists(r.roi_shift_snaps.x, r.roi_shift_snaps.y);
-                
-                xnum = length(r.traces_xlist);
-                ynum = length(r.traces_ylist);
-                xmax = r.traces_xlist(end); % it can be either 0 (neg x) or n-1 (pos x)
-                ymax = r.traces_ylist(end);
-               
+                %% roi traces with x,y shifts of possible integer grid
                 r.traces = cell(1, r.numRoi);
                 
+                %% Library of roi mean traces (must be in constructor)
                 for k = 1:r.numRoi
-                    
-                    r.traces{k} = zeros(r.numFrames, xnum, ynum);
+                        
                     % r.traces{roi}(values, x_index, y_index)
                     
-                    for x = r.traces_xlist
-                    for y = r.traces_ylist
+                    r.traces{k} = zeros(r.numFrames, r.roi_shift.xnum, r.roi_shift.ynum);
+                    
+                    for i = 1:length(r.traces_xlist)
+                    for j = 1:length(r.traces_ylist)
                         
-                        % New pixel list with shift by integer offset x & y
+                        x = r.traces_xlist(i);
+                        y = r.traces_ylist(j);
                         offset = [x, y];
                         shiftedPixelIdxList = utils.getShiftedPixelList(cc.PixelIdxList{k}, offset, rows, cols);
                         
@@ -622,16 +616,13 @@ classdef roiData < matlab.mixin.Copyable
                         trace_shifted = mean(vol_reshaped(shiftedPixelIdxList, :), 1);
                         trace_shifted = trace_shifted - bg_PMT; % No-activity PMT level substraction
                         
-                        % save trace
-                        x_index = x + (xnum-xmax);
-                        y_index = y + (ynum-ymax);
-                        r.traces{k}(:,x_index,y_index) = trace_shifted;
+                        r.traces{k}(:,i,j) = trace_shifted;
                     end
                     end
                     
                 end
                 
-                %% Assign roi trace for no-shift conditions
+                %% Default roi trace: no-shift conditions
                 for i=1:r.numRoi
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;       % No-activity PMT level substraction
@@ -643,8 +634,7 @@ classdef roiData < matlab.mixin.Copyable
                 disp('ROI traces were extracted. PMT bg level was substracted..');
                 
                 % Interpolation of trajectories across times of snaps.
-%                 x; % length(x) = numframes. x(frame id)
-%                 y; 
+                %r.roi_shift_xy_interpolation;
                 
                 %% Dynamic ROI mode
                 % roi mean with shifted trajectories
@@ -702,7 +692,7 @@ classdef roiData < matlab.mixin.Copyable
                     disp('Average analysis between..');
                     disp(['0. Major triggers (', num2str(numSessTriggers),' sessions).']);
                     for i_sess = 1:numSessTriggers
-                        fprintf('%d. Minor triggers within one session trigger %d (at %.1f sec).\n', i_sess, i_sess, r.sess_trigger_times(i_sess));
+                        fprintf('%d. Minor triggers within session trigger %d (started at %.1f sec).\n', i_sess, i_sess, r.sess_trigger_times(i_sess));
                     end
                     str = sprintf('Which average analysis do you want? 0-%d [%d] or enter 99 for no average analysis.\n', i_sess, i_sess);
                     which_avg = input(str);

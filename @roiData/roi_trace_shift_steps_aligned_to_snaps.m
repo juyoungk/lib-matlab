@@ -1,4 +1,4 @@
-function traces = roi_trace_interpolated_to_steps_of_snaps(r, rois)
+function traces = roi_trace_shift_steps_aligned_to_snaps(r, rois)
 %
 %  snap1 -  snap2 -  snap3 - ..
 % shift1 - shift2 - shift3 - ..
@@ -26,7 +26,7 @@ for i = 1:numRoi
 
     for s = 1:numSnaps-1 % exclude last snap
         
-        y = roi_trace_interpolated_aligned_to_snap(r, s, roi);
+        y = roi_trace_single_shift_aligned_to_snap(r, s, roi);
         
         % start time
         if s == 1
