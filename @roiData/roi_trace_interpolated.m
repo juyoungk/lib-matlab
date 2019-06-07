@@ -4,6 +4,10 @@ function trace_at_frame_t = roi_trace_interpolated(r, t, roi, x, y)
 % inputs:
 %       t - frame id
     
+    if roi > r.numRoi
+        error('Invalid ROI id.');
+    end
+        
     if nargin < 5
         y = r.roi_shift.y(t, roi);
     end
@@ -14,10 +18,6 @@ function trace_at_frame_t = roi_trace_interpolated(r, t, roi, x, y)
     
     if nargin < 3 
         error('Please specify roi id,');
-    end
-    
-    if roi > r.numRoi
-        error('Invalid ROI id.');
     end
     
     [xrange, xratio] = decompose(x);
@@ -35,7 +35,7 @@ function trace_at_frame_t = roi_trace_interpolated(r, t, roi, x, y)
     
     f = r.traces{roi};
 
-    % Grid value matrix for bilinear interpolation
+    % 2x2 matrix for bilinear interpolation
     M = [ f(t, xid(1), yid(1)) f(t, xid(1), yid(2)); f(t, xid(2), yid(1)) f(t, xid(2), yid(2)) ];
 
     % Interpolated roi trace

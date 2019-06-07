@@ -3,6 +3,10 @@ function trace = roi_trace_interpolated_xy_trajectory(r, rois, frame_ids)
 %   rois      - list of roi ids for interpolation
 %   frame_ids - list of ids for frames
     
+    if isempty(r.roi_shift) || isempty(r.roi_shift.x) || isempty(r.roi_shift.y)
+        error('x & y shift trajectories are not yet interpolated.');
+    end
+
     if nargin < 3
         frame_ids = 1:r.numFrames;
     end

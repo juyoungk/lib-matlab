@@ -17,7 +17,9 @@ function trace = roi_trace_single_shift_aligned_to_snap(r, snap_id, rois)
         x = r.roi_shift_snaps.x(snap_id, roi);
         y = r.roi_shift_snaps.y(snap_id, roi);
         
-        trace(:, i) = r.roi_trace_interpolated(roi, x, y);
+        for t = 1:r.numFrames
+            trace(t, i) = r.roi_trace_interpolated(t, roi, x, y);
+        end
 
     end
     
