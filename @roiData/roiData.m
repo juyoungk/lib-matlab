@@ -19,6 +19,7 @@ classdef roiData < matlab.mixin.Copyable
         ex_stim     % Stim parameters struct
         %
         roi_cc      % roi information (struct 'cc')
+        roi_cc_time % time in which the given cc is best aligned.
         %
         roi_patch       % representative zoomed ROI image
         roi_shift       % x & y drift [px] of each ROI in each frame time by interpolating snaps' shifts.
@@ -569,9 +570,6 @@ classdef roiData < matlab.mixin.Copyable
                 
                 % mean over snaps
                 r.image = mean(r.snaps, 3);
-                % define reference snap imge - 1st image
-                r.snap_ref = r.snaps(:,:,1);
-                disp('1st snap image is set for reference image for offset parameters.');
                 
                 % Add last snap. can be overlapped?
                 [lastSnap, lastSnapTime] = utils.mean_image_last_duration(vol, r.f_times, 30);
@@ -579,15 +577,32 @@ classdef roiData < matlab.mixin.Copyable
                 r.snaps_trigger_times = cat(2, r.snaps_trigger_times, lastSnapTime - (r.f_times(end)-lastSnapTime));
                 r.snaps_middle_times = cat(2, r.snaps_middle_times, lastSnapTime);
                 
-                % ROI patch
+                % timing of given cc
+                if isfield(cc, 'i_image')
+                    i_snap = cc.i_image;
+                    % assume i-th snap corresponds to i-th session trigger.
+                    str = sprintf('Is given cc best agliend with the snap image triggered at session trigger %d (%.1f sec)? [Y]', i_snap, r.snaps_trigger_times(i_snap));
+                    answer = input(str, 's');
+                    if isempty(answer) || contains(str, 'Y')  || contains(str, 'y')
+                        r.roi_cc_time = r.snaps_middle_times(i_snap);
+                        r.snap_ref = r.snaps(:,:,i_snap);
+                    end
+                end
+                        
+                if isempty(r.roi_cc_time)
+                    % time for offset x, y = 0.
+                    r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
+                    r.snap_ref = r.snaps(:,:,1); % arbitrary choice of 
+                end
+
+                % Representative ROI patch
                 padding = 10;
                 r.roi_patch = utils.getPatchesFromPixelLists(r.snap_ref, cc.PixelIdxList, padding);
                 
-
                 %% Estimate shift (x, y) of individual ROIs across snap images
-                
-                % shift at snaps from ref image
-                r.roi_shift_snaps = utils.roi_shift_from_ref(r.snap_ref, r.snaps, cc.PixelIdxList, 1:r.numRoi, padding);
+                % Image correlation between snaps to compute offset x, y
+                % (It has no meaning in an absolute sense. Relative dist from ref-image which is arbitrary choice.)
+                r.roi_shift_snaps = utils.roi_shift_from_ref(r.snap_ref, r.snaps, cc.PixelIdxList, 1:r.numRoi, padding); %% cc is needed just for patch location.
                
                 % Interpolate x,y of each roi for all frame times
                 % (roi_shift will be updated)

@@ -422,8 +422,14 @@ classdef gdata < handle
                             
                             % title name
                             t_filename = strrep(g.tif_filename, '_', '  ');
-                            s_title = sprintf('%s  (AI ch:%d, ScanZoom:%.1f)', t_filename, h.channelSave(j), h.scanZoomFactor);
-
+                            s_title = sprintf('%s  (AI ch:%d)', t_filename, h.channelSave(j));
+                            
+                            % Snaps triggered by pd_events1
+                            if ~isempty(g.pd_events1)
+                                [snaps, snaps_times] = utils.mean_images_after_triggers(g.AI{ch}, g.f_times, g.pd_events1, 30); % mean of 30s duration at times of..
+                                s_title = sprintf('%s snaps at pd_events1 (AI ch:%d)', t_filename, h.channelSave(j));
+                            end
+                            
                             % plot mean images
                             hf = g.figure;
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
