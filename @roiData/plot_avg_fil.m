@@ -7,7 +7,7 @@ function ax = plot_avg_fil(r, id_roi, varargin)
         end
         % plot single roi avg trace
         y = r.avg_trace_fil(:,id_roi);
-        duration = r.avg_trigger_interval;
+        duration = r.avg_duration;
         
         plot(r.a_times, y, 'LineWidth', 1.5, varargin{:}); hold on;
         ax = gca;  Fontsize = 10; 

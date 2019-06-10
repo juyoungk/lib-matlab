@@ -17,7 +17,7 @@ end
 if contains(plotType, 'avg')
     
             Fontsize = p.Results.FontSize;
-            duration = r.avg_trigger_interval;
+            duration = r.avg_duration;
             
             ax.XLim = [r.a_times(1), r.a_times(end)];
             ax.XAxis.FontSize = Fontsize;

@@ -78,8 +78,8 @@ classdef roiData < matlab.mixin.Copyable
         w_filter_trend_stop 
         
         % Average analysis parameters
-        % (subset of stim minor triggers --> avg_trigger_times --> average
-        % analysis)
+        % (subset of stim minor triggers --> avg_trigger_times --> aligning data (align_trace_to_avg_triggers) 
+        % --> average analysis)
         avg_FLAG = false
         avg_FIRST_EXCLUDE = false
         avg_every         % Spacing of stim triggers for average analysis (avg_tigger_times)
@@ -87,6 +87,7 @@ classdef roiData < matlab.mixin.Copyable
                           % A subset of stim_trigger_times.
                           % Can be directly given or given by set.avg_every method.
         avg_trigger_interval
+        avg_duration    % duration for average analysis
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_plot   % structure for plot properties of each stim triggers.
         avg_stim_tags
@@ -577,24 +578,27 @@ classdef roiData < matlab.mixin.Copyable
                 r.snaps_trigger_times = cat(2, r.snaps_trigger_times, lastSnapTime - (r.f_times(end)-lastSnapTime));
                 r.snaps_middle_times = cat(2, r.snaps_middle_times, lastSnapTime);
                 
-                % timing of given cc
-                if isfield(cc, 'i_image')
+                % Timestamp of given cc
+                if isfield(cc, 'timestamp')
+                    r.roi_cc_time = cc.timestamp;
+                elseif isfield(cc, 'i_image')
                     i_snap = cc.i_image;
                     % assume i-th snap corresponds to i-th session trigger.
                     str = sprintf('Is given cc best agliend with the snap image triggered at session trigger %d (%.1f sec)? [Y]', i_snap, r.snaps_trigger_times(i_snap));
                     answer = input(str, 's');
                     if isempty(answer) || contains(str, 'Y')  || contains(str, 'y')
                         r.roi_cc_time = r.snaps_middle_times(i_snap);
-                        r.snap_ref = r.snaps(:,:,i_snap);
                     end
-                end
-                        
-                if isempty(r.roi_cc_time)
+                else
                     % time for offset x, y = 0.
                     r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
-                    r.snap_ref = r.snaps(:,:,1); % arbitrary choice of 
                 end
-
+                
+                % Pick one of the middle snap for reference roi images.
+                i_ref_snap = max(1, round(length(r.snaps_middle_times)/2.));
+                % or find a closest snap to roi_cc_time..
+                r.snap_ref = r.snaps(:,:,i_ref_snap); % arbitrary choice 
+                
                 % Representative ROI patch
                 padding = 10;
                 r.roi_patch = utils.getPatchesFromPixelLists(r.snap_ref, cc.PixelIdxList, padding);
@@ -615,7 +619,6 @@ classdef roiData < matlab.mixin.Copyable
                 for k = 1:r.numRoi
                         
                     % r.traces{roi}(values, x_index, y_index)
-                    
                     r.traces{k} = zeros(r.numFrames, r.roi_shift.xnum, r.roi_shift.ynum);
                     
                     for i = 1:length(r.traces_xlist)
@@ -689,44 +692,9 @@ classdef roiData < matlab.mixin.Copyable
 %                 r.s_phase = -0.25;
                 
                 %% Average analysis
-                if numStimTriggers == numSessTriggers
-                    %
-                    str_input = sprintf('Same numberes of major nad minor triggers. Average analysis over all %d triggers? [Y]?\n (or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers);
-                    n_every = input(str_input);
-                    if isempty(n_every); n_every = 1; end
-                    r.avg_every = n_every;
-                    
-                else
-                    % can be multiple scenarios.
-                    % 1. minor triggers are avg triggers, sess
-                    % triggers distinguish the set of mirror
-                    % triggers.
-                    % 2. Sess triggers are avg tiggers, minor
-                    % tiggers distinguish multiple kinds of stimuli
-                    % withing one cyle.
-                    disp('Average analysis between..');
-                    disp(['0. Major triggers (', num2str(numSessTriggers),' sessions).']);
-                    for i_sess = 1:numSessTriggers
-                        fprintf('%d. Minor triggers within session trigger %d (started at %.1f sec).\n', i_sess, i_sess, r.sess_trigger_times(i_sess));
-                    end
-                    str = sprintf('Which average analysis do you want? 0-%d [%d] or enter 99 for no average analysis.\n', i_sess, i_sess);
-                    which_avg = input(str);
-                    if isempty(which_avg); which_avg = i_sess; end
-                    
-                    switch which_avg
-                        case 0
-                            r.avg_trigger_times = r.sess_trigger_times;
-                        case 99
-                            % default baseline estimation & smoothing
-                            r.avg_FLAG = false;
-                            r.baseline;
-                        otherwise
-                            r.avg_trigger_times = r.stim_triggers_within(which_avg);
-                    end
-                end
-
+                r.average_trigger_set_by_session_triggers
+               
                 %% Load ex struct?
-                
                 
                 %% Cluster mean initialization (100 clusters max)
                 r.c_mean = zeros(length(r.a_times), r.totClusterNum);
@@ -779,6 +747,7 @@ classdef roiData < matlab.mixin.Copyable
                 else
                     % single trial case 
                     [mean_f, good_cells] = sort(r.stat.mean_stim, 'descend');
+                    r.roi_good = good_cells;
                     % summary
                     fprintf('ROI %d: mean fluorescence level %5.2f\n', good_cells(1:numCell), mean_f(1:numCell));
 
@@ -890,38 +859,63 @@ classdef roiData < matlab.mixin.Copyable
             % THE FINAL information for avaerage analysis.
             % avg_trigger_interval and stim_end will be computed.
             % Average analysis will be called if the trigger times for
-            % average (or session) are given. 
-            
-            r.avg_FLAG = true;
-            
+            % average (or session) are given.
+           
             % Assign new times
-            r.avg_trigger_times = new_times;
+            r.avg_trigger_times = new_times;           
+            %
+            numAvgTrigger = numel(r.avg_trigger_times);
+            fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
             
-            % Avg trigger interval & stim end
-            if numel(r.avg_trigger_times) > 1
-                
+            if numAvgTrigger < 2 
+                % no avg analysis
+                disp('Single trial response. No avg analysis.');
+            else
                 r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
-                disp(['Avg trigger interval: ', num2str(r.avg_trigger_interval), ' secs.']);
+                
+                % Possible options for duration for average analysis
+                disp('Set duration for the average analysis.');
+                if ~isempty(r.avg_duration)
+                    fprintf('0. Current set duration (%.1f sec).\n', r.avg_duration);
+                    n_default = 0;
+                else
+                    n_default = 1;
+                end
+                fprintf('1. interval between avg trigger times (%.1f sec).\n', r.avg_trigger_interval);
+                %fprintf('2. ')
+                fprintf('99. Get new duration from keyboard.')
+                n = input(sprintf('Enter option no. [%d]\n or provide a specific time duration in secs: ', n_default));
+                if isempty(n)
+                    n = n_default;
+                end
+                switch n
+                    case 0
+                        % do nothing
+                    case 1
+                        r.avg_duration = r.avg_trigger_interval;
+                    case 2
+                    otherwise
+                        r.avg_duration = n;    
+                end
 
-                numAvgTrigger = numel(r.avg_trigger_times);
-
-                if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_trigger_interval)
+                if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_duration)
                     r.stim_end = r.f_times(end);
                     numRepeat = numAvgTrigger - 1;
                 else
-                    r.stim_end = r.avg_trigger_times(end) + r.avg_trigger_interval;
+                    r.stim_end = r.avg_trigger_times(end) + r.avg_duration;
                     numRepeat = numAvgTrigger;
                 end
-            else
-                disp('Single trial response. Default time interval between trigger is set to 10 secs.');
-                r.avg_trigger_interval = 10;
-                numRepeat = 1;
+                fprintf('Num of full repeats: %d.\n', numRepeat);
+                
+                % Let's do avg analysis
+                r.avg_FLAG = true;
+                % (avg_trigger_times, avg_trigger_interval) --> avg analysis.
+                r.average_analysis;                
             end
-            fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
-            fprintf('Num of full repeats: %d.\n', numRepeat);
             
-            % (avg_trigger_times, avg_trigger_interval) --> avg analysis.
-            r.average_analysis;
+           
+          
+                      
         end
         
         function set.avg_FIRST_EXCLUDE(r, value)

@@ -89,7 +89,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             %% Plot
             if DrawPlot
                 
-                duration = r.avg_trigger_interval;
+                duration = r.avg_duration;
                 
                 % Adjust for plot (phase & cycles)
                 %[y, times] = r.traceAvgPlot(y);
@@ -169,7 +169,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         plot([x x], y_line, 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
                         
                         if contains(r.ex_name, 'flash')
-                            x = x + r.avg_trigger_interval/2.;
+                            x = x + r.avg_duration/2.;
                             plot([x x], y_line, '-.', 'LineWidth', 1, 'Color', 0.8*[1 1 1]); hold on
                         end
                     end
@@ -196,7 +196,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         % middle lines
                         if r.avg_stim_plot(kk).middleline == true
                             if kk == r.avg_every
-                                next_stim = r.avg_trigger_interval;
+                                next_stim = r.avg_duration;
                             else
                                 next_stim = r.avg_stim_times(kk+1);
                             end
@@ -212,7 +212,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 ax.XAxis.FontSize = Fontsize;
                 ax.YAxis.FontSize = Fontsize;
                 % XTick positions: independent of phase value
-                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_trigger_interval];
+                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_duration];
         %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
                 xtickformat('%.0f');
                 if Lines == true

@@ -149,10 +149,10 @@ classdef gdata < handle
                             J = imvol(g.AI{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'z_step_um', g.header.stackZStepSize);
                         else
                             if isempty(g.cc)
-                                J = imvol(g.AI_snaps{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor);
+                                J = imvol(g.AI_snaps{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'globalContrast', true);
                             else
                                 disp('''cc'' was given to imvol().');
-                                J = imvol(g.AI_snaps{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', true);
+                                J = imvol(g.AI_snaps{i}, 'title', s_title, 'scanZoom', g.header.scanZoomFactor, 'roi', g.cc, 'edit', true, 'globalContrast', true);
                             end
                         end
                     end
@@ -417,6 +417,7 @@ classdef gdata < handle
                         if ch ~= g.AI_trigger_ch
                             % mean image: first and last 1000 frames (for 512x512 pixels)
                             snaps = g.imdrift(ch);
+                            snaps_times = [];
                             g.AI_snaps{ch} = snaps;
                             g.AI_mean{ch} = mean(snaps, 3);
                             
@@ -424,7 +425,8 @@ classdef gdata < handle
                             t_filename = strrep(g.tif_filename, '_', '  ');
                             s_title = sprintf('%s  (AI ch:%d)', t_filename, h.channelSave(j));
                             
-                            % Snaps triggered by pd_events1
+                            % Update snaps if there are pd_events1
+                            % triggers.
                             if ~isempty(g.pd_events1)
                                 [snaps, snaps_times] = utils.mean_images_after_triggers(g.AI{ch}, g.f_times, g.pd_events1, 30); % mean of 30s duration at times of..
                                 s_title = sprintf('%s snaps at pd_events1 (AI ch:%d)', t_filename, h.channelSave(j));
@@ -433,7 +435,7 @@ classdef gdata < handle
                             % plot mean images
                             hf = g.figure;
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor);
+                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor, 'timestamp', snaps_times, 'globalContrast', true);
                         end
                     end
                     

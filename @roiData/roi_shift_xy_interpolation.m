@@ -22,7 +22,7 @@ disp('roi shift x & y were interpolated using spline between offset of snapshots
 
 % zero offset x, y at roi_cc_time
 i_frame = find(r.f_times > r.roi_cc_time, 1);
-r.roi_shift.x = r.roi_shift.x - r.roi_shift.x(i_frame, :); % broadcasting?
+r.roi_shift.x = r.roi_shift.x - r.roi_shift.x(i_frame, :);
 r.roi_shift.y = r.roi_shift.y - r.roi_shift.y(i_frame, :);
 fprintf('Offset x, y were zeroed at time %.1f sec (roi_cc_time).\n', r.roi_cc_time);
 

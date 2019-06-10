@@ -1,4 +1,8 @@
 function [aligned, t_aligned] = align_trace_to_avg_triggers(r, Trace, times)
+% For given Trace (array or char type) and related times, this function
+% will sample a chuck of data at times defined in r.avg_trigger_times with
+% duration defined in r.avg_duration.
+%
 % Input variables:
 %               Trace, times
 %
@@ -11,7 +15,7 @@ function [aligned, t_aligned] = align_trace_to_avg_triggers(r, Trace, times)
 % 'Trace' can be a string. (e.g. 'raw', 'smoothed_norm', ..)
 %
 % 2019 0312 first wrote.
-%
+% 2019 0610 add comments.
 % (c) Juyoung Kim
 
     if nargin < 2 
@@ -53,12 +57,12 @@ function [aligned, t_aligned] = align_trace_to_avg_triggers(r, Trace, times)
         error('Mismatch bwetween trace (%d) and times (%d).', num_data, length(times));
     end
     
-    duration = r.n_cycle * r.avg_trigger_interval;
-    triggers = r.avg_trigger_times + r.s_phase * r.avg_trigger_interval;
+    triggers = r.avg_trigger_times + r.s_phase * r.avg_duration;
+    duration = r.n_cycle * r.avg_duration;
 
     [aligned, t_aligned] = align_rows_to_events(Trace, times, triggers, duration);
     
     % Shift t_aligned so that avg_trigger_times may be at zero.
-    t_aligned = t_aligned + r.s_phase * r.avg_trigger_interval;
+    t_aligned = t_aligned + r.s_phase * r.avg_duration;
 
 end
