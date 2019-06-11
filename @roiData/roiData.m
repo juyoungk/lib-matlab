@@ -567,17 +567,19 @@ classdef roiData < matlab.mixin.Copyable
                 
                 %% Snap images (at sess_trigger_times)
                 r.snaps_trigger_times = r.sess_trigger_times;
-                [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.snaps_trigger_times, 30); % mean of 30s duration at times of..
+                [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.snaps_trigger_times, 15); % mean of 30s duration at times of..
                 
                 % mean over snaps
                 r.image = mean(r.snaps, 3);
                 
-                % Add last snap. can be overlapped?
-                [lastSnap, lastSnapTime] = utils.mean_image_last_duration(vol, r.f_times, 30);
-                r.snaps = cat(3, r.snaps, lastSnap);
-                r.snaps_trigger_times = cat(2, r.snaps_trigger_times, lastSnapTime - (r.f_times(end)-lastSnapTime));
-                r.snaps_middle_times = cat(2, r.snaps_middle_times, lastSnapTime);
-                
+                % Add last snap.
+                [lastSnap, lastSnapTime] = utils.mean_image_last_duration(vol, r.f_times, 15);
+                if lastSnapTime > r.snaps_middle_times(end)
+                    r.snaps = cat(3, r.snaps, lastSnap);
+                    r.snaps_trigger_times = cat(2, r.snaps_trigger_times, lastSnapTime - (r.f_times(end)-lastSnapTime));
+                    r.snaps_middle_times = cat(2, r.snaps_middle_times, lastSnapTime);
+                end
+
                 % Timestamp of given cc
                 if isfield(cc, 'timestamp')
                     r.roi_cc_time = cc.timestamp;

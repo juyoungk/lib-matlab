@@ -27,6 +27,13 @@ function [snaps, times] = mean_images_after_triggers(vol, f_times, trigger_times
         i_frame = find(f_times >= t_event, 1);
         e_frame = find(f_times > t_event+duration, 1);
         
+        if isempty(e_frame)
+            fprintf('mean snap images : %d trigger + duration goes beyond the recorded time. Break.\n', i);
+            snaps = snaps(:,:,1:i-1);
+            times = times(:,1:i-1);
+            break;
+        end
+        
         % estimate ifi and time interval between i_frame and e_frame
         ifi = f_times(i_frame+1) - f_times(i_frame);
         time_for_avg = (e_frame - i_frame) * ifi;

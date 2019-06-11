@@ -47,10 +47,10 @@ function plot(r, I)
 %                 ax.LineWidth = 0.8;            
             
         subplot(n_row, n_col, 2*n_col+1);
-            %axes('Position', [0  0  1  1], 'Visible', 'off');
-            mask(cc.PixelIdxList{k}) = true;
-            h = imshow(RGB_label);
-            set(h, 'AlphaData', 0.9*mask+0.1);
+%             mask(cc.PixelIdxList{k}) = true;
+%             h = imshow(RGB_label);
+%             set(h, 'AlphaData', 0.9*mask+0.1);
+            r.plot_roi_patch(k, 18);
             
             ax = gca;
             str1 = sprintf('%d/%d ROI', k, r.numRoi);

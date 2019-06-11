@@ -14,14 +14,13 @@ pixelIdxList = r.roi_cc.PixelIdxList{roi_id};
 
 [patch_img, patch_bw] = utils.getPatchFromPixelList(img, pixelIdxList, padding);
 
-contrast = 0.2;
+contrast = 0.4;
 J = utils.myshow(patch_img, contrast);
 %J = utils.myshow(patch_bw, contrast);
 hold on
 
 % add contour
-visboundaries(patch_bw,'Color','r','LineWidth', 0.7); 
-
+visboundaries(patch_bw,'Color','r','LineWidth', 0.6); 
 
 hold off
 

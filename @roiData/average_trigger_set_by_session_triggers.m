@@ -8,8 +8,18 @@ function average_trigger_set_by_session_triggers(r)
         %
         str_input = sprintf('Same numberes of major nad minor triggers. Average analysis over all %d triggers? [Y]?\n (or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers);
         n_every = input(str_input);
-        if isempty(n_every); n_every = 1; end
-        r.avg_every = n_every;
+        if isempty(n_every); 
+            n_every = 1; 
+        end
+        
+        switch n_every
+            case 0
+                % default baseline estimation & smoothing
+                r.avg_FLAG = false;
+                r.baseline;
+            otherwise
+                r.avg_every = n_every;
+        end
 
     else
         % can be multiple scenarios.

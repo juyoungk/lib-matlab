@@ -17,7 +17,7 @@ function ax = plot_trace_raw(r, id_roi)
             axis tight
             
         % stimulus lines
-        ev = r.stim_trigger_times; % all 
+        ev = r.sess_trigger_times; % all 
         
         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
         if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400

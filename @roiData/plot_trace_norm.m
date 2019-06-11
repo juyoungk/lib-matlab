@@ -15,7 +15,7 @@ function ax = plot_trace_norm(r, id_roi)
             ax.XLim = [0 r.f_times(end)];
         
         % stimulus lines
-        ev = r.stim_trigger_times;        
+        ev = r.sess_trigger_times;        
         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme')) 
         if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400
             for i=1:length(ev)

@@ -15,10 +15,12 @@ r.roi_shift.x = zeros(r.numFrames, r.numRoi);
 r.roi_shift.y = zeros(r.numFrames, r.numRoi);
 
 for roi = 1:r.numRoi
-    r.roi_shift.x(:,roi) = spline(times, shifts.x(:,roi), r.f_times);
-    r.roi_shift.y(:,roi) = spline(times, shifts.y(:,roi), r.f_times);
+%     r.roi_shift.x(:,roi) = spline(times, shifts.x(:,roi), r.f_times);
+%     r.roi_shift.y(:,roi) = spline(times, shifts.y(:,roi), r.f_times);
+    r.roi_shift.x(:,roi) = interp1(times, shifts.x(:,roi), r.f_times, 'pchip', 'extrap');
+    r.roi_shift.y(:,roi) = interp1(times, shifts.y(:,roi), r.f_times, 'pchip', 'extrap');
 end
-disp('roi shift x & y were interpolated using spline between offset of snapshots.');
+disp('roi shift x & y were interpolated between offset of snapshots.');
 
 % zero offset x, y at roi_cc_time
 i_frame = find(r.f_times > r.roi_cc_time, 1);
