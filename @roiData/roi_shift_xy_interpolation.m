@@ -28,6 +28,9 @@ r.roi_shift.x = r.roi_shift.x - r.roi_shift.x(i_frame, :);
 r.roi_shift.y = r.roi_shift.y - r.roi_shift.y(i_frame, :);
 fprintf('Offset x, y were zeroed at time %.1f sec (roi_cc_time).\n', r.roi_cc_time);
 
+% plot
+r.plot_roi_shift;
+
 %% Reject odd cases
 
 
