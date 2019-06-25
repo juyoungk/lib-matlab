@@ -41,13 +41,16 @@ function average_trigger_set_by_session_triggers(r)
         switch which_avg
             case 0
                 r.avg_trigger_times = r.sess_trigger_times;
+                r.avg_FLAG = true;
             case 99
-                % default baseline estimation & smoothing
+                % default baseline estimation & smoothing update
                 r.avg_FLAG = false;
                 r.baseline;
             otherwise
                 r.avg_trigger_times = r.stim_triggers_within(which_avg);
-                % avg_trigger_interval will be determined at the set method
+                r.avg_FLAG = true;
         end
     end
+    
+    r.average_analysis;
 end

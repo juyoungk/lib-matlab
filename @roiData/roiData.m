@@ -88,7 +88,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_trigger_times % Times for aligning between trials for average analysis. 
                           % A subset of stim_trigger_times.
                           % Can be directly given or given by set.avg_every method.
-        avg_trigger_interval
+        avg_trigger_interval % interval between triggers. No other meaning. Duration can be same as this interval.
         avg_duration    % duration for average analysis
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_plot   % structure for plot properties of each stim triggers.
@@ -113,7 +113,7 @@ classdef roiData < matlab.mixin.Copyable
         % clusters for ROIs
         dispClusterNum = 10;
         totClusterNum = 100;
-        c             % cluster id array. 0 is unallowcated or noisy group
+        c             % cluster id array. 0 is unassigned or noisy group
         c_mean        % cluster mean for average trace (trace X #clusters ~100). update through plot_cluster
         c_hfig
         c_note
@@ -128,6 +128,9 @@ classdef roiData < matlab.mixin.Copyable
         t_range = [-100, 100] % Currently, limits the range of trigger line plots.
         %c_range = [0, 1]; % Cycle range. Not used yet. 
         coeff   % (PCA) basis
+        
+        %
+        misc
     end
  
     properties (Hidden, Access = private)
@@ -413,19 +416,16 @@ classdef roiData < matlab.mixin.Copyable
             end
             r.smoothing_size = t;
             r.update_smoothed_trace;
-            r.average_analysis;
         end
         
         function set.w_filter_low_pass(r, w)
             r.w_filter_low_pass = w;
             r.update_smoothed_trace;
-            r.average_analysis;
         end
         
         function set.w_filter_low_stop(r, w)
             r.w_filter_low_stop = w;
             r.update_smoothed_trace;
-            r.average_analysis;
         end
                     
         %% Constructor
@@ -579,8 +579,7 @@ classdef roiData < matlab.mixin.Copyable
                         
                         r.traces{k}(:,i,j) = trace_shifted;
                     end
-                    end
-                    
+                    end   
                 end
                 
                 %% Default roi trace: no-shift conditions
@@ -628,14 +627,13 @@ classdef roiData < matlab.mixin.Copyable
 %                 r.plot_stim_lines;
 %                 title('Trace of bg pixels excluding roi regions.');  
                 %xlim([r.stim_trigger_times(1) - 10, r.stim_end]); 
-                
-                
+                            
                 %% Average analysis setting (currently, use default setting)
 %                 r.n_cycle = 1.5;
 %                 r.s_phase = -0.25;
                 
-                %% Average analysis
-                r.average_trigger_set_by_session_triggers
+                %% Average analysis (includes baseline estimation & smoothing)
+                r.average_trigger_set_by_session_triggers;
                
                 %% Load ex struct?
                 
@@ -670,7 +668,7 @@ classdef roiData < matlab.mixin.Copyable
                 end
                 
                 %% Statistics under identical stimulus if possible.
-                numCell = 12; % Print top 10 cells.
+                numCell = min(12, r.numRoi); % Print top 10 cells.
                 % Plot several (avg) traces
                 if r.avg_FLAG == true 
                     % ROIs exhibiting hiested correlations between traces
@@ -692,8 +690,9 @@ classdef roiData < matlab.mixin.Copyable
                     [mean_f, good_cells] = sort(r.stat.mean_stim, 'descend');
                     r.roi_good = good_cells;
                     % summary
-                    fprintf('ROI %d: mean fluorescence level %5.2f\n', good_cells(1:numCell), mean_f(1:numCell));
-
+                    for i = 1:numCell
+                        fprintf('ROI %3d: mean fluorescence level %5.2f\n', good_cells(i), mean_f(i));
+                    end
                     % plot
 %                     r.roi_good = good_cells;
 %                     r.plot(r.roi_good);
@@ -704,10 +703,12 @@ classdef roiData < matlab.mixin.Copyable
                 r.save;
             end
         end
-              
-                        
+                                   
         function triggers = stim_triggers_within(r, sess_id)
             % Returns minor stim trigger times under session trigger id.
+            if nargin < 2
+                error('Session trigger id should be given.');
+            end
             
             n_session = numel(r.sess_trigger_times);
             
@@ -770,7 +771,7 @@ classdef roiData < matlab.mixin.Copyable
             disp('Average analysis ON..');
 
             % Assign triggers for avg analysis: 'avg_trigger_times'
-            % Set method for 'avg>trigger_times' should do every jobs for
+            % Set method for 'avg_trigger_times' should do every jobs for
             % avg analysis.
             if r.avg_every > 1 
                 id_trigger = mod(1:numel(r.stim_trigger_times), r.avg_every) == 1; % logical array
@@ -799,66 +800,61 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function set.avg_trigger_times(r, new_times)
-            % THE FINAL information for avaerage analysis.
-            % avg_trigger_interval and stim_end will be computed.
-            % Average analysis will be called if the trigger times for
-            % average (or session) are given.
+            % 2 requirements for avaerage analysis: 
+            % avg_trigger_times & avg_duration
            
             % Assign new times
             r.avg_trigger_times = new_times;           
             %
             numAvgTrigger = numel(r.avg_trigger_times);
-            fprintf('Num of Avg triggers: %d.\n', numAvgTrigger);
+            fprintf('Num of avg triggers: %d.\n', numAvgTrigger);
             
             if numAvgTrigger < 2 
                 % no avg analysis
-                disp('Single trial response. No avg analysis.');
+                r.avg_trigger_interval = [];
+                disp('Single trigger or trial for average analysis.');
+                return;
             else
                 r.avg_trigger_interval = r.avg_trigger_times(2) - r.avg_trigger_times(1);
-                
-                % Possible options for duration for average analysis
-                disp('Set duration for the average analysis.');
-                if ~isempty(r.avg_duration)
-                    fprintf('0. Current set duration (%.1f sec).\n', r.avg_duration);
-                    n_default = 0;
-                else
-                    n_default = 1;
+                % Default inference for the avg_duration
+                if isempty(r.avg_duration)
+                    r.avg_duration = r.avg_trigger_interval;
+                    fprintf('Duration for average analysis (avg_duration) was set to %f sec.\n', r.avg_trigger_interval);
                 end
-                fprintf('1. interval between avg trigger times (%.1f sec).\n', r.avg_trigger_interval);
-                %fprintf('2. ')
-                fprintf('99. Get new duration from keyboard.')
-                n = input(sprintf('Enter option no. [%d]\n or provide a specific time duration in secs: ', n_default));
-                if isempty(n)
-                    n = n_default;
-                end
-                switch n
-                    case 0
-                        % do nothing
-                    case 1
-                        r.avg_duration = r.avg_trigger_interval;
-                    case 2
-                    otherwise
-                        r.avg_duration = n;    
-                end
-
-                if r.f_times(end) < (r.avg_trigger_times(end) + r.avg_duration)
-                    r.stim_end = r.f_times(end);
-                    numRepeat = numAvgTrigger - 1;
-                else
-                    r.stim_end = r.avg_trigger_times(end) + r.avg_duration;
-                    numRepeat = numAvgTrigger;
-                end
-                fprintf('Num of full repeats: %d.\n', numRepeat);
-                
-                % Let's do avg analysis
-                r.avg_FLAG = true;
-                % (avg_trigger_times, avg_trigger_interval) --> avg analysis.
-                r.average_analysis;                
-            end
-            
-           
-          
-                      
+            end 
+%                 % Possible options for duration for average analysis
+%                 disp('Set duration for the average analysis.');
+%                 if ~isempty(r.avg_duration)
+%                     fprintf('0. Current set duration (%.1f sec).\n', r.avg_duration);
+%                     n_default = 0;
+%                 else
+%                     n_default = 1;
+%                 end
+%                 fprintf('1. interval between avg trigger times (%.1f sec).\n', r.avg_trigger_interval);
+%                 fprintf('2. interval to next session trigger. (under construction..)\n')
+%                 fprintf('10. Get new duration from keyboard.\n')
+%                 fprintf('99. Quit average analysis.\n')
+%                 n = input(sprintf('Enter option no. [%d]\n or provide a specific time duration in secs: ', n_default));
+%                 if isempty(n)
+%                     n = n_default;
+%                 end
+%                 switch n
+%                     case 0
+%                         % avg duration previously set up.
+%                     case 1
+%                         % avg duration = event interval
+%                         r.avg_duration = r.avg_trigger_interval;
+%                     case 2
+%                         % avg duration = until the next major session
+%                         % trigger
+%                     case 10
+%                         % Get new input
+%                         r.avg_duration = input('New duration for average analysis? (sec)');
+%                     case 99
+%                         return; 
+%                     otherwise
+%                         error('Event duration should be set properly.');
+%                 end        
         end
         
         function set.avg_FIRST_EXCLUDE(r, value)

@@ -55,5 +55,7 @@ function update_filtered_trace(r)
             r.roi_filtered_norm(:,i) = y_filtered_norm;
     end
 
-
+    if r.avg_FLAG
+        r.average_analysis;
+    end
 end
