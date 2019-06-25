@@ -1,7 +1,7 @@
 function plot_roi_shift(r, ids)
 
 if nargin < 2
-    ids = r.roi_good(1:20);
+    ids = 1:r.numRoi;
 end
 
 %color_list = lines(numel(ids));
