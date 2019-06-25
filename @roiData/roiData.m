@@ -567,7 +567,7 @@ classdef roiData < matlab.mixin.Copyable
                 
                 %% Snap images (at sess_trigger_times)
                 r.snaps_trigger_times = r.sess_trigger_times;
-                [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.snaps_trigger_times, 15); % mean of 30s duration at times of..
+                [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.snaps_trigger_times, 15); % mean of 15s duration at times of..
                 
                 % mean over snaps
                 r.image = mean(r.snaps, 3);
