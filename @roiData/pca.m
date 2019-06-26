@@ -13,31 +13,34 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
     end
     
     if r.avg_FLAG
-
         X = r.avg_trace_smooth_norm(:,I);
-        
-        % normalization
-        X = normc(X);
-        disp('PCA basis is computed for normalized traces.');
-        
-        
-        X_col_times = X.'; % times as variables
-
-        % compute new PCA basis (coeff)
-        % n traces -> (n-1) col vectors for coeff. 
-        [coeff, score, latent, ts, explained] = pca(X_col_times);
-
-        % compute scores for ALL ROIs (column normalized)
-        X = r.avg_trace_smooth_norm;
-        X = normc(X);
-        disp('The computed PCA score are scores for their normalized traces.');
-        score = X.' * coeff;
-        
-        %
-        r.avg_pca_score = score;
+        X_all = r.avg_trace_smooth_norm;
+        disp('PCA analysis - average smoothed norm traces were used.');
     else
-        disp('PCA score will be computed only for avg traces (avg_FLAG on). ');
-    end
+        X = r.roi_smoothed_norm(:,I);
+        X_all = r.roi_smoothed_norm;
+        disp('PCA analysis - entire smoothed norm traces were used.');
+    end    
+    % normalization
+    X = normc(X);
     
+    disp('PCA basis is computed after normalization (no amplitude differece between traces).');
+
+    X_col_times = X.'; % times as variables
+
+    % compute new PCA basis (coeff)
+    % n traces -> (n-1) col vectors for coeff. 
+    [coeff, score, latent, ts, explained] = pca(X_col_times);
+
+    % compute scores for ALL ROIs (column normalized)
+    X_all = normc(X_all);
+    disp('The computed PCA score are scores for their normalized traces.');
+    score = X_all.' * coeff;
+    %
+    r.avg_pca_score = score;
+%     else
+%         disp('PCA score will be computed only for avg traces (avg_FLAG on). ');
+%     end
+%     
 end
             

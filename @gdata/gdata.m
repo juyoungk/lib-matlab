@@ -430,6 +430,7 @@ classdef gdata < handle
                             if ~isempty(g.pd_events1)
                                 [snaps, snaps_times] = utils.mean_images_after_triggers(g.AI{ch}, g.f_times, g.pd_events1, 15); % mean of 15s duration at times of..
                                 s_title = sprintf('%s snaps at pd_events1 (AI ch:%d)', t_filename, h.channelSave(j));
+                                g.AI_snaps{ch} = snaps;
                             end
                             
                             % plot mean images

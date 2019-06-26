@@ -24,7 +24,7 @@ function ax = plot_avg_fil(r, id_roi, varargin)
             x = (n-1) * duration;
             plot([x x], ax.YLim, 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
             % middle line
-            if strfind(r.ex_name, 'flash')
+            if contains(r.ex_name, 'flash')
                 x = (n-1) * duration + duration/2.;
                 plot([x x], ax.YLim, '--', 'LineWidth', 1.0, 'Color', 0.5*[1 1 1]);
             end

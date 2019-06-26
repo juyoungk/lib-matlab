@@ -21,7 +21,7 @@ function ax = plot_trace_norm(r, id_roi)
             for i=1:length(ev)
                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
                 % middle line
-                if strfind(r.ex_name, 'flash') && numel(ev) > 1
+                if contains(r.ex_name, 'flash') && numel(ev) > 1
                     interval = ev(2)-ev(1);
                     plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
                 end

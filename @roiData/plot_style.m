@@ -36,7 +36,7 @@ if contains(plotType, 'avg')
                 plot([x x], ax.YLim, 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]);
                 
                 % middle line
-                if strfind(r.ex_name, 'flash')
+                if contains(r.ex_name, 'flash')
                     x = (n-1) * duration + duration/2.;
                     plot([x x], ax.YLim, 'LineWidth', 0.8, 'Color', 0.35*[1 1 1]);
                 end

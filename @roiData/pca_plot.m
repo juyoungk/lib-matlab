@@ -20,7 +20,6 @@ function pca_plot(r, i, j)
     color = jet(c_max); 
     % color index? color(c_list == r.c(k), :)
 
-
     if isempty(X) || size(X, 2) < 2
         % X will be empty when only one data is clustered.
         % size(X, 2) is (n-1) where n is num of data or traces.
@@ -35,8 +34,8 @@ function pca_plot(r, i, j)
         end
         
         % un-assigned cluster 0: gray plot
-        c0_color = [0.4 0.4 0.4];
-        %scatter(X(r.c==0, i),X(r.c==0, j), 12, c0_color, 'filled');
+        c0_color = 0.6 * [1 1 1];
+        scatter(X(r.c==0, i),X(r.c==0, j), 12, c0_color, 'filled');
         
         % Label
         ax = gca;
@@ -50,7 +49,6 @@ function pca_plot(r, i, j)
             axes('Position', [0.93  0.45  0.05  0.2], 'Visible', 'off');
             imshow(cluster_colorbar);
         end
-        
         
         % Where is the k-th ROI in PCA space?
 %         if r.c(k)

@@ -1,4 +1,4 @@
-function ff
+function ff(line_Linewidth)
 % Figure font control
 
 color = [1 1 1];
@@ -7,7 +7,9 @@ disp('Current color is black');
 
 Fontsize = 28;
 axis_Linewidth = 1.2;
-line_Linewidth = 1.2;
+if nargin < 1
+    line_Linewidth = 1.2;
+end
 
 hfig = get(groot,'CurrentFigure');
 
