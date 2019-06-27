@@ -90,6 +90,7 @@ classdef roiData < matlab.mixin.Copyable
                           % Can be directly given or given by set.avg_every method.
         avg_trigger_interval % interval between triggers. No other meaning. Duration can be same as this interval.
         avg_duration    % duration for average analysis
+        avg_analysis_name  % short string for the anlysis -> filename 
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_plot   % structure for plot properties of each stim triggers.
         avg_stim_tags
@@ -130,7 +131,7 @@ classdef roiData < matlab.mixin.Copyable
         coeff   % (PCA) basis
         
         %
-        misc
+        misc    % struct for saving any misc info
     end
  
     properties (Hidden, Access = private)
@@ -512,6 +513,8 @@ classdef roiData < matlab.mixin.Copyable
                 
                 % mean over snaps
                 r.image = mean(r.snaps, 3);
+                %
+                r.save_roi_figure;
                 
                 % Add last snap.
                 [lastSnap, lastSnapTime] = utils.mean_image_last_duration(vol, r.f_times, 15);
@@ -536,6 +539,9 @@ classdef roiData < matlab.mixin.Copyable
                     % time for offset x, y = 0.
                     r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
                 end
+                
+
+                
                 
                 % Pick one of the middle snap for reference roi images.
                 i_ref_snap = max(1, round(length(r.snaps_middle_times)/2.));

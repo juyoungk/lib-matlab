@@ -26,14 +26,14 @@ function plot_bg_pixels(g, ch, timeafter)
     g.bg_trace = zeros(g.nframes, length(contrast));
     
     snap1 = g.AI_snaps{ch}(:,:,1);
-    snap2 = g.AI_snaps{ch}(:,:,2);
+    %snap2 = g.AI_snaps{ch}(:,:,2);
     
     % Pick pixels based on PMT average intensity at snaps.
     for i = 1:length(contrast) % contrast values (%)
         c = contrast(i);
-        bw1 = lowerpixels(snap1, c);
-        bw2 = lowerpixels(snap2, c);
-        bw = bw1 & bw2;
+        bw = lowerpixels(snap1, c);
+        %bw2 = lowerpixels(snap2, c);
+        %bw = bw1 & bw2;
         g.bg_trace(:,i) = mean(vol_reshaped(bw,:), 1);
     end
     

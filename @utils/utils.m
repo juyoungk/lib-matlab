@@ -68,6 +68,16 @@ classdef utils
             J = utils.myadjust(I, c);
             imshow(J);
         end
+        %
+         function hf = figure()
+            % create figure with appropriate size.
+            %pos = get(0, 'DefaultFigurePosition');
+            hf = figure;
+            hf.Color = 'none';
+            hf.PaperPositionMode = 'auto';
+            hf.InvertHardcopy = 'off';
+            axes('Position', [0  0  1  0.9524], 'Visible', 'off'); % space for title
+        end
         
         
         

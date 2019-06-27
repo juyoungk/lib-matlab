@@ -436,7 +436,7 @@ classdef gdata < handle
                             % plot mean images
                             hf = g.figure;
                             %set(hf, 'Position', pos+[pos(3)*(j-1), -pos(4)*(1-1), 0, 0]);
-                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'scanZoom', g.header.scanZoomFactor, 'timestamp', snaps_times, 'globalContrast', true);
+                            imvol(snaps, 'hfig', hf, 'title', s_title, 'png', true, 'filename', g.ex_name, 'scanZoom', g.header.scanZoomFactor, 'timestamp', snaps_times, 'globalContrast', true);
                         end
                     end
                     

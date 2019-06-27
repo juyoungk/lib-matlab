@@ -42,13 +42,16 @@ function average_trigger_set_by_session_triggers(r)
             case 0
                 r.avg_trigger_times = r.sess_trigger_times;
                 r.avg_FLAG = true;
+                r.avg_analysis_name = 'over_all_sess_triggers';
             case 99
                 % default baseline estimation & smoothing update
                 r.avg_FLAG = false;
                 r.baseline;
+                r.avg_analysis_name = [];
             otherwise
                 r.avg_trigger_times = r.stim_triggers_within(which_avg);
                 r.avg_FLAG = true;
+                r.avg_analysis_name = sprintf('stim_triggers_in_%d_session', which_avg);
         end
     end
     
