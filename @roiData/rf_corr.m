@@ -15,12 +15,13 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
     end
     
     if nargin < 3
-        traceType = 'smoothed_norm';
+        traceType = 'smoothed_detrend_norm';
     end
    
     % session trigger..?
     % stimulus id? 
     i = 1;
+    disp('!!! stim group was set to 1. need to be updated..');
     
     if ~isfield(r.stim(i), 'starttime') || isempty(r.stim(i).starttime)
     end
@@ -40,7 +41,7 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
         % the data should be ignored to work with r.f_times_norm.
         elseif contains(traceType, 'raw')
             y = r.roi_trace(:, id_roi);
-            y = y(r.f_times>r.ignore_sec) %- r.roi_trend(:, id_roi);
+            y = y(r.f_times>r.ignore_sec); %- r.roi_trend(:, id_roi);
             
         elseif contains(traceType, 'smoothed')
             y = r.roi_smoothed(:, id_roi);
@@ -50,6 +51,9 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
         elseif contains(traceType, 'smoothed_norm')
             y = r.roi_smoothed_norm(:, id_roi);
             y = y(r.f_times>r.ignore_sec);
+        
+        elseif contains(traceType, 'smoothed_detrend_norm')
+            y = r.roi_smoothed_detrend_norm(:, id_roi);
         
         elseif contains(traceType, 'filtered')    
             y = r.roi_filtered(:, id_roi);
@@ -72,7 +76,7 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
         % stat. of rf
             nearby = 0;
             % whitenoise bar stimulus
-            s = rf_stat(r, rf, nearby);
+            %s = rf_stat(r, rf, nearby);
             
     else
         error('roi id should be specified in rf function');

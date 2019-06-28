@@ -39,7 +39,7 @@ for i=1:numGroups
     
     % timestamps start time to zero
     if isfield(stim(i), 'timestamps')
-        stim(i).timestamps = stim(i).timestamps(1);
+        stim(i).timestamps = stim(i).timestamps - stim(i).timestamps(1);
     end
 end
 
@@ -52,7 +52,8 @@ session_id_over30s_long = [session_id_over30s_long, length(r.sess_trigger_times)
 session_triggers_30s_spacing = r.sess_trigger_times(session_id_over30s_long);
 numTriggers = numel(session_triggers_30s_spacing);
 
-fprintf('Session triggers with >30s gap : %s (total %d triggers).\n',num2str(session_triggers_30s_spacing),numTriggers);
+fprintf('Session trigger ids with >30s gap : %s (total %d triggers)\n',num2str(session_id_over30s_long),numTriggers);
+fprintf('Session trigger times w/ >30s gap : %s \n',num2str(session_triggers_30s_spacing));
 
 if numTriggers == numGroups
     
@@ -77,8 +78,8 @@ end
    
 r.stim = stim;
 r.stim_att = att;
+struct2table(r.stim);
 
-struct2table(r.stim)
 end
 
 function load_h5_bk(r, dirpath)
