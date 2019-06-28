@@ -20,8 +20,8 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
    
     % session trigger..?
     % stimulus id? 
-    i = 1;
-    disp('!!! stim group was set to 1. need to be updated..');
+    i = 8;
+    disp('!!! stim group was set to 8. need to be updated..');
     
     if ~isfield(r.stim(i), 'starttime') || isempty(r.stim(i).starttime)
     end

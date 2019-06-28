@@ -82,7 +82,10 @@ sstim = double(sstim);
 
 % % resample stim at recording (or imaging) times
 sstim = interp1(fliptimes, sstim.', rtime); % [N (times), D1, D2, ..] for V (sstim)
-sstim = sstim.'; % [ch x times] 
+%sstim = sstim.'; % [ch x times] 
+if size(sstim, 1) > size(sstim, 2)
+    error('May need or cancle transpose. Larger channel numbers than time points.');
+end
 
 %# of frames for maxlag duration
 N_maxcorr = round(maxlag/r_ifi);
@@ -90,6 +93,9 @@ N_maxcorr = round(maxlag/r_ifi);
 % Final number of stim flips --> limit # of recorded data point.
 sstim = sstim(:, ~isnan(sstim(1,:))); % exclude NaN elements
 [~, N_flips] = size(sstim);
+
+% sstim = sstim(~isnan(sstim)); N_flips = size(sstim);
+% disp('!!! only for 1D full-field stim.');
 
 rdata = rdata(1:N_flips); % col# increase as time goes
 

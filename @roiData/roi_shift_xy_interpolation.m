@@ -39,9 +39,11 @@ r.plot_roi_shift;
 
 
 %% Integer grid of shift xy
-% only after the 1st trigger from all ROIs
-xshift = r.roi_shift.x(r.f_times>r.snaps_trigger_times(1), :);
-yshift = r.roi_shift.y(r.f_times>r.snaps_trigger_times(1), :); 
+% only after the 2nd trigger from all ROIs
+% 1st session is usually gray screen for adaptation
+i_snap = min(2, numel(r.snaps_trigger_times));
+xshift = r.roi_shift.x(r.f_times>r.snaps_trigger_times(i_snap), :);
+yshift = r.roi_shift.y(r.f_times>r.snaps_trigger_times(i_snap), :); 
 
 % or limit the range on shifted values of snaps
 xshift = r.roi_shift_snaps.x;
