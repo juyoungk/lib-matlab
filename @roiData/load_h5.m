@@ -55,18 +55,25 @@ numTriggers = numel(session_triggers_30s_spacing);
 fprintf('Session triggers with >30s gap : %s (total %d triggers).\n',num2str(session_triggers_30s_spacing),numTriggers);
 
 if numTriggers == numGroups
-   
+    
+    disp('Trigger numbers are equal to Stim group numbers.');
+    
     for i=1:numGroups
         stim(i).starttime = session_triggers_30s_spacing(i);
         stim(i).session_id = session_id_over30s_long(i);
     end
     
+elseif numTriggers-1 == numGroups
+    
+    disp('The 1st trigger is regarded as gray adapting screen.');
+    
+    for i=1:numGroups
+        stim(i).starttime = session_triggers_30s_spacing(i+1);
+        stim(i).session_id = session_id_over30s_long(i+1);
+    end   
 else
-    
     disp('Trigger number is different from the Group number. Starttime is not assigned for stim groups.');
-    
 end
-
    
 r.stim = stim;
 r.stim_att = att;

@@ -14,6 +14,9 @@ pixelIdxList = r.roi_cc.PixelIdxList{roi_id};
 
 [patch_img, patch_bw] = utils.getPatchFromPixelList(img, pixelIdxList, padding);
 
+% you can get new pixellist from patch_bw.
+
+
 contrast = 0.4;
 J = utils.myshow(patch_img, contrast);
 %J = utils.myshow(patch_bw, contrast);

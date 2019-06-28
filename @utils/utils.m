@@ -43,8 +43,6 @@ classdef utils
         shiftedPixelIdxList = getShiftedPixelList(pixelIdxList, offset, numRows, numCols)
         
         
-        
-        
         %% Visualization tools
         %
         bwmask = pixels_to_bwmask(PixelIdxList, ImageSize)

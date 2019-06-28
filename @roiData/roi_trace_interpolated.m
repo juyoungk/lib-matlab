@@ -1,6 +1,8 @@
 function trace_at_frame_t = roi_trace_interpolated(r, t, roi, x, y)
 % For single roi id, with given arbitrary x & y shift values, the function
-% will compute the interpolated output of roi-averaged pixel intensity
+% will compute the interpolated output of roi-averaged pixel intensity at
+% time t (singe frame output)
+%
 % inputs:
 %       t - frame id
     
