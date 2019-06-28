@@ -17,15 +17,27 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
     if nargin < 3
         traceType = 'smoothed_norm';
     end
-        
+   
+    % session trigger..?
+    % stimulus id? 
+    i = 1;
     
+    if ~isfield(r.stim(i), 'starttime') || isempty(r.stim(i).starttime)
+    end
+    
+    t_stimflip_start = r.stim(i).starttime;
+    stim_movie = r.stim(i).stim;
+    fliptimes = r.stim(i).timestamps;
+
     if nargin>1 && numel(id_roi) == 1 && isnumeric(id_roi)
 
         % trace type & convert f_times to f_times_norm    
         if contains(traceType, 'normalized')
             error('No more use for the tracetype ''roi_normalized''');
             %y = r.roi_normalized(:, id_roi);
-            
+        
+        % for 'raw', 'smoothed', 'smoothed_norm' traces, the frst part of
+        % the data should be ignored to work with r.f_times_norm.
         elseif contains(traceType, 'raw')
             y = r.roi_trace(:, id_roi);
             y = y(r.f_times>r.ignore_sec) %- r.roi_trend(:, id_roi);
@@ -53,7 +65,7 @@ function [rf, s] = rf_corr(r, id_roi, traceType, maxlag, upsampling)
         % reverse correlation
         % Adding the trigger time is better because resample of stim movie
         % before the first time of the recording would generate errors. 
-        rf = corrRF4(y, r.f_times_norm, r.stim_movie, r.stim_fliptimes + r.stim_trigger_times(1), maxlag, upsampling);
+        rf = corrRF4(y, r.f_times_norm, stim_movie, fliptimes + t_stimflip_start, maxlag, upsampling);
         
         % dim of rf: time = sampling rate of imaging. space = visual stim space. 
         

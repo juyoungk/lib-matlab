@@ -42,7 +42,7 @@ function average_trigger_set_by_session_triggers(r)
             case 0
                 r.avg_trigger_times = r.sess_trigger_times;
                 r.avg_FLAG = true;
-                r.avg_analysis_name = 'over_all_sess_triggers';
+                r.avg_analysis_name = 'over_all_sess_triggers'; % for save filename
             case 99
                 % default baseline estimation & smoothing update
                 r.avg_FLAG = false;

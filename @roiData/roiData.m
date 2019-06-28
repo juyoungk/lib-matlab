@@ -32,7 +32,7 @@ classdef roiData < matlab.mixin.Copyable
         stim_end    % End time of stimulus. Last avg_trigger_time + interval. 
         %
         stim               % struct for stimulus info including data
-        atim_att
+        stim_att
         stim_movie
         stim_fliptimes     % relative times between whitenoise flip times. Should start from 0.
         stim_size          % spatial size [mm]
@@ -539,9 +539,6 @@ classdef roiData < matlab.mixin.Copyable
                     % time for offset x, y = 0.
                     r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
                 end
-                
-
-                
                 
                 % Pick one of the middle snap for reference roi images.
                 i_ref_snap = max(1, round(length(r.snaps_middle_times)/2.));

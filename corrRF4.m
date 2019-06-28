@@ -1,5 +1,18 @@
 function [rf] = corrRF4(rdata, rtime, stim, fliptimes, maxlag, upsampling, varargin)
-% v4: for imaging data (e.g. roiDATA class)
+% Reverse correlation analysis, usually with whitenoise stimulus sequence.
+% Version 4 - designed for imaging data (e.g. roiDATA class)
+% 
+% General assumption - recording starts before stimulus and ends after
+% stimulus, but the function will handle edge cases.
+%
+% Algorithms:
+% 1) Pick data recorded only after the first fliptime of the stimulus
+% (start time alignment)
+% 2) Resample stimulus at recorded times (rtime)
+% 3) ...
+%
+% fliptimes - absolute fliptimes with resepct to recording time (rtime)
+%
 % How to match sampling rates between imaging and stimflips? 
 % Resample stim at imaging frame times (matching rate & times)
 % Optimized for sampling rate ~ stim flip rate
@@ -40,7 +53,7 @@ end
 r_ifi = rtime(2)-rtime(1);
 f_ifi = fliptimes(2)-fliptimes(1); 
 
-% recording data
+% recording data - initial time alignment
 rdata = rdata(rtime>fliptimes(1)); % col vector
 rtime = rtime(rtime>fliptimes(1));
 
@@ -74,9 +87,10 @@ sstim = sstim.'; % [ch x times]
 %# of frames for maxlag duration
 N_maxcorr = round(maxlag/r_ifi);
 
-% set end point
+% Final number of stim flips --> limit # of recorded data point.
 sstim = sstim(:, ~isnan(sstim(1,:))); % exclude NaN elements
 [~, N_flips] = size(sstim);
+
 rdata = rdata(1:N_flips); % col# increase as time goes
 
 % normalization

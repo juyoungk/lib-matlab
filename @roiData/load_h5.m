@@ -19,22 +19,54 @@ c = h5info(fname);
 att = c.Datasets.Attributes;
 numGroups = numel(c.Groups);
 
+% data loading
 for i=1:numGroups
     
     gname = c.Groups(i).Name;
     disp(['Group Name - ', gname]);
     
+    for j=1:numel(c.Groups(i).Datasets)
+        
+        field_name = c.Groups(i).Datasets(j).Name;
+  
+        %stim(i).Datasets(j).Data = h5read(fname, [gname,'/',field_name]);
+
+        c.Groups(i).(field_name) = h5read(fname, [gname,'/',field_name]);
+        
+    end
+    
     stim(i) = c.Groups(i);
     
-    for j=1:numel(stim(i).Datasets)
-        field_name = stim(i).Datasets(j).Name
-        
-        stim(i).Datasets(j).Data = h5read(fname, [gname,'/',field_name]);
-        
-        %stim(i).(field_name) = h5read(fname, [gname,'/',field_name]);
+    % timestamps start time to zero
+    if isfield(stim(i), 'timestamps')
+        stim(i).timestamps = stim(i).timestamps(1);
     end
-   
 end
+
+% set starttime
+% print all session triggers if the spacing is over 30s 
+timegap = r.sess_trigger_times(2:end) - r.sess_trigger_times(1:end-1);
+session_id_over30s_long = find(timegap > 30);
+session_id_over30s_long = [session_id_over30s_long, length(r.sess_trigger_times)]; % include last session trigger.
+
+session_triggers_30s_spacing = r.sess_trigger_times(session_id_over30s_long);
+numTriggers = numel(session_triggers_30s_spacing);
+
+fprintf('Session triggers with >30s gap : %s (total %d triggers).\n',num2str(session_triggers_30s_spacing),numTriggers);
+
+if numTriggers == numGroups
+   
+    for i=1:numGroups
+        stim(i).starttime = session_triggers_30s_spacing(i);
+        stim(i).session_id = session_id_over30s_long(i);
+    end
+    
+else
+    
+    disp('Trigger number is different from the Group number. Starttime is not assigned for stim groups.');
+    
+end
+
    
 r.stim = stim;
 r.stim_att = att;
