@@ -10,6 +10,7 @@ if roi_id > r.numRoi
 end
 
 img = r.snap_ref;
+img = r.snaps(:,:,2);
 pixelIdxList = r.roi_cc.PixelIdxList{roi_id};
 
 [patch_img, patch_bw] = utils.getPatchFromPixelList(img, pixelIdxList, padding);

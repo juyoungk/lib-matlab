@@ -22,6 +22,8 @@ function plot_shift(r, roi)
 
     hold off
     
+    disp('traces in library were plotted.');
+    
     
     % roi boundaries
     
