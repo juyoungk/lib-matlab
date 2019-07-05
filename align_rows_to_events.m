@@ -21,7 +21,7 @@ end
 ifi = x(2)-x(1);
 
 %
-n_sampling = floor(duration*(1./ifi));
+n_sampling = round(duration*(1./ifi));
 
 % 
 [n_times, n_cells] = size(y);
