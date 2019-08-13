@@ -17,7 +17,7 @@ NormFreqRange = 0:1/(num_bins/2 -1):1;
 
 figure();
 
-plot([NormFreqRange], X_mags(1:num_bins/2))
+plot(NormFreqRange, X_mags(1:length(NormFreqRange)))
 xlabel('Normalised frequency (\pi rads/sample)')
 ylabel('Magnitude')
 

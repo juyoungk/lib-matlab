@@ -183,6 +183,7 @@ function ids = plot_repeat(r, I, varargin)
                 
                 n_repeats = size(y, 2);
                 h_ax_one_trace = 0.90*(h_ax_repeat)/n_repeats;
+                
                 % individual traces
                 for ii = 1:n_repeats
                     ax = axes('Position', [x_ax,  y_ax + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');

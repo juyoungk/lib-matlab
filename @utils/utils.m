@@ -60,11 +60,15 @@ classdef utils
         %
         function J = myshow(I, c)
             %imshow with contrast value (%)
-            if nargin < 2
-                c = 0.2;
+            if isempty(I)
+                J = [];
+            else
+                if nargin < 2
+                    c = 0.2;
+                end
+                J = utils.myadjust(I, c);
+                imshow(J);
             end
-            J = utils.myadjust(I, c);
-            imshow(J);
         end
         %
          function hf = figure()
@@ -77,11 +81,7 @@ classdef utils
             axes('Position', [0  0  1  0.9524], 'Visible', 'off'); % space for title
         end
         
-        
-        
-        
-        
-        
+        [N, EDGES] = myhistplot(x, num_bin)
         
     end
 end

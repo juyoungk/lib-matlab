@@ -5,35 +5,44 @@ function [patch_img, patch_bw] = getPatchFromPixelList(img, pixelIdxList, paddin
 %
 % single patch version 19-05-06 Juyoung Kim
 
-    [N, M] = size(img);          % ex)[N, M] = [512 380]
-    P = padding;
+    if isempty(img)
+        
+        patch_img = [];
+        patch_bw = [];
+        
+    else
 
-    flatten = reshape(zeros(N, M), [N * M, 1]); % zero image
-    flatten(pixelIdxList) = 1;
-    bw = reshape(flatten, [N, M]);
-    
-    s = regionprops(bw, 'BoundingBox');
-    ymin = ceil(s.BoundingBox(2));
-    ymax = ymin + ceil(s.BoundingBox(4)) - 1;
-    xmin = ceil(s.BoundingBox(1));
-    xmax = xmin + s.BoundingBox(3) - 1;
-    
-    if ymin - P < 1
-        ymin = P + 1;
+        [N, M] = size(img);          % ex)[N, M] = [512 380]
+        P = padding;
+
+        flatten = reshape(zeros(N, M), [N * M, 1]); % zero image
+        flatten(pixelIdxList) = 1;
+        bw = reshape(flatten, [N, M]);
+
+        s = regionprops(bw, 'BoundingBox');
+        ymin = ceil(s.BoundingBox(2));
+        ymax = ymin + ceil(s.BoundingBox(4)) - 1;
+        xmin = ceil(s.BoundingBox(1));
+        xmax = xmin + s.BoundingBox(3) - 1;
+
+        if ymin - P < 1
+            ymin = P + 1;
+        end
+        if ymax + P > N
+            ymax = N - P;
+        end
+        if xmin - P < 1
+            xmin = P + 1;
+        end
+        if xmax + P > M
+            xmax = M - P;
+        end
+
+        patch_img = img(ymin-P:ymax+P, xmin-P:xmax+P);
+        patch_bw = bw(ymin-P:ymax+P, xmin-P:xmax+P);
+        
     end
-    if ymax + P > N
-        ymax = N - P;
-    end
-    if xmin - P < 1
-        xmin = P + 1;
-    end
-    if xmax + P > M
-        xmax = M - P;
-    end
-    
-    patch_img = img(ymin-P:ymax+P, xmin-P:xmax+P);
-    patch_bw = bw(ymin-P:ymax+P, xmin-P:xmax+P);
-    
+
 end
 
 

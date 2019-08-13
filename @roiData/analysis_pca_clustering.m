@@ -1,5 +1,6 @@
 %% PCA analysis note for 0223 flash data using roiData
 % r
+
 %% Just PCA for first look on data
 r.smoothing_size = 7;
 I = find(r.p_corr.smoothed_norm > 0.2);

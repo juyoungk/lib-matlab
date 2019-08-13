@@ -24,7 +24,8 @@ function r_avg = corr_avg(y)
 %             % then mean over correalations.
 %             r_avg = mean(R(:,end));
 
-            % Correlation between all possible pairs.
+            % Correlation matrix between all possible pairs.
+            % if y is n-by-m, A is m-by-m.
             A = corrcoef(y);
             A = (A-eye(n_trace));
             r_avg = sum(A(:))/( n_trace*(n_trace-1));

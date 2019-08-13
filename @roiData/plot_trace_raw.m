@@ -6,9 +6,10 @@ function ax = plot_trace_raw(r, id_roi)
         plot(r.f_times,     r.roi_trace(:,id_roi), 'LineWidth', 0.7); hold on
         plot(r.f_times_fil, r.roi_trend(:,id_roi), 'LineWidth', 0.7);
         %title([r.ex_name]);
-        title('raw trace');
+        title('Raw trace');
         %legend('raw trace (bg substracted)', 'F (trend)');
-            ylabel('a.u.'); axis auto;
+            ylabel('Fluorescence (a.u.)'); axis auto;
+            xlabel('Time (sec)');
             ax = gca; 
             Fontsize = 16;
             ax.XAxis.FontSize = Fontsize;

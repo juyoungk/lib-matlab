@@ -1,12 +1,15 @@
 function ax = plot_trace_norm(r, id_roi)
-% plot normalized trace [dF/F]
+% plot smoothed norm trace [dF/F]
 
     if nargin>1 && numel(id_roi) == 1
-        % plot single roi trace (smoothed)
-        plot(r.f_times, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
-        % or use detrend_norm  
-        %plot(r.f_times_norm, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
-        title('Normalized trace');
+        %plot single roi trace (smoothed)
+        
+        %plot(r.f_times, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
+        %title('Normalized trace');
+        
+        plot(r.f_times_norm, r.roi_smoothed_detrend_norm(:,id_roi), 'LineWidth', 0.7); hold on
+        title('Normalized detrended smoothed trace');
+        
             ylabel('dF/F [%]'); axis auto;
             ax = gca; 
             Fontsize = 14;
@@ -14,23 +17,25 @@ function ax = plot_trace_norm(r, id_roi)
             ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
         
-        % stimulus lines
-        ev = r.sess_trigger_times;        
-        %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme')) 
-        if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400
-            for i=1:length(ev)
-                plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
-                % middle line
-                if contains(r.ex_name, 'flash') && numel(ev) > 1
-                    interval = ev(2)-ev(1);
-                    plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
-                end
-            end
-        else
-            % only start & end line
-            plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
-            plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
-        end
+%         % stimulus lines
+%         ev = r.sess_trigger_times;        
+%         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme')) 
+%         if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400
+%             for i=1:length(ev)
+%                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+%                 % middle line
+%                 if contains(r.ex_name, 'flash') && numel(ev) > 1
+%                     interval = ev(2)-ev(1);
+%                     plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
+%                 end
+%             end
+%         else
+%             % only start & end line
+%             plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+%             plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+%         end
+
+        r.plot_triggers(ax);
         hold off
     else
         % No id for ROI: plot all trace

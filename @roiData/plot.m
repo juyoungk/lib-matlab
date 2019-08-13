@@ -2,8 +2,11 @@ function plot(r, I)
 % Create new figure with interactive keyboard navigation over roi#
 
     if nargin < 2
-        %I = 1:r.numRoi;
-        I = r.roi_good;
+        if ~isempty(r.roi_good)
+            I = r.roi_good;
+        else
+            I = 1:r.numRoi;
+        end
     end
     i_roi = 1;
     imax = numel(I);
@@ -28,9 +31,9 @@ function plot(r, I)
     n_col = 3;
     n_row = 3;
     
-
     function redraw()
         k = I(i_roi); % roi index
+        fprintf('ROI id: %d\n', k);
         mask = false(cc.ImageSize);
         % ex info
         ex_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);

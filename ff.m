@@ -5,7 +5,7 @@ color = [1 1 1];
 color = [0 0 0]; % black
 disp('Current color is black');
 
-Fontsize = 28;
+Fontsize = 24;
 axis_Linewidth = 1.2;
 if nargin < 1
     line_Linewidth = 1.2;

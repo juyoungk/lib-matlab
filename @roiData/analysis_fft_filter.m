@@ -1,13 +1,13 @@
 %% What is the right level of filtering? 
 %% 
-id = 9;
+id = 57;
 r.plot_rf(id);
 
 %% Power spectrum of raw trace
 
 ids = [9, 10, 14, 20, 21];
 %ids = [9, 10];
-
+    
 for id = ids
     
     r.plot_fft(id);
@@ -19,7 +19,7 @@ end
 hold off
 
 %% Trace comparisons as varying filter frequencies
-id = 9;
+id = 57;
 
 r.w_filter_low_pass = 0.4;
 r.w_filter_low_stop = 0.6;
