@@ -13,13 +13,15 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
     end
     
     if r.avg_FLAG
-        X = r.avg_trace_smooth_norm(:,I);
+        % smooth_norm trace. Norm by what? Baseline activity before the trigger. 
+        % smooth_detrened_norm -> norm by detrend. dF/F.  
+        X = r.avg_trace_smooth_norm(:,I); 
         X_all = r.avg_trace_smooth_norm;
         disp('PCA analysis - average smoothed norm traces were used.');
     else
         X = r.roi_smoothed_norm(:,I);
         X_all = r.roi_smoothed_norm;
-        disp('PCA analysis - entire smoothed norm traces were used.');
+        disp('PCA analysis - whole smoothed norm (by baseline) traces were used. You might want to use a detrended norm trace.');
     end    
     % normalization
     X = normc(X);
@@ -29,14 +31,15 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
     X_col_times = X.'; % times as variables
 
     % compute new PCA basis (coeff)
-    % n traces -> (n-1) col vectors for coeff. 
+    % n traces -> (n-1) col vectors for coeff.
     [coeff, score, latent, ts, explained] = pca(X_col_times);
 
     % compute scores for ALL ROIs (column normalized)
     X_all = normc(X_all);
     disp('The computed PCA score are scores for their normalized traces.');
     score = X_all.' * coeff;
-    %
+    
+    % Roi-by-PCs
     r.avg_pca_score = score;
 %     else
 %         disp('PCA score will be computed only for avg traces (avg_FLAG on). ');

@@ -10,7 +10,7 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
         return;
     end
     
-    r.avg_FLAG = false; % not to call average_analysis function in a nested way.
+    r.avg_FLAG = false; % not to call average_analysis function in a nested way during baseline computation.
 
     if nargin < 4
         FIRST_EXCLUDE = r.avg_FIRST_EXCLUDE;

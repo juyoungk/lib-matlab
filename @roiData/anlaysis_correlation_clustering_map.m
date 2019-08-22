@@ -7,18 +7,22 @@ r = g.rr;
 t1 = 0;
 t1 = 110;
 t2 = 330;
-ids = r.f_times > t1 & r.f_times < t2;
+
+%
+sess_trigger = 1;
+tt = r.stim_triggers_within(sess_trigger);
+t1 = tt(1);
+t2 = tt(end) + r.avg_trigger_interval;
+frame_ids = r.f_times > t1 & r.f_times < t2;
 
 %% Filter by ROIs: Top xx reliable ROIs.
-
-rois = r.roi_good(1:40);
-
+rois = r.roi_good(1:100);
 
 %% Trace type
 
-Y = r.roi_smoothed_norm(ids, rois);
-
-%Y = r.roi_smooth_detrend(ids, rois);
+%data matrix X
+X = r.roi_smoothed_norm(frame_ids, rois);
+%X = r.roi_smooth_detrend(ids, rois);
 
 % Meaning of trend?
 %1. is not the dynamic fluctuation of expression level.
@@ -28,10 +32,36 @@ Y = r.roi_smoothed_norm(ids, rois);
 % often, the stimulus-irrelevant correlation is also very important feature
 % to observe.
 
+%% PCA projection (If needed) for efficient representation of data
+
+% before PCA, let's normalize. 
+X = normc(X);
+
+[coeff, score, latent, ts, explained] = pca(X); 
+% Data matrix Y: observation(n)-by-variables(p); Observations are responses
+% in different time points. Variavles are different ROIs.
+
+% Basis of the PC? Coeff.
+% Col of coeff = coeff for one principal component. Columns are in
+% descending order.
+
+% Visualize the coeff (raio between ROIs) its spatial arrangement
+% non-nagative coeff..?
+% negative coeff should have a meaning.
+
+% in 3D?
+
+a = score(1, :);
+b = score(2, :);
+c = score(3, :);
+
+figure
+scatter(a, b);
+%scatter3(a, b, c);
+
 
 %% Correlation matrix (Pearson correlation)
-
-A = corrcoef(Y);
+A = corrcoef(X);
 
 % remove diagonal elements
 A = A - eye(size(A));
@@ -55,18 +85,19 @@ leafOrder = optimalleaforder(Z, dissimilarity);
 
 % group the data into clusters
 cutoff = 0.25;
-c = cluster(Z,'cutoff',cutoff,'criterion','distance')
-
 % Plot the tree
 % P = 0 means all leaf nodes.
 H = dendrogram(Z, 0, 'colorthreshold', cutoff, 'reorder', leafOrder);
 set(H, 'LineWidth', 2);
 
+%% Clustering 
+%c = cluster(Z,'cutoff',cutoff,'criterion','distance');
+c = cluster(Z,'maxclust', 9,'criterion','distance');
+
 % Clustering by Gaussian Mixture Model?
 
-
-%% reorder Y by cluster groups
-Y_ordered = zeros(size(Y));
+% reorder Y by cluster groups
+X_ordered = zeros(size(X));
 
 % cluster info
 clear c_info
@@ -85,7 +116,7 @@ for i=1:max(c)
     c_info(i).num = length(c_ids);
     c_info(i).row_e = c_info(i).row_i + c_info(i).num - 1;
     
-    Y_ordered(:, c_info(i).row_i:c_info(i).row_e) = Y(:, c_ids);
+    X_ordered(:, c_info(i).row_i:c_info(i).row_e) = X(:, c_ids);
     
     if i ~= max(c)
         c_info(i+1).row_i = c_info(i).row_e + 1;
@@ -99,7 +130,7 @@ imagesc(A(idx, idx) + eye(size(A)));
 colorbar
 
 % Correlation matrix after ordering
-A_ordered = corrcoef(Y_ordered);
+A_ordered = corrcoef(X_ordered);
 
 figure;
 ax = axes('Position', [0.03 0 1 0.98]);
@@ -133,7 +164,7 @@ r.plot_roi(rois, "imageType", "bw", "label", false);
 
 % Trace of clustered ROIs
 figure('Position', [906 976 1420 305]);
-plot(Y(:, rois))
+plot(X(:, rois))
 ff
 
 

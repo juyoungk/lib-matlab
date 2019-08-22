@@ -82,7 +82,7 @@ classdef roiData < matlab.mixin.Copyable
         % Average analysis parameters
         % (subset of stim minor triggers --> avg_trigger_times --> aligning data (align_trace_to_avg_triggers) 
         % --> average analysis)
-        avg_FLAG = false
+        avg_FLAG = false  % This flag will also control which trace will be used for PCA analysis.
         avg_FIRST_EXCLUDE = false
         avg_every         % Spacing of stim triggers for average analysis (avg_tigger_times)
         avg_trigger_times % Times for aligning between trials for average analysis. 
@@ -97,9 +97,9 @@ classdef roiData < matlab.mixin.Copyable
         
         % avg traces (always smoothed at least)
         avg_trace       % avg over trials. SMOOTHED. (times x roi#): good for 2-D plot
+        avg_trace_smooth_norm
         avg_trace_norm  % Normed and centered. SMOOTHED trace. No more use?
         avg_trace_fil   % avg over (filtered) trials.
-        avg_trace_smooth_norm
         %avg_trace_filter_norm
         avg_trace_std   % std over trials
         %avg_trace_filter_norm
