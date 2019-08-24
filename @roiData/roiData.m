@@ -451,7 +451,7 @@ classdef roiData < matlab.mixin.Copyable
                 end
                 %
                 if nargin < 3
-                    ex_str = [];
+                    ex_str = 'no name';
                 end
                 %
                 r.ex_name = ex_str;
@@ -529,15 +529,18 @@ classdef roiData < matlab.mixin.Copyable
                     r.roi_cc_time = cc.timestamp;
                 end
                 
-                if isfield(cc, 'i_image')
+                % i_ref_snap
+                if isfield(cc, 'i_image') && isfield(cc, 'numImages') && cc.numImages == length(r.sess_trigger_times)
+                    % i_image means the i-th snapshot by the i-th session
+                    % trigger.
                     i_ref_snap = cc.i_image; 
-                else
+                else    
                     % Pick one of the middle snap for reference roi images.
                     i_ref_snap = max(1, round(length(r.snaps_middle_times)/2.));
                 end
                 
-                if isempty(r.roi_cc_time)
-                    if isfield(cc, 'i_image') 
+                if isempty(r.roi_cc_time) || isnan(r.roi_cc_time)
+                    if isfield(cc, 'i_image')
                         % assume i-th snap corresponds to i-th session trigger.
                         str = sprintf('Is given cc best agliend with the snap image triggered at session trigger %d (%.1f sec)? [Y]', i_ref_snap, r.snaps_trigger_times(i_ref_snap));
                         answer = input(str, 's');
@@ -555,41 +558,42 @@ classdef roiData < matlab.mixin.Copyable
                 padding = 10;
                 r.roi_patch = utils.getPatchesFromPixelLists(r.snap_ref, cc.PixelIdxList, padding);
                 
-                %% Estimate shift (x, y) of individual ROIs across snap images
-                % Image correlation between snaps to compute offset x, y
-                % (It has no meaning in an absolute sense. Relative dist from ref-image which is arbitrary choice.)
-                r.roi_shift_snaps = utils.roi_shift_from_ref(r.snap_ref, r.snaps, cc.PixelIdxList, 1:r.numRoi, padding); %% cc is needed just for patch location.
-               
-                % Interpolate x,y of each roi for all frame times
-                % (roi_shift will be updated)
-                r.roi_shift_xy_interpolation;
-                
-                %% roi traces with x,y shifts of possible integer grid
-                r.traces = cell(1, r.numRoi);
-                
-                %% Library of roi mean traces (must be in constructor)
-                for k = 1:r.numRoi
-                        
-                    % r.traces{roi}(values, x_index, y_index)
-                    r.traces{k} = zeros(r.numFrames, r.roi_shift.xnum, r.roi_shift.ynum);
-                    
-                    for i = 1:length(r.traces_xlist)
-                    for j = 1:length(r.traces_ylist)
-                        
-                        x = r.traces_xlist(i);
-                        y = r.traces_ylist(j);
-                        offset = [x, y];
-                        shiftedPixelIdxList = utils.getShiftedPixelList(cc.PixelIdxList{k}, offset, rows, cols);
-                        
-                        % compute mean signal for the new pixel list
-                        % (shifted ROI)
-                        trace_shifted = mean(vol_reshaped(shiftedPixelIdxList, :), 1);
-                        trace_shifted = trace_shifted - bg_PMT; % No-activity PMT level substraction
-                        
-                        r.traces{k}(:,i,j) = trace_shifted;
-                    end
-                    end   
-                end
+                disp('Currently, roi shift function was disabled.');
+%                 %% Estimate shift (x, y) of individual ROIs across snap images
+%                 % Image correlation between snaps to compute offset x, y
+%                 % (It has no meaning in an absolute sense. Relative dist from ref-image which is arbitrary choice.)
+%                 r.roi_shift_snaps = utils.roi_shift_from_ref(r.snap_ref, r.snaps, cc.PixelIdxList, 1:r.numRoi, padding); %% cc is needed just for patch location.
+%                
+%                 % Interpolate x,y of each roi for all frame times
+%                 % (roi_shift will be updated)
+%                 r.roi_shift_xy_interpolation;
+%                 
+%                 %% roi traces with x,y shifts of possible integer grid
+%                 r.traces = cell(1, r.numRoi);
+%                 
+%                 %% Library of roi mean traces (must be in constructor)
+%                 for k = 1:r.numRoi
+%                         
+%                     % r.traces{roi}(values, x_index, y_index)
+%                     r.traces{k} = zeros(r.numFrames, r.roi_shift.xnum, r.roi_shift.ynum);
+%                     
+%                     for i = 1:length(r.traces_xlist)
+%                     for j = 1:length(r.traces_ylist)
+%                         
+%                         x = r.traces_xlist(i);
+%                         y = r.traces_ylist(j);
+%                         offset = [x, y];
+%                         shiftedPixelIdxList = utils.getShiftedPixelList(cc.PixelIdxList{k}, offset, rows, cols);
+%                         
+%                         % compute mean signal for the new pixel list
+%                         % (shifted ROI)
+%                         trace_shifted = mean(vol_reshaped(shiftedPixelIdxList, :), 1);
+%                         trace_shifted = trace_shifted - bg_PMT; % No-activity PMT level substraction
+%                         
+%                         r.traces{k}(:,i,j) = trace_shifted;
+%                     end
+%                     end   
+%                 end
                 
                 %% Default roi trace: no-shift conditions
                 for i=1:r.numRoi

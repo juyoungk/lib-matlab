@@ -24,6 +24,7 @@ disp('roi shift x & y were interpolated between offset of snapshots.');
 
 % frame id at roi_cc_time
 i_frame = find(r.f_times > r.roi_cc_time, 1);
+
 % zero roi_shift_snaps first
 r.roi_shift_snaps.x = r.roi_shift_snaps.x - r.roi_shift.x(i_frame, :);
 r.roi_shift_snaps.y = r.roi_shift_snaps.y - r.roi_shift.y(i_frame, :);

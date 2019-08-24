@@ -25,6 +25,8 @@ classdef gdata < handle
             AI_trigger_ch = 2 % Channel for direct recording of PD triggers.
                               % If emptty, default trigger will be from
                               % WaveSurfer h5.
+            vol_smoothed % Smoothed image frames (only for roi channel)
+            %vol_smooth_size = 11
             nframes  % per channel (e.g. PMT)
             ifi
             f_times % frame times
@@ -66,9 +68,9 @@ classdef gdata < handle
             avg_trigger_times
             avg_vol
             
-            % roi response data per stimulus
+            % roi response data
             numStimulus % and initialize roiDATA objects. Should be initialized at least 1.
-            rr
+            rr          % roiData object
             cc          % ROI connectivity structure
             roi_channel
     end   
@@ -443,6 +445,8 @@ classdef gdata < handle
                     % BG crosstalk analysis.
                     ch = g.roi_channel;
                     g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Bg pixels are selected from snap images.
+                    
+                    % Averaged frame
                     
                     % Load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);

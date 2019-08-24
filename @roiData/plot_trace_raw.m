@@ -9,34 +9,34 @@ function ax = plot_trace_raw(r, id_roi)
         title('Raw trace');
         %legend('raw trace (bg substracted)', 'F (trend)');
             ylabel('Fluorescence (a.u.)'); axis auto;
-            xlabel('Time (sec)');
+            %xlabel('Time (sec)');
             ax = gca; 
-            Fontsize = 16;
+            Fontsize = 15;
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
             axis tight
-            
-        % stimulus lines
-        ev = r.sess_trigger_times; % all 
-        
-        %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
-        if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400
-            i_last = length(ev);
-            for i=1:i_last
-                % all stim trigger times 
-                plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.0, 'Color',0.6*[1 1 1]);
-                % middle line
-                if contains(r.ex_name, 'flash') && i < i_last 
-                    interval = ev(i+1) - ev(i);
-                    plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
-                end
-            end
-        else
-            % 1st & last event lines
-            plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
-            plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
-        end
+        r.plot_triggers(ax);    
+%         % stimulus lines
+%         ev = r.sess_trigger_times; % all 
+%         
+%         %if isempty(strfind(r.ex_name, 'whitenoise')) && isempty(strfind(r.ex_name, 'runjuyoung')) && isempty(strfind(r.ex_name, 'runme'))    
+%         if ~contains(r.ex_name, 'whitenoise') && length(ev) <= 400
+%             i_last = length(ev);
+%             for i=1:i_last
+%                 % all stim trigger times 
+%                 plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.0, 'Color',0.6*[1 1 1]);
+%                 % middle line
+%                 if contains(r.ex_name, 'flash') && i < i_last 
+%                     interval = ev(i+1) - ev(i);
+%                     plot([ev(i)+interval/2, ev(i)+interval/2], ax.YLim, ':', 'LineWidth', 1.0, 'Color',0.5*[1 1 1]);
+%                 end
+%             end
+%         else
+%             % 1st & last event lines
+%             plot([ev(1) ev(1)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+%             plot([ev(end) ev(end)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.6*[1 1 1]);
+%         end
         hold off
     else
         % No id for ROI: plot all trace

@@ -46,8 +46,9 @@ y_aligned = zeros(n_sampling, n_cells, n_repeats);
 for i=1:n_repeats
     % index for the onset of the event
     a = events(i);
-    idx = find(x>=a);
-    id = idx(1);
+%     idx = find(x>=a);
+%     id = idx(1);
+    id = find(x>=a, 1);
 
 %     if (id+n_sampling-1) > n_times
 %         disp('ERROR: Event +duration goes over the recorded signal. ');

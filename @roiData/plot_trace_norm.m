@@ -4,15 +4,19 @@ function ax = plot_trace_norm(r, id_roi)
     if nargin>1 && numel(id_roi) == 1
         %plot single roi trace (smoothed)
         
-        %plot(r.f_times, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
-        %title('Normalized trace');
+        % option 1: norm by baseline
+        plot(r.f_times, r.roi_smoothed_norm(:,id_roi), 'LineWidth', 0.7); hold on
+        title('Smoothed, then subtracted and normalized by baseline.');
         
-        plot(r.f_times_norm, r.roi_smoothed_detrend_norm(:,id_roi), 'LineWidth', 0.7); hold on
-        title('Normalized detrended smoothed trace');
+        % Detrended norm
+        %plot(r.f_times_norm, r.roi_smoothed_detrend_norm(:,id_roi), 'LineWidth', 0.7); hold on
+        %title('Normalized detrended smoothed trace');
         
-            ylabel('dF/F [%]'); axis auto;
+            ylabel('dF/F [%]');
+            %xlabel('Time (sec)');
+            axis auto;
             ax = gca; 
-            Fontsize = 14;
+            Fontsize = 15;
             ax.XAxis.FontSize = Fontsize;
             ax.YAxis(end).FontSize = Fontsize;
             ax.XLim = [0 r.f_times(end)];
