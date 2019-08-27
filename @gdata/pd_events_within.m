@@ -1,10 +1,14 @@
 function triggers = pd_events_within(g, sess_id)
     % Returns pd trigger times under major (pd events1) trigger id.
-
+    
+    if nargin < 2
+        sess_id = [];
+    end
+    
     n_session = numel(g.pd_events1);
 
     if isempty(sess_id)
-        str = sprintf('There are %d session (pd events 1) triggers. Which session do you want to get for stim triggers? 1-%d [%d]\n', n_session, n_session, n_session); 
+        str = sprintf('There are %d session (pd events 1) triggers. \nWhich session do you want to retrieve for stim triggers? 1-%d [%d]\n', n_session, n_session, n_session); 
         sess_id = input(str);
         if isempty(sess_id); sess_id = n_session; end
     end

@@ -54,7 +54,7 @@ classdef utils
             % Input: contrast value (%)
             I = mat2gray(I); % Normalize to [0 1]. 
             Tol = [c*0.01 1-c*0.01];
-            MinMax = stretchlim(I,Tol);
+            MinMax = stretchlim(I,Tol); % MinMax is always in [0 1].
             J = imadjust(I, MinMax);
         end
         %

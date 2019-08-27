@@ -7,7 +7,7 @@ end
 
 if nargin < 2
     %smooth_size = g.vol_smooth_size;
-    smooth_size = 9;
+    smooth_size = 7;
 end
 
 fprintf('Smoothing channel %d raw imaging data... (smooth size is %d)\n', ch, smooth_size);

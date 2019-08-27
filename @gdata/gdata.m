@@ -447,6 +447,7 @@ classdef gdata < handle
                     g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Bg pixels are selected from snap images.
                     
                     % Averaged frame
+                    g.avg_frames_by_triggers_in_session;
                     
                     % Load cc struct if exist
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
