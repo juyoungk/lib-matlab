@@ -4,7 +4,7 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
 
     % all ROI traces
     if nargin < 2
-        I = find(r.p_corr.smoothed_norm > 0.1);
+        I = find(r.p_corr.smoothed_norm > 0.2);
     end
     
     % At least 2 data points are needed for PCA analysis.
@@ -24,9 +24,10 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
         disp('PCA analysis - whole smoothed norm (by baseline) traces were used. You might want to use a detrended norm trace.');
     end    
     % normalization
-    X = normc(X);
-    
-    disp('PCA basis is computed after normalization (no amplitude differece between traces).');
+%     X = normc(X);
+%     disp('PCA basis is computed after normalization (no amplitude differece between traces).');
+    % new normalization? to make it insensitive to rectified response.
+    % abs > max > divide
 
     X_col_times = X.'; % times as variables
 

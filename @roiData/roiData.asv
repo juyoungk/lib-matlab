@@ -696,6 +696,8 @@ classdef roiData < matlab.mixin.Copyable
                     % plot                    
                     r.plot_repeat;
                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
+%                   % ROI pattern
+%                     r.plot_roi(good_cells(1:numCell));
                     
                     % cluster
                     

@@ -8,16 +8,22 @@ function triggers = pd_events_within(g, sess_id)
     n_session = numel(g.pd_events1);
 
     if isempty(sess_id)
-        str = sprintf('There are %d session (pd events 1) triggers. \nWhich session do you want to retrieve for stim triggers? 1-%d [%d]\n', n_session, n_session, n_session); 
+        str = sprintf('There are %d session (pd events 1) triggers. \nWhich session do you want to retrieve for stim triggers? 1-%d [1]\n', n_session, n_session); 
         sess_id = input(str);
-        if isempty(sess_id); sess_id = n_session; end
+        if isempty(sess_id); sess_id = 1; end
+    end
+    
+    if sess_id < 1
+        triggers = [];
+        return;
     end
 
     % session on and off times.
-    session_on  = g.pd_events1(sess_id);
+    % session trigger can be up to one framed delayed.
+    session_on  = g.pd_events1(sess_id) - g.ifi;
+    
     if sess_id < n_session
-        session_off = g.pd_events1(sess_id+1);
-        % 
+        session_off = g.pd_events1(sess_id+1) - g.ifi;
     else
         session_off = g.f_times(end);
     end

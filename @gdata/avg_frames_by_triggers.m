@@ -38,7 +38,13 @@ for i=1:numTriggers
 end
 
 % Averaged volume
-imvol(vol_averaged, 'globalContrast', true, 't_step', g.ifi);
+session_id = find(g.pd_events1 == triggers(1), 1);
+if ~isempty(session_id)
+    s_title = sprintf('%s - averaged %d repeats (session %d: trigger started at %.0f sec)', g.ex_name, numTriggers, session_id, triggers(1));
+else
+    s_title = sprintf('%s - averaged %d repeats (trigger started at %.0f sec)', g.ex_name, numTriggers, triggers(1));
+end
+imvol(vol_averaged, 'title', s_title, 'globalContrast', true, 't_step', g.ifi);
 
 % opening filter setting 
 disk_size = 9;

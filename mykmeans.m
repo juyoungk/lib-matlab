@@ -13,11 +13,13 @@ function [idx, cent, sumdist, silh_avg] = mykmeans(X, k, varargin)
     end
 
     Xre = reshape(X,[],size(X,ndims(X)));
-
+    
+    % Clustering
+    % distance: 'cosine', 'correlation', ..
     [idx, cent, sumdist] = kmeans(Xre, k, 'Display','final','Replicates', 10, varargin{:});
 
     figure('Name',['Cluster Numbers: ', num2str(k)], 'NumberTitle','off', ...
-        'position', [1385, 685, 560, 420]);
+        'position', [1945, 770, 560, 420]);
 
     % silhouette plot
     [silh, ~] = silhouette(Xre, idx, 'cosine');
@@ -33,8 +35,8 @@ function [idx, cent, sumdist, silh_avg] = mykmeans(X, k, varargin)
     
     plottext = sprintf('Avg. Silhouette Value: %.2f', silh_avg);
     plottext2 = ['Sum of within-cluster sum distances: ', num2str(sum(sumdist))];
-    text(0.50, round(0.93*length(idx)), plottext, 'FontSize',13);
-    text(0.50, round(0.98*length(idx)), plottext2,'FontSize',13);
+    text(0.50, round(0.94*length(idx)), plottext, 'FontSize',12);
+    text(0.50, round(0.99*length(idx)), plottext2,'FontSize',12);
 
     % average silhouette values to see if there is any improvement.
     
