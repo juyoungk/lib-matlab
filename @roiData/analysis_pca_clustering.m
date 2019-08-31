@@ -1,5 +1,5 @@
 %% PCA analysis note for 0223 flash data using roiData
-%r = g.rr;
+r = g.rr;
 
 %% Just PCA for first look on data
 %r.smoothing_size = 5;
@@ -15,7 +15,7 @@ I = find(r.p_corr.smoothed_norm > 0.3);
 score  = r.avg_pca_score(I, 1:3); % [id, scores]
 mycluscatter(score);
 
-% Plot basis trace?
+% Plot PCA basis trace?
 
 %% (For clustered result) See how clustered data is scattered in PCA space.
 I = find(r.p_corr.smoothed_norm > 0.1);
@@ -23,8 +23,8 @@ I = find(r.p_corr.smoothed_norm > 0.1);
 mycluscatter(score, 'Cluster', r.c(I));
 
 %% Clustering ON - OFF w/ previous PCA basis
-num_cluster = 2;
-PCA_dim = 3;
+num_cluster = 4;
+PCA_dim = 4;
 
 % Select ROIs.
 I = find(r.p_corr.smoothed_norm > 0.4);
@@ -33,7 +33,7 @@ score = r.avg_pca_score(I, 1:PCA_dim); % [id, scores]
 % 'cosine': angle matters. 
 [c_idx, cent, sumdist] = mykmeans(score, num_cluster, 'Distance', 'cosine');
 
-figure;
+figure('Position', [230, 550, 250*num_cluster, 620]);
 for c = 1:num_cluster
     ids = I(c_idx==c);
     X = r.avg_trace_smooth_norm(:, ids);
@@ -46,7 +46,7 @@ end
 %
 c2 = c_idx;
 
-%% Clustering within ON (or OFF) cells - New PCA and cluster
+%% Clustering within ON (or OFF) clusters - New PCA and cluster
 I_group1 = I(c2 == 1);            % I is a set of ROI numbers.
 [coeff, score] = r.pca(I_group1); % Do PCA
 % data for cluster

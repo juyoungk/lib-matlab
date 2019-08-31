@@ -10,7 +10,7 @@ figure('Position', [170 350 1500 450]);
 y = r.roi_smoothed_norm(:, rois);
 
 % clim: lower than 250%
-clim = min(max(abs(y(:))), 250);
+clim = min(max(abs(y(:))), 150);
 
 imagesc(y.', [-clim, clim]);
 xlabel('times');
