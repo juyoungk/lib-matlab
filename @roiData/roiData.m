@@ -397,7 +397,7 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function imvol(r)
-            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', true, 'scanZoom', r.header.scanZoomFactor); % can be different depending on threhsold 
+            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false, 'scanZoom', r.header.scanZoomFactor); % can be different depending on threhsold 
         end
         
         function get_stimulus(r, stims_whitenoise, fliptimes, aperture_size)
@@ -699,9 +699,8 @@ classdef roiData < matlab.mixin.Copyable
                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
                     
                     % Cluster
-                    [idx_sorted, cluster_idx] = r.kmeans(6);
-                    
-                    
+                    [idx_sorted, cluster_idx] = r.kmeans(5);
+                                       
                     % Plot traces for reliable cells
                     r.plot_trace_image(idx_sorted);
                     

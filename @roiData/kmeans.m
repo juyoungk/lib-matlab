@@ -8,12 +8,16 @@ function [ids_sorted, cluster_idx] = kmeans(r, num_cluster, num_PCA_dim, ids)
 
 if nargin < 4
     % no ids were given.
-    reliability_threshold = 0.3;
-    fprintf('kmeans clustering - roi selected by reliability threshold: %d\n', reliability_threshold);
+    reliability_threshold = 0.2;
+    % Select ROIs.
+    ids = find(r.p_corr.smoothed_norm > reliability_threshold);
+    fprintf('kmeans clustering - %d rois selected by reliability threshold: %.2f\n', length(ids), reliability_threshold);
+else
+    fprintf('kmeans clustering - %d rois are given.\n', length(ids))
 end
 
 if nargin < 3
-    num_PCA_dim = 4;
+    num_PCA_dim = 5;
 end
 
 if nargin < 2
@@ -26,10 +30,7 @@ disp(' ');
 
 % PCA over selected ids.
 r.pca(ids);
-
-% Select ROIs.
-I = find(r.p_corr.smoothed_norm > reliability_threshold);
-score = r.avg_pca_score(I, 1:num_PCA_dim); % [id, scores]
+score = r.avg_pca_score(ids, 1:num_PCA_dim); % [id, scores]
 
 % K-means Clustering: distance can be 'correlation' 
 % 'cosine': only angle matters
@@ -40,19 +41,19 @@ figure('Position', [15, 550, 250*num_cluster, 550]);
 
 for c = 1:num_cluster
     
-    ids = I(c_idx==c);
+    ids_cluster = ids(c_idx==c);
     
     subplot(2, num_cluster, c);
-    r.plot_avg(ids, 'PlotType', 'overlaid', 'NormByCol', true, 'Label', false);
+    r.plot_avg(ids_cluster, 'PlotType', 'overlaid', 'NormByCol', true, 'Label', false);
     
     subplot(2, num_cluster, c+num_cluster);
-    r.plot_roi(ids);
+    r.plot_roi(ids_cluster);
     
 end
 
 % Sorting
 [cluster_idx, index_order] = sort(c_idx);
-ids_sorted = I(index_order);
+ids_sorted = ids(index_order);
 
 % Correlation map
 % over repeats
@@ -64,8 +65,9 @@ X = r.roi_smoothed_norm(frame_ids, ids_sorted);
 A = corrcoef(X);
 
 figure;
-ax = axes('Position', [0.03 0 1 0.98]);
+ax = axes('Position', [0.03 0 0.96 0.98]);
 imagesc(A);
+title('correlation');
 colorbar
 % YTick
 ax.TickLength = [0 0];
@@ -81,9 +83,10 @@ ax.TickLength = [0 0];
 %     text(x+w/2., y, label, 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center', 'FontSize', 12, 'FontWeight', 'bold');
 % end
 
+disp(' ');
 
 % Save the cluster result 
 r.cluster_draft = zeros(1, r.numRoi);
-r.cluster_draft(I) = c_idx;
+r.cluster_draft(ids) = c_idx; % doesn't need to be ordered.
     
 end
