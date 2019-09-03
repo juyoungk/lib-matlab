@@ -39,6 +39,10 @@ function h5FileOpenForStimTrigger(g, h5_filename)
         end
         g.h5_pd_raw = pd;
         
+        % Threshold for pd recording
+        g.pd_threshold1 = 0.8;
+        g.pd_threshold2 = 0.4;
+        
         % Detect events in the trace
         g.pd_events_detect(pd, times);
 

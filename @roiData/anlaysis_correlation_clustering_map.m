@@ -76,11 +76,12 @@ dissimilarity = 1 - p;
 %% 
 % Perform linkage clustering
 % 'complete' method - measures the farthest distance
-%
+% input: dissimilarity or distance. e.g) pdist(score(:, 1:PCA_dim),'euclidean')
+
+Z = linkage(dissimilarity, 'complete');
 % Z = (obj1, obj2, dist). Ordered by distance.
 % Z = (objects-1) X 3 matrix.
-% method can be 'complete'
-Z = linkage(dissimilarity, 'complete');
+
 leafOrder = optimalleaforder(Z, dissimilarity);
 
 % group the data into clusters
@@ -90,9 +91,10 @@ cutoff = 0.25;
 H = dendrogram(Z, 0, 'colorthreshold', cutoff, 'reorder', leafOrder);
 set(H, 'LineWidth', 2);
 
-%% Clustering 
+%% Clustering
+% Hyperparameter: max cluster or cur-off
 %c = cluster(Z,'cutoff',cutoff,'criterion','distance');
-c = cluster(Z,'maxclust', 9,'criterion','distance');
+c = cluster(Z, 'maxclust', 9, 'criterion','distance');
 
 % Clustering by Gaussian Mixture Model?
 

@@ -27,7 +27,7 @@ for i=1:numTriggers
     ids(i) = find(g.f_times>=triggers(i), 1);
 end
 
-% Average
+% Average over triggered duration (repeats)
 numframes = round(duration / g.ifi);
 vol_averaged = zeros(g.header.pixelsPerLine, g.header.linesPerFrame, numframes);
 for i=1:numTriggers
@@ -36,26 +36,40 @@ for i=1:numTriggers
        vol_averaged = vol_averaged + g.vol_smoothed(:,:,frames);
    end
 end
+g.avg_vol = vol_averaged;
 
-% Averaged volume
-session_id = find(g.pd_events1 == triggers(1), 1);
-if ~isempty(session_id)
-    s_title = sprintf('%s - averaged %d repeats (session %d: trigger started at %.0f sec)', g.ex_name, numTriggers, session_id, triggers(1));
-else
-    s_title = sprintf('%s - averaged %d repeats (trigger started at %.0f sec)', g.ex_name, numTriggers, triggers(1));
-end
-imvol(vol_averaged, 'title', s_title, 'globalContrast', true, 't_step', g.ifi);
+% Normalize vol_average.
 
-% opening filter setting 
-disk_size = 9;
-se = strel('disk', disk_size);
-
-% Max & Min projection
+% Max & Min projection of the averaged
 max_projected = max(vol_averaged, [], 3);
 min_projected = min(vol_averaged, [], 3);
 % normalize for making images have positive values.
 %max_projected = mat2gray(max_projected);
 %min_projected = mat2gray(min_projected);
+
+% Opening filter setting
+disk_min_opening = 1;
+se_min_opening = strel('disk', disk_min_opening);
+
+% Opened image for min projection (for smoothed difference image)
+% Also, it usually doens't catch the dendrite. Thus, it emphasizes the
+% dendritic structure if data is substracted by this. 
+min_projected_opened = imopen(min_projected, se_min_opening);
+
+% Averaged volume
+session_id = find(g.pd_events1 == triggers(1), 1);
+if ~isempty(session_id)
+    s_title = sprintf('%s - avg %d repeats (session %d: trigger started at %.0f sec)', g.ex_name, numTriggers, session_id, triggers(1));
+else
+    s_title = sprintf('%s - avg %d repeats (trigger started at %.0f sec)', g.ex_name, numTriggers, triggers(1));
+end
+imvol(vol_averaged, 'title', s_title, 'globalContrast', true, 't_step', g.ifi);
+imvol(vol_averaged - min_projected, 'title', [s_title, ' diff'], 'globalContrast', true, 't_step', g.ifi);
+imvol(vol_averaged - min_projected_opened, 'title', [s_title, ' diff by min projection: disk size ', num2str(disk_min_opening)], 'globalContrast', true, 't_step', g.ifi);
+
+% Opening filter setting 
+disk_size = 9;
+se = strel('disk', disk_size);
 
 % saturated max projection iamge for bg image
 c_percentage = 0.2;
@@ -85,7 +99,9 @@ penality = scaling * 1./bg_open - scaling;
 bg_penalized = bg_open + penality;
 
 % image stacks
-stack = cat(3, max_projected, imtophat(J, se));
+stack = cat(3, max_projected, imtophat(J, se)); % J is a saturated max-projected image
+%stack = cat(3, stack, min_projected);
+%stack = cat(3, stack, min_projected_opened);
 stack = cat(3, stack, diff_image);
 stack = cat(3, stack, imtophat(J_diff, se));
 stack = cat(3, stack, diff_image./bg_penalized);
@@ -93,5 +109,8 @@ stack = cat(3, stack, bg_open);
 
 time_snap = (triggers(1) + triggers(end) + duration)/2.;
 imvol(stack, 'title', ['1. Max projected.  2. w/ bg substracted.  3. diff_image  4. w/ bg substracted  5. norm.  6. bg image (disk size -',num2str(disk_size),')'], 'timestamp', time_snap*ones(1, size(stack, 3)));
+
+
+
 
 end

@@ -118,7 +118,7 @@ score = X.'*coeff; % times as variables in X.'
         % 1. distant metric
         % 2. linkage method is important - 'average', 'single', 'centroid', ..
         PCA_dim = 7;
-        D = pdist(score(:, 1:PCA_dim),'euclidean'); % 'euclidean', ..
+        D = pdist(score(:, 1:PCwA_dim),'euclidean'); % 'euclidean', ..
         clustTree = linkage(D,'average');
         cophenet(clustTree, D)
         %

@@ -246,6 +246,8 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
         end
         
         k = 1; % index in selected roi group
+        
+        % Create multiple figures
         while (k <= numel(roi_array))
         %while (rr <= 30)
         

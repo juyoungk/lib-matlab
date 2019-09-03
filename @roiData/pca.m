@@ -42,6 +42,7 @@ function [coeff, score, latent, ts, explained] = pca(r, I)
     
     % Roi-by-PCs
     r.avg_pca_score = score;
+    
 %     else
 %         disp('PCA score will be computed only for avg traces (avg_FLAG on). ');
 %     end

@@ -118,9 +118,10 @@ classdef roiData < matlab.mixin.Copyable
         c_mean        % cluster mean for average trace (trace X #clusters ~100). update through plot_cluster
         c_hfig
         c_note
+        cluster_draft
         roi_review
         roi_selected
-        roi_good % selected ids for good cells (e.g. high correlation over repeats) 
+        roi_good % selected ids for good cells (e.g. high correlation over repeats)
         
         % Properties for plot of averaged trace. (use traceAvgPlot ?? not any more?)
         % Method 'align_trace_to_avg_triggers' will use those properties.
@@ -697,13 +698,12 @@ classdef roiData < matlab.mixin.Copyable
                     r.plot_repeat;
                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
                     
-                    % cluster
+                    % Cluster
+                    [idx_sorted, cluster_idx] = r.kmeans(6);
                     
-
-
+                    
                     % Plot traces for reliable cells
-                    r.plot_trace_image;
-                    
+                    r.plot_trace_image(idx_sorted);
                     
                 else
                     % single trial case 
