@@ -39,7 +39,8 @@ for i=1:numTriggers
 end
 g.avg_vol = vol_averaged;
 
-% Normalize vol_average.
+% Mean of the averaged vol
+m = mean(vol_averaged, 3);
 
 % Max & Min projection of the averaged
 %max_projected = max(vol_averaged, [], 3);
@@ -49,9 +50,6 @@ max_projected = max(max_projected1, max_projected2);
 min_projected1 = min(vol_averaged(:,:,1:numframesHalf-1), [], 3);
 min_projected2 = min(vol_averaged(:,:,numframesHalf:end), [], 3);
 min_projected = min(min_projected1, min_projected2);
-% normalize for making images have positive values.
-%max_projected = mat2gray(max_projected);
-%min_projected = mat2gray(min_projected);
 
 % Opening filter setting
 disk_min_opening = 1;
@@ -70,12 +68,14 @@ else
     s_title = sprintf('%s - avg %d repeats (trigger started at %.0f sec)', g.ex_name, numTriggers, triggers(1));
 end
 %imvol(vol_averaged, 'title', s_title, 'globalContrast', true, 't_step', g.ifi);
+imvol(vol_averaged - m, 'title', [s_title, ' mean substracted'], 'globalContrast', true, 't_step', g.ifi);
 imvol(vol_averaged - min_projected, 'title', [s_title, ' diff'], 'globalContrast', true, 't_step', g.ifi);
 %imvol(vol_averaged - min_projected_opened, 'title', [s_title, ' diff by min projection: disk size ', num2str(disk_min_opening)], 'globalContrast', true, 't_step', g.ifi);
 
 % Opening filter setting 
 disk_size = 7;
-se = strel('disk', disk_size);
+se_bg = strel('disk', disk_size);
+se_blur = strel('disk', 3);
 
 % saturated max projection iamge for bg image
 c_percentage = 0.2;
@@ -85,7 +85,7 @@ MinMax = stretchlim(I, Tol);
 J = imadjust(I, MinMax);
 
 % BG image for max projection
-bg_open = imopen(J, se);
+bg_open = imopen(J, se_bg);
 
 % BG substracted max-projected image
 %max_projected_bg_substracted = mat2gray(max_projected) - bg_open;
@@ -105,6 +105,12 @@ diff2 = max_projected2 - min_projected2;
 %diff1 = mat2gray(diff1);
 %diff2 = mat2gray(diff2);
 
+% Can I enphasize the spatial structure?
+
+% Small opening would capture large patches ~ cells.
+% Use this to emphasize the IPL.
+
+
 % BG image with minimum saturation
 scaling = 0.1;
 penality = scaling * 1./bg_open - scaling;
@@ -112,15 +118,15 @@ bg_penalized = bg_open + penality;
 
 % image stacks
 str = [];
-stack = cat(3, max_projected, imtophat(J, se)); % J is a saturated max-projected image
+stack = cat(3, max_projected, imtophat(J, se_bg)); % J is a saturated max-projected image
 %stack = cat(3, stack, min_projected);
 %stack = cat(3, stack, min_projected_opened);
 stack = cat(3, stack, diff_image);
-stack = cat(3, stack, imtophat(J_diff, se));
+stack = cat(3, stack, imtophat(J_diff, se_bg));
 stack = cat(3, stack, diff1);
-stack = cat(3, stack, imtophat(diff1, se));
+stack = cat(3, stack, imtophat(diff1, se_bg));
 stack = cat(3, stack, diff2);
-stack = cat(3, stack, imtophat(diff2, se));
+stack = cat(3, stack, imtophat(diff2, se_bg));
 stack = cat(3, stack, abs(diff1-diff2));
 stack = cat(3, stack, max(diff1, diff2));
 stack = cat(3, stack, diff_image./bg_penalized);

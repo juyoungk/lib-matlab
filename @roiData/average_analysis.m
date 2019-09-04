@@ -55,7 +55,7 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
     fprintf('Num of full duration of repeats in the recording: %d\n', numAvgTrigger);
     
     % Compute the baseline level just before the first average tigger time.
-    r.baseline; % smoothing > filtering > average_anlaysis if FLAG is on.
+    r.baseline; % smoothing > normalization & filtering > average_anlaysis if FLAG is on.
     
     %
     r.avg_FLAG = true;

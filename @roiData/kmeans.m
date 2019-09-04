@@ -21,8 +21,11 @@ if nargin < 3
 end
 
 if nargin < 2
-    num_cluster = 4;
+    num_cluster = 5;
 end
+
+num_PCA_dim = min(num_PCA_dim, length(ids)-1);
+num_cluster = min(num_cluster, length(ids)-1);
 
 fprintf('kmeans clustering - num of PCA dimension: %d\n', num_PCA_dim);
 fprintf('kmeans clustering - num of clusters: %d\n', num_cluster);
@@ -37,17 +40,27 @@ score = r.avg_pca_score(ids, 1:num_PCA_dim); % [id, scores]
 [c_idx, cent, sumdist] = mykmeans(score, num_cluster, 'Distance', 'cosine');
 
 % Plot results
-figure('Position', [15, 550, 250*num_cluster, 550]);
+h = figure('Position', [15, 550, 250*num_cluster, 650]);
+    x0 = 0.0;
+    y0 = 0.0;
+    x_spacing =(1-x0)/num_cluster;
+    x_width = 1.*x_spacing;
+    y_spacing = (1-y0)/2.;
+    y_width = 1. * y_spacing;
 
 for c = 1:num_cluster
     
     ids_cluster = ids(c_idx==c);
     
-    subplot(2, num_cluster, c);
+    %subplot(2, num_cluster, c);
+    %axes('Parent', h, 'OuterPosition', [x0/2.+(c-1)*x_spacing y0/2.+1*y_spacing x_width y_width]); % 'Visible', 'off'
+    axes('Parent', h, 'OuterPosition', [(c-1)*x_spacing y_spacing x_width y_width]); % 'Visible', 'off'
     r.plot_avg(ids_cluster, 'PlotType', 'overlaid', 'NormByCol', true, 'Label', false);
     
-    subplot(2, num_cluster, c+num_cluster);
-    r.plot_roi(ids_cluster);
+    %subplot(2, num_cluster, c+num_cluster);
+    %axes('Parent', h, 'OuterPosition', [x0/2.+(c-1)*x_spacing (1-y0/2.)-1*y_spacing x_width y_width]);
+    axes('Parent', h, 'OuterPosition', [(c-1)*x_spacing 0 x_width y_width]);
+    r.plot_roi(ids_cluster, 'label', false); % 'imageType', 'bw'
     
 end
 

@@ -413,11 +413,10 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function set.smoothing_size(r, t)
-            if nargin < 2
-                t = r.smoothing_size_init;
+            if ~isempty(t) && t > 0
+                r.smoothing_size = t;
+                r.update_smoothed_trace;
             end
-            r.smoothing_size = t;
-            r.update_smoothed_trace;
         end
         
         function set.w_filter_low_pass(r, w)
@@ -647,6 +646,10 @@ classdef roiData < matlab.mixin.Copyable
 %                 r.s_phase = -0.25;
                 
                 %% Average analysis (includes baseline estimation & smoothing)
+                % 1. Average triggers & duration
+                % 2. Baseline estimation just before the 1st trigger. This
+                % automatically triggers "smoothing & normalization & filtering"
+                % 3. Average over repeats & stat.
                 r.average_trigger_set_by_session_triggers;
                
                 %% Load ex struct?
@@ -699,10 +702,10 @@ classdef roiData < matlab.mixin.Copyable
                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
                     
                     % Cluster
-                    [idx_sorted, cluster_idx] = r.kmeans(5);
+                    %[idx_sorted, cluster_idx] = r.kmeans(5);
                                        
                     % Plot traces for reliable cells
-                    r.plot_trace_image(idx_sorted);
+                    %r.plot_trace_image(idx_sorted);
                     
                 else
                     % single trial case 
