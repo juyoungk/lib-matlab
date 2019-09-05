@@ -28,8 +28,9 @@ for k = c_list
     
     bw_k_labeled = k * bwmask;
     
-    
-    bw_labeled = bw_labeled + bw_k_labeled; 
+    %bw_labeled = bw_labeled + bw_k_labeled; 
+    % For overlapped ROIs
+    bw_labeled = max(bw_labeled, bw_k_labeled);
     
     bw(:,:,k) = bwmask;
 end

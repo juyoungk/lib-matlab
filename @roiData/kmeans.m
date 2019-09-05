@@ -31,16 +31,26 @@ fprintf('kmeans clustering - num of PCA dimension: %d\n', num_PCA_dim);
 fprintf('kmeans clustering - num of clusters: %d\n', num_cluster);
 disp(' ');
 
+% raw traces
+trace = r.avg_trace_smooth_norm(:, ids);
+trace = trace.'; % transpose so that ids is in 1st dim.
+
 % PCA over selected ids.
 r.pca(ids);
 score = r.avg_pca_score(ids, 1:num_PCA_dim); % [id, scores]
 
 % K-means Clustering: distance can be 'correlation' 
-% 'cosine': only angle matters
-[c_idx, cent, sumdist] = mykmeans(score, num_cluster, 'Distance', 'cosine');
+% 'cosine': distance by measuring angle of two vectors.
+% Data matrix X is N-by-P. Rows of X corresponds to points.
+% Roi index should be the 1st dim.
+% Num of cluster is arbitrary. It does not reflect any kind of structures
+% in the data.
+%[c_idx, cent, sumdist] = mykmeans(score, num_cluster, 'Distance', 'cosine');
+[c_idx, cent, sumdist] = mykmeans(trace, num_cluster, 'Distance', 'correlation');
+
 
 % Plot results
-h = figure('Position', [15, 550, 250*num_cluster, 650]);
+h = figure('Position', [15, 560, 250*num_cluster, 650]);
     x0 = 0.0;
     y0 = 0.0;
     x_spacing =(1-x0)/num_cluster;
@@ -77,7 +87,7 @@ frame_ids = r.f_times > t1 & r.f_times < t2;
 X = r.roi_smoothed_norm(frame_ids, ids_sorted);
 A = corrcoef(X);
 
-figure;
+figure('Position', [1270, 435, 745, 782]);
 ax = axes('Position', [0.03 0 0.96 0.98]);
 imagesc(A);
 title('correlation');
@@ -101,5 +111,9 @@ disp(' ');
 % Save the cluster result 
 r.cluster_draft = zeros(1, r.numRoi);
 r.cluster_draft(ids) = c_idx; % doesn't need to be ordered.
-    
+
+% Color-coded roi
+r.c = r.cluster_draft;
+r.plot_cluster_roi_labeled;
+
 end

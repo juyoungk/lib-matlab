@@ -1,6 +1,6 @@
 %% merging multiple cc (for continuous ROIs)
 
-cc_cells = {cc_f7, cc_f38, cc_f68, cc_f70};
+cc_cells = {cc7, cc17, cc68};
 %% Image each rois
 bw_stack = [];
 
@@ -15,7 +15,7 @@ imvol(bw_stack);
 
 %% Combine rois
 
-cc_cells = {cc_f38, cc_f70};
+%cc_cells = {cc_f38, cc_f70};
 
 %CC must contain the following fields: Connectivity, ImageSize, NumObjects, and PixelIdxList.
 cc_tot = cc_cells{1};

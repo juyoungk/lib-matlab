@@ -1,7 +1,8 @@
 function [idx, cent, sumdist, silh_avg] = mykmeans(X, k, varargin)
-% dist measure for silhouette: 'cosine'
-% X can be n-by-p matrix or image(2D-by-p). P is # of observations (variables).
-% k : k-means cluster
+% X can be n-by-p matrix or image(2D-by-p). Object id (e.g. roi) should come first. Rows correspond to points.
+% P is # of observations (variables). It can be measurements in different
+% wavelengths (i.e. spectrum) or in different time points.
+% k : num of clusters
 % cent? k-by-P matrix
     d = size(X);
     Dim = ndims(X);
@@ -16,6 +17,7 @@ function [idx, cent, sumdist, silh_avg] = mykmeans(X, k, varargin)
     
     % Clustering
     % distance: 'cosine', 'correlation', ..
+    % X is N-by-P. Rows of X correponds to points. Partitioning rows.
     [idx, cent, sumdist] = kmeans(Xre, k, 'Display','final','Replicates', 10, varargin{:});
 
     figure('Name',['Cluster Numbers: ', num2str(k)], 'NumberTitle','off', ...
@@ -23,6 +25,7 @@ function [idx, cent, sumdist, silh_avg] = mykmeans(X, k, varargin)
 
     % silhouette plot
     [silh, ~] = silhouette(Xre, idx, 'cosine');
+    disp('''cosine'' metric was used for silhouette plot.');
 
         h = gca;
         h.Children.EdgeColor = [.8 .8 1];
@@ -39,13 +42,16 @@ function [idx, cent, sumdist, silh_avg] = mykmeans(X, k, varargin)
     text(0.50, round(0.99*length(idx)), plottext2,'FontSize',12);
 
     % average silhouette values to see if there is any improvement.
-    
     disp(['Average Silhouette Value: ', num2str(silh_avg)]);
     
     
     %% scatter plot of color-coded clusters
     if ndims(X) > 1 && d(end) > 1 % p should be more than one.
-        mycluscatter(Xre, 'Cluster', idx);
+        if d(end) < 6
+            mycluscatter(Xre, 'Cluster', idx);
+        else
+            disp('No scatter plot. Too high dimensional (> 5) objects.');
+        end
     end
 
     %%
