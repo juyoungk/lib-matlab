@@ -775,14 +775,14 @@ classdef roiData < matlab.mixin.Copyable
             end
             r.roi_baseline = mean( r.roi_trace(id, :), 1);
             
-            % Update traces (smoothing & filtering)
+            % update trace
             disp('Update smoothing after estimating baseline levels...');
-            if isempty(r.smoothing_size)
-                % call set method 
-                r.smoothing_size = r.smoothing_size_init;
-            else
-                r.update_smoothed_trace;
+                
+            
+             r.smoothing_size = r.smoothing_size_init;
             end
+
+            r.update_smoothed_trace;
         end
         
         function set.avg_every(r, n_every)

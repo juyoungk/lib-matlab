@@ -25,37 +25,39 @@ function update_filtered_trace(r)
     r.roi_smoothed_detrend_norm = zeros(numframes, r.numRoi);
     r.roi_filtered_norm = zeros(numframes, r.numRoi);
 
-    for i=1:r.numRoi
-            y = r.roi_trace(:,i); % raw data (bg substracted)
-            
-            %
-            y_smoothed = r.roi_smoothed(:,i);       % raw data (bg substracted)
-            
-            % Low-pass filtering: all data
-            y_filtered = filtfilt(fil_low, y);
-            
-            % Select data after stimulus onset: For de-trending
-            y_smoothed = y_smoothed(r.f_times > t); 
-            y_filtered = y_filtered(r.f_times > t); 
-            
-            % High-pass filter
-            y_trend = filtfilt(fil_trend, y_filtered);
+%     for i=1:r.numRoi
+%             y = r.roi_trace(:,i); % raw data (bg substracted)
+%             
+%             %
+%             y_smoothed = r.roi_smoothed(:,i);       % raw data (bg substracted)
+%             
+%             % Low-pass filtering: all data
+%             y_filtered = filtfilt(fil_low, y);
+%             
+%             % Select data after stimulus onset: For de-trending
+%             y_smoothed = y_smoothed(r.f_times > t); 
+%             y_filtered = y_filtered(r.f_times > t); 
+%             
+%             % High-pass filter
+%             y_trend = filtfilt(fil_trend, y_filtered);
+% 
+%             % detrend & normalization
+%             y_smoothed_detrend = y_smoothed - y_trend; 
+%             y_smoothed_detrend_norm = ((y_smoothed - y_trend)./y_trend)*100;
+%             y_filtered_norm = ((y_filtered - y_trend)./y_trend)*100;
+% 
+%             %
+%             r.roi_filtered(:,i) = y_filtered;          % set by filter definition?
+%             r.roi_trend(:,i) = y_trend;
+%             %
+%             r.roi_smoothed_detrend(:,i) = y_smoothed_detrend;
+%             r.roi_smoothed_detrend_norm(:,i) = y_smoothed_detrend_norm;
+%             r.roi_filtered_norm(:,i) = y_filtered_norm;
+%     end
+% 
+%     if r.avg_FLAG
+%         r.average_analysis;
+%     end
+    disp('Currently, filtering was turned off. (you can activate it in roiData/update_filtered_trace.m');
 
-            % detrend & normalization
-            y_smoothed_detrend = y_smoothed - y_trend; 
-            y_smoothed_detrend_norm = ((y_smoothed - y_trend)./y_trend)*100;
-            y_filtered_norm = ((y_filtered - y_trend)./y_trend)*100;
-
-            %
-            r.roi_filtered(:,i) = y_filtered;          % set by filter definition?
-            r.roi_trend(:,i) = y_trend;
-            %
-            r.roi_smoothed_detrend(:,i) = y_smoothed_detrend;
-            r.roi_smoothed_detrend_norm(:,i) = y_smoothed_detrend_norm;
-            r.roi_filtered_norm(:,i) = y_filtered_norm;
-    end
-
-    if r.avg_FLAG
-        r.average_analysis;
-    end
 end

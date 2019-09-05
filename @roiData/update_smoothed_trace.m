@@ -1,9 +1,7 @@
 function update_smoothed_trace(r)
-    
-    if isempty(r.smoothing_size)
-        r.smoothing_size = r.smoothing_size_init;
-    end
-    disp(['Smoothing size = ', num2str(r.smoothing_size)]);
+% don't call this function? instead r.smoothing_size = size
+
+    disp(['Smoothing size = ', num2str(r.smoothing_size),'. Now update...']);
 
     % initialize array
     r.roi_smoothed = zeros(size(r.roi_trace));
@@ -23,5 +21,4 @@ function update_smoothed_trace(r)
     
     % filtered_trace
     r.update_filtered_trace;
-        
 end

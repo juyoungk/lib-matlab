@@ -1,0 +1,23 @@
+%% merging multiple cc
+
+
+cc_cells = {cc_f7, cc_f38, cc_f68, cc_f70};
+%% Image each rois
+bw_stack = [];
+
+for i=1:numel(cc_cells)
+
+    [~, bw] = conn_to_bwmask(cc_cells{i});
+    bw_stack = cat(3, bw_stack, bw);
+   
+end
+
+imvol(bw_stack);
+
+%% Combine rois
+
+
+
+
+cc_all.PixelIdxList = [cc_f7, cc_f38, cc_f70];
+cc
