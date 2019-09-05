@@ -38,6 +38,7 @@ for i=1:numTriggers
    end
 end
 g.avg_vol = vol_averaged;
+g.avg_duration = duration;
 
 % Mean of the averaged vol
 m = mean(vol_averaged, 3);

@@ -67,6 +67,7 @@ classdef gdata < handle
             % average analysis
             avg_trigger_times
             avg_vol
+            avg_duration
             
             % roi response data
             numStimulus % and initialize roiDATA objects. Should be initialized at least 1.
