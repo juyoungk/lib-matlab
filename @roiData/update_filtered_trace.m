@@ -54,10 +54,12 @@ function update_filtered_trace(r)
 %             r.roi_smoothed_detrend_norm(:,i) = y_smoothed_detrend_norm;
 %             r.roi_filtered_norm(:,i) = y_filtered_norm;
 %     end
-% 
-%     if r.avg_FLAG
-%         r.average_analysis;
-%     end
+%
     disp('Currently, filtering was turned off. (you can activate it in roiData/update_filtered_trace.m');
-
+    
+    % Perform average analysis if avg analysis was done before. 
+    if r.avg_FLAG
+        r.average_analysis;
+    end
+   
 end
