@@ -66,13 +66,14 @@ for c = 1:num_cluster
     %axes('Parent', h, 'OuterPosition', [x0/2.+(c-1)*x_spacing y0/2.+1*y_spacing x_width y_width]); % 'Visible', 'off'
     axes('Parent', h, 'OuterPosition', [(c-1)*x_spacing y_spacing x_width y_width]); % 'Visible', 'off'
     r.plot_avg(ids_cluster, 'PlotType', 'overlaid', 'NormByCol', true, 'Label', false);
-    
+    axis off
     %subplot(2, num_cluster, c+num_cluster);
     %axes('Parent', h, 'OuterPosition', [x0/2.+(c-1)*x_spacing (1-y0/2.)-1*y_spacing x_width y_width]);
     axes('Parent', h, 'OuterPosition', [(c-1)*x_spacing 0 x_width y_width]);
     r.plot_roi(ids_cluster, 'label', false); % 'imageType', 'bw'
     
 end
+%ff; % graph enhance.
 
 % Sorting
 [cluster_idx, index_order] = sort(c_idx);

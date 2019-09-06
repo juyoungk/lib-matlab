@@ -46,7 +46,7 @@ function plot_cluster_roi(r, k, varargin)
         end
         
         % Contour (k cluster only, not k2)
-        visboundaries(bw_k,'Color','r','LineWidth', 1.2); 
+        visboundaries(bw_k,'Color','r','LineWidth', 1.0); 
                
         % ROI number display
         if FLAG_label

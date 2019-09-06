@@ -397,7 +397,9 @@ classdef roiData < matlab.mixin.Copyable
         end
         
         function imvol(r)
-            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false, 'scanZoom', r.header.scanZoomFactor); % can be different depending on threhsold 
+            imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false, 'scanZoom', r.header.scanZoomFactor); 
+            % ROI can be different depending on threhsold, especially for
+            % overlapped ROIs.
         end
         
         function get_stimulus(r, stims_whitenoise, fliptimes, aperture_size)
@@ -547,8 +549,6 @@ classdef roiData < matlab.mixin.Copyable
                         if isempty(answer) || contains(str, 'Y')  || contains(str, 'y')
                             r.roi_cc_time = r.snaps_middle_times(i_ref_snap);
                         end
-                    else
-                        r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
                     end     
                 end                
                 %
@@ -702,10 +702,10 @@ classdef roiData < matlab.mixin.Copyable
                     print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
                     
                     % Cluster
-                    %[idx_sorted, cluster_idx] = r.kmeans(5);
+                    [idx_sorted, cluster_idx] = r.kmeans(5);
                                        
                     % Plot traces for reliable cells
-                    %r.plot_trace_image(idx_sorted);
+                    r.plot_trace_image(idx_sorted);
                     
                 else
                     % single trial case 
@@ -885,6 +885,13 @@ classdef roiData < matlab.mixin.Copyable
 %                 end        
         end
         
+        function value = get.roi_cc_time(r)
+            if isempty(r.roi_cc_time)
+                r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
+            end
+            value = r.roi_cc_time;
+        end
+            
         function set.avg_FIRST_EXCLUDE(r, value)
             r.avg_FIRST_EXCLUDE = value;
             r.average_analysis;
