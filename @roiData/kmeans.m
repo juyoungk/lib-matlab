@@ -50,7 +50,7 @@ score = r.avg_pca_score(ids, 1:num_PCA_dim); % [id, scores]
 
 
 % Plot results
-h = figure('Position', [15, 560, 250*num_cluster, 650]);
+h = figure('Position', [0, 560, 250*num_cluster, 500]);
     x0 = 0.0;
     y0 = 0.0;
     x_spacing =(1-x0)/num_cluster;
@@ -74,6 +74,7 @@ for c = 1:num_cluster
     
 end
 %ff; % graph enhance.
+print([r.ex_name, '_kmeans_clustered_',num2str(num_cluster)],'-dpng','-r300')
 
 % Sorting
 [cluster_idx, index_order] = sort(c_idx);
@@ -116,5 +117,7 @@ r.cluster_draft(ids) = c_idx; % doesn't need to be ordered.
 % Color-coded roi
 r.c = r.cluster_draft;
 r.plot_cluster_roi_labeled;
+print([r.ex_name, '_kmeans_clustered_',num2str(num_cluster),'_roi_color'],'-dpng','-r300')
+
 
 end
