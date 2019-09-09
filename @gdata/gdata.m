@@ -45,7 +45,7 @@ classdef gdata < handle
             % pd events (can be recorded by WaveSurfer or by Scanimage CH2)
             pd_trace
             pd_times
-            pd_threshold1 = 0.5 % Major events
+            pd_threshold1 = 0.48 % Major events
             pd_threshold2 = 0.08 % Minnor events
             min_interval_secs = 0.8
             ignore_secs = 2 % Skip some initial times for threshold detection.
@@ -445,7 +445,8 @@ classdef gdata < handle
                     
                     % BG crosstalk analysis.
                     ch = g.roi_channel;
-                    g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Bg pixels are selected from snap images.
+                    %g.plot_bg_pixels(ch); % detect bg (cross-talk) events. Bg pixels are selected from snap images.
+                    disp('Background pixel analysis is currently disabled.');
                     
                     % Averaged frame
                     disp(' ');

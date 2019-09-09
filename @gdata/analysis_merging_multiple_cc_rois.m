@@ -1,6 +1,7 @@
 %% merging multiple cc (for continuous ROIs)
 % cc_cells % output of g.get_cc_from_avg_vol_frames;
 ids = [10:13, 16]; 
+ids = [1,10,11];
 cc_selected = cc_cells(ids);
 
 %% Image each rois

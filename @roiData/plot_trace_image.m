@@ -4,6 +4,10 @@ if nargin < 2
     rois = r.roi_good(1:64);
 end
 
+if isempty(rois)
+    return;
+end
+
 figure('Position', [170 350 1500 450]);
 
 %

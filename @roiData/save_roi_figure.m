@@ -9,7 +9,7 @@ if isfield(r.roi_cc, 'i_image') % save i-th image among
         r.image = r.snaps(:,:,r.roi_cc.i_image);
         roi_fig_name = [roi_fig_name, '_snap_',num2str(r.roi_cc.i_image)];
     end
-else
+end
     
 % save
 utils.figure; 

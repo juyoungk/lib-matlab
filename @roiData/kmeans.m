@@ -16,6 +16,13 @@ else
     fprintf('kmeans clustering - %d rois are given.\n', length(ids))
 end
 
+if length(ids) < 4
+    disp('Too few (<4) ROIs were selected. Clustering analysis is aborted.');
+    ids_sorted = [];
+    cluster_idx = [];
+    return;
+end
+
 if nargin < 3
     num_PCA_dim = 5;
 end
@@ -74,7 +81,7 @@ for c = 1:num_cluster
     
 end
 %ff; % graph enhance.
-print([r.ex_name, '_kmeans_clustered_',num2str(num_cluster)],'-dpng','-r300')
+print([r.avg_name, '_kmeans_clustered_',num2str(num_cluster)],'-dpng','-r300')
 
 % Sorting
 [cluster_idx, index_order] = sort(c_idx);
@@ -117,7 +124,6 @@ r.cluster_draft(ids) = c_idx; % doesn't need to be ordered.
 % Color-coded roi
 r.c = r.cluster_draft;
 r.plot_cluster_roi_labeled;
-print([r.ex_name, '_kmeans_clustered_',num2str(num_cluster),'_roi_color'],'-dpng','-r300')
-
+print([r.avg_name, '_kmeans_clustered_',num2str(num_cluster),'_roi_color'],'-dpng','-r300')
 
 end

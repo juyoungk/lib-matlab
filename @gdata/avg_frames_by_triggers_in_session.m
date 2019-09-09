@@ -1,6 +1,6 @@
 function avg_frames_by_triggers_in_session(g, session_id)
 
-if nargin < 2
+if nargin < 2 || ~isnumber(session_id)
     session_id = [];
 end
 

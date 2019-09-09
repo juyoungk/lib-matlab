@@ -94,6 +94,7 @@ classdef roiData < matlab.mixin.Copyable
         avg_stim_times  % stim times within one avg trace [0 duration]
         avg_stim_plot   % structure for plot properties of each stim triggers.
         avg_stim_tags
+        avg_name        % string for analysis name
         
         % avg traces (always smoothed at least)
         avg_trace       % avg over trials. SMOOTHED. (times x roi#): good for 2-D plot
@@ -342,7 +343,10 @@ classdef roiData < matlab.mixin.Copyable
             s.roi_review = r.roi_review;
             % stim ex
             s.ex_stim = r.ex_stim;
-            save([r.ex_name,'_roiData_save'], '-struct', 's');
+            if isempty(r.avg_name)
+                r.avg_name = r.ex_name;
+            end
+            save([r.avg_name,'_roiData_save'], '-struct', 's');
         end
         
         function load_c(r, c, c_note, roi_review)
@@ -515,7 +519,8 @@ classdef roiData < matlab.mixin.Copyable
                 
                 % mean over snaps
                 r.image = mean(r.snaps, 3);
-                %
+                
+                % save roi 
                 r.save_roi_figure;
                 
                 % Add last snap.
@@ -692,20 +697,17 @@ classdef roiData < matlab.mixin.Copyable
                     % under repeated stimulus
                     [corr, good_cells] = sort(r.p_corr.smoothed_norm, 'descend');
                     r.roi_good = good_cells;
-%                     % Print corr results for top cells
-%                     for i = 1:numCell
-%                         fprintf('ROI%4d: corr between trials %5.2f\n', good_cells(i), corr(i));
-%                     end
                     
                     % plot                    
                     r.plot_repeat;
-                    print([r.ex_name, '_plot_repeats'], '-dpng', '-r300');
+                    print([r.avg_name, '_plot'], '-dpng', '-r300');
                     
                     % Cluster
                     [idx_sorted, cluster_idx] = r.kmeans(5);
                                        
                     % Plot traces for reliable cells
                     r.plot_trace_image(idx_sorted);
+                    print([r.avg_name, '_traces_sorted_by_cluster_id'], '-dpng', '-r300');
                     
                 else
                     % single trial case 

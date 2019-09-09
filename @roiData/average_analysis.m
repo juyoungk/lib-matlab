@@ -103,4 +103,7 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
     % Times for averaged trace
     r.a_times = t_aligned;
     
+    %
+    r.avg_name = sprintf('%s_avg_%d_repeats_triggered_at_%.0fs', r.ex_name, n_repeats, r.avg_trigger_times(1));
+    
 end
