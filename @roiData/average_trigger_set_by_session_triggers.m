@@ -57,5 +57,6 @@ function average_trigger_set_by_session_triggers(r)
         end
     end
     
+    disp(' ');
     r.average_analysis;
 end

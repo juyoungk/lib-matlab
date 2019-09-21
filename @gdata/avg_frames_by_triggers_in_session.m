@@ -9,11 +9,11 @@ disp(' ');
 
 triggers = g.pd_events_within(session_id);
 
+disp(' ');
 if isempty(triggers)
     disp('No trigger times were given.');
     return;
 else
-    disp(' ');
     fprintf('trigger = %.1f\n', triggers); 
 end
 

@@ -243,7 +243,7 @@ classdef gdata < handle
 %                 end
 %                 obj.roi_channel = ch;
                 ch = obj.roi_channel;
-                disp(['Create roiData object for Ch#', num2str(ch), '...']); % it calls
+                disp(['roiData object for channel #', num2str(ch), '...']); % it calls
                 obj.cc = cc;
 
                 % create roiData object (as many as numStimulus? No. roiData will handle it.)
@@ -453,6 +453,7 @@ classdef gdata < handle
                     g.avg_frames_by_triggers_in_session;
                     
                     % Load cc struct if exist
+                    disp(' ');
                     cc_filenames = getfilenames(pwd, ['/*',ex_str,'*save*.mat']);
                     if ~isempty(cc_filenames)
                         commandwindow

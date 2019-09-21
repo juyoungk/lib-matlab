@@ -4,7 +4,9 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
 % inputs: 
 %           times - times for average triggers
 %           duration - duration for snippet
-
+    
+    disp('Now average analysis...');
+    
     if r.avg_FLAG == 0
         disp('roiData average anlysis: avg_FLAG is off.');
         return;
@@ -23,7 +25,7 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
             r.avg_duration = duration;
         else
             % preset duration
-            fprintf('Current avg duration value was set to %.1f (sec).\n', r.avg_duration);
+            fprintf('Duration for average analysis was set to %.2f (sec).\n', r.avg_duration);
         end
     else
         r.avg_duration = duration;

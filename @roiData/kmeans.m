@@ -55,33 +55,23 @@ score = r.avg_pca_score(ids, 1:num_PCA_dim); % [id, scores]
 %[c_idx, cent, sumdist] = mykmeans(score, num_cluster, 'Distance', 'cosine');
 [c_idx, cent, sumdist] = mykmeans(trace, num_cluster, 'Distance', 'correlation');
 
+% Save the cluster result as a draft
+% It was to do analyses without replacing a precious clustering result.
+% Currently, no meaning for draft cluster.
+r.cluster_draft = zeros(1, r.numRoi);
+r.cluster_draft(ids) = c_idx; % doesn't need to be ordered.
 
-% Plot results
-h = figure('Position', [0, 560, 250*num_cluster, 500]);
-    x0 = 0.0;
-    y0 = 0.0;
-    x_spacing =(1-x0)/num_cluster;
-    x_width = 1.*x_spacing;
-    y_spacing = (1-y0)/2.;
-    y_width = 1. * y_spacing;
+% Save as a new cluster result for various plots.
+% (Previous clustering result will be deleted and updated.)
+r.c = r.cluster_draft;
 
-for c = 1:num_cluster
-    
-    ids_cluster = ids(c_idx==c);
-    
-    %subplot(2, num_cluster, c);
-    %axes('Parent', h, 'OuterPosition', [x0/2.+(c-1)*x_spacing y0/2.+1*y_spacing x_width y_width]); % 'Visible', 'off'
-    axes('Parent', h, 'OuterPosition', [(c-1)*x_spacing y_spacing x_width y_width]); % 'Visible', 'off'
-    r.plot_avg(ids_cluster, 'PlotType', 'overlaid', 'NormByCol', true, 'Label', false);
-    axis off
-    %subplot(2, num_cluster, c+num_cluster);
-    %axes('Parent', h, 'OuterPosition', [x0/2.+(c-1)*x_spacing (1-y0/2.)-1*y_spacing x_width y_width]);
-    axes('Parent', h, 'OuterPosition', [(c-1)*x_spacing 0 x_width y_width]);
-    r.plot_roi(ids_cluster, 'label', false); % 'imageType', 'bw'
-    
-end
-%ff; % graph enhance.
-print([r.avg_name, '_kmeans_clustered_',num2str(num_cluster)],'-dpng','-r300')
+% Plot avg traces and locations of each cluster.
+r.plot_cluster_result;
+
+% Plot color-coded clustered rois
+r.plot_cluster_roi_labeled;
+print([r.avg_name, '_kmeans_clustered_',num2str(num_cluster),'_roi_color'], '-dpng', '-r300')
+
 
 % Sorting
 [cluster_idx, index_order] = sort(c_idx);
@@ -116,14 +106,5 @@ ax.TickLength = [0 0];
 % end
 
 disp(' ');
-
-% Save the cluster result 
-r.cluster_draft = zeros(1, r.numRoi);
-r.cluster_draft(ids) = c_idx; % doesn't need to be ordered.
-
-% Color-coded roi
-r.c = r.cluster_draft;
-r.plot_cluster_roi_labeled;
-print([r.avg_name, '_kmeans_clustered_',num2str(num_cluster),'_roi_color'],'-dpng','-r300')
 
 end

@@ -367,7 +367,7 @@ classdef roiData < matlab.mixin.Copyable
         function set.c(r, value)
             n_prev = numel(find(r.c~=0));
             r.c = value;
-            r.totClusterNum = max(r.c);
+            %r.totClusterNum = max(r.c); % move to get method
             n_new = numel(find(r.c~=0));
             if n_new ~= n_prev
                 % c_mean (avg trace) update
@@ -380,8 +380,12 @@ classdef roiData < matlab.mixin.Copyable
                 end
                 % pca update
                 r.pca;
-                disp('PCA score has been computed.');
+                disp('New cluster result.. PCA score has been computed.');
             end
+        end
+        
+        function num = get.totClusterNum(r)
+            num = max(r.c);
         end
         
         function swapcluster(r, i, j)
@@ -442,7 +446,7 @@ classdef roiData < matlab.mixin.Copyable
             % vol: 3-D image stack data
             % ifi: inter-frame interval or log-frames-period
             if nargin > 0 % in order to create an array with no input arguments.
-                disp('roiData..');
+                disp(' ');
                 r.roi_cc = cc;
                 r.numRoi = numel(cc.PixelIdxList);
                 r.numFrames = size(vol, 3);
@@ -516,6 +520,7 @@ classdef roiData < matlab.mixin.Copyable
                 vol_reshaped = reshape(vol, [], nframes);
                 
                 %% Snap images (at sess_trigger_times)
+                disp(' ');
                 disp('roiData snaps are mean images over frames (15 sec) triggered by session triggers.');
                 [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.sess_trigger_times, 15); % mean of 15s duration at times of..
                 r.snaps_trigger_times = r.sess_trigger_times;
@@ -604,6 +609,7 @@ classdef roiData < matlab.mixin.Copyable
 %                 end
                 
                 %% Default roi trace: no-shift conditions
+                disp(' ');
                 for i=1:r.numRoi
                     y = mean(vol_reshaped(cc.PixelIdxList{i},:),1);
                     y = y - bg_PMT;       % No-activity PMT level substraction
@@ -658,6 +664,7 @@ classdef roiData < matlab.mixin.Copyable
                 % 2. Baseline estimation just before the 1st trigger. This
                 % automatically triggers "smoothing & normalization & filtering"
                 % 3. Average over repeats & stat.
+                disp(' ');
                 r.average_trigger_set_by_session_triggers;
                
                 %% Load ex struct?
@@ -852,7 +859,7 @@ classdef roiData < matlab.mixin.Copyable
                 % Default inference for the avg_duration
                 if isempty(r.avg_duration)
                     r.avg_duration = r.avg_trigger_interval;
-                    fprintf('Duration for average analysis (avg_duration) was set to %f sec.\n', r.avg_trigger_interval);
+                    fprintf('Duration for average analysis (avg_duration) is set to %.2f sec.\n', r.avg_trigger_interval);
                 end
             end 
 %                 % Possible options for duration for average analysis
@@ -895,7 +902,8 @@ classdef roiData < matlab.mixin.Copyable
                 %r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
                 % middle of the 
                 r.roi_cc_time = r.f_times(end)/2.;
-                disp('roi-cc-time was assumed to be the middle of the whole recording. Currnently, it does not affect the analysis since the roi shift trajectory was discarded.');
+                disp('roi-cc-time was assumed to be the middle of the whole recording.');
+                disp('(Currnently, it does not affect the analysis since roi shift estimation was turned off. The roi locations are assumed to be fixed over time.)');
             end
             value = r.roi_cc_time;
         end
