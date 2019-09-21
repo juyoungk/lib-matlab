@@ -1,4 +1,4 @@
-function bw = plot_cluster_roi_labeled(r, c_list)
+function bw = plot_cluster_roi_labeled(r, c_list, BACKGROUND)
 %PLOT_CLUSTER_ROI_LABELED(c_list)
 %
 % 1. Display color-coded clustered ROI locations
@@ -46,6 +46,9 @@ hfig = figure('Position', [1500, 250, 835, 980], 'Name', ['Cluster ', num2str(c_
 %cluster_RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
 cluster_RGB_label = label2rgb(bw_labeled, jet(c_max), 'k'); % @jet
 
+% Add background
+
+
 % Horizontal colorbar
 %cluster_colorbar = label2rgb(sort(c_list)-min_cluster+1, jet(c_max), 'k');
 cluster_colorbar = label2rgb(sort(c_list), jet(c_max), 'k');
@@ -66,7 +69,7 @@ text(ax.XLim(end)+0.2, c_num, num2str(max(c_list)), 'FontSize', 14, 'Color', 'w'
 end
 
 function [bw_selected, bw_array] = cc_to_bwmask(cc, id_selected)
-% convert cc to bwmask array and totla bw for selected IDs.
+% convert cc to bwmask array and total bw for selected IDs.
 
     if nargin < 2
         id_selected = 1:cc.NumObjects;

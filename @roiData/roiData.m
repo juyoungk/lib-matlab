@@ -397,10 +397,12 @@ classdef roiData < matlab.mixin.Copyable
         end
             
         function myshow(r)
+            % Display r.image at the current axis.
             J = myshow(r.image);
         end
         
         function imvol(r)
+            % Create figure and display r.image with roi pixel info.
             imvol(r.image, 'title', r.ex_name, 'roi', r.roi_cc, 'edit', false, 'scanZoom', r.header.scanZoomFactor); 
             % ROI can be different depending on threhsold, especially for
             % overlapped ROIs.
@@ -514,8 +516,9 @@ classdef roiData < matlab.mixin.Copyable
                 vol_reshaped = reshape(vol, [], nframes);
                 
                 %% Snap images (at sess_trigger_times)
+                disp('roiData snaps are mean images over frames (15 sec) triggered by session triggers.');
+                [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.sess_trigger_times, 15); % mean of 15s duration at times of..
                 r.snaps_trigger_times = r.sess_trigger_times;
-                [r.snaps, r.snaps_middle_times] = utils.mean_images_after_triggers(vol, r.f_times, r.snaps_trigger_times, 15); % mean of 15s duration at times of..
                 
                 % mean over snaps
                 r.image = mean(r.snaps, 3);
@@ -703,7 +706,7 @@ classdef roiData < matlab.mixin.Copyable
                     print([r.avg_name, '_plot'], '-dpng', '-r300');
                     
                     % Cluster
-                    [idx_sorted, cluster_idx] = r.kmeans(5);
+                    [idx_sorted, cluster_idx] = r.kmeans(6);
                                        
                     % Plot traces for reliable cells
                     r.plot_trace_image(idx_sorted);
@@ -889,7 +892,10 @@ classdef roiData < matlab.mixin.Copyable
         
         function value = get.roi_cc_time(r)
             if isempty(r.roi_cc_time)
-                r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
+                %r.roi_cc_time = input('Enter time in which the roi cc is aligned (sec): ');
+                % middle of the 
+                r.roi_cc_time = r.f_times(end)/2.;
+                disp('roi-cc-time was assumed to be the middle of the whole recording. Currnently, it does not affect the analysis since the roi shift trajectory was discarded.');
             end
             value = r.roi_cc_time;
         end

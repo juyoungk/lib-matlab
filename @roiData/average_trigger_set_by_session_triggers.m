@@ -8,7 +8,7 @@ function average_trigger_set_by_session_triggers(r)
         %
         str_input = sprintf('Same numberes of major nad minor triggers. Average analysis over all %d triggers? [Y]?\n (or enter how many stim triggers were in one repeat. Enter 0 if it is not repeated.)\n', numSessTriggers);
         n_every = input(str_input);
-        if isempty(n_every); 
+        if isempty(n_every)
             n_every = 1; 
         end
         
@@ -52,6 +52,8 @@ function average_trigger_set_by_session_triggers(r)
                 r.avg_trigger_times = r.stim_triggers_within(which_avg);
                 r.avg_FLAG = true;
                 r.avg_analysis_name = sprintf('stim_triggers_in_%d_session', which_avg);
+                % update the representative image
+                r.image = r.snaps(:,:,which_avg);
         end
     end
     
