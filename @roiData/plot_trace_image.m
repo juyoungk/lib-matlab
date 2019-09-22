@@ -1,7 +1,8 @@
 function plot_trace_image(r, rois)
 
 if nargin < 2
-    rois = r.roi_good(1:64);
+    num_cells = min(r.numRoi, 64);
+    rois = r.roi_good(1:num_cells);
 end
 
 if isempty(rois)

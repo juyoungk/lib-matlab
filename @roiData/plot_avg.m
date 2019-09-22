@@ -27,6 +27,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     DrawPlot = p.Results.DrawPlot;
     Label    = p.Results.Label;
     Lines    = p.Results.Lines;
+    Smooth_size = p.Results.Smooth;
     
     argPlot = {};
     
@@ -38,7 +39,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     
     if islogical(id_roi)
         ids = 1:r.numRoi;
-        id_roi = ids(id_roi)
+        id_roi = ids(id_roi);
     end
     
     %if any([nargin>1 && numel(id_roi) == 1, avg_over_ROIs])
@@ -76,6 +77,11 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             
             if contains(PlotType,'mean')
                 y = mean(y, 2);
+            end
+            
+            % smooth over averaged trace
+            if Smooth_size > 1
+                y = smoothdata(y, r.smoothing_method, Smooth_size);
             end
             
             % Output1 : trace
@@ -141,7 +147,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     end
                     % cluster id
                     c_id = unique(r.c(id_roi));
-                    if c_id~=0 && numel(c_id) == 1
+                    if numel(c_id) == 1 && c_id~=0
                         text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
                                     'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
                     end
@@ -306,6 +312,7 @@ function p =  ParseInput(varargin)
     p.addParameter('LineWidth', 1.5, @(x) x>0);
     p.addParameter('Color', [], @(x) isvector(x) || ischar(x) || isempty(x)); % [0 0.4470 0.7410]
     p.addParameter('axes', []);
+    p.addParameter('Smooth', 1, @(x) x>0);
  
 %     addParamValue(p,'verbose', true, @(x) islogical(x));
 %     addParamValue(p,'png', false, @(x) islogical(x));

@@ -47,7 +47,11 @@ rgb = label2rgb(bw_labeled, jet(c_max), 'k'); % @jet
 
 % Add background
 if BACKGROUND
-    image = 255*mat2gray(r.image);
+    % contrast-enhanced mapping of I to [0 1].
+    % saturation level is a second variable.
+    image = utils.myadjust(r.image, 0.05); 
+    % conversion to uint8
+    image = 255*image;
     image = uint8(image);
     image = cat(3, image, image, image);
     image(rgb>0) = 0;
@@ -56,7 +60,7 @@ end
 
 if FIGURE
     % Plot color-coded cluster locations with colorbar in a new figure
-    hfig = figure('Position', [1500, 250, 835, 980], 'Name', ['Cluster ', num2str(c_list), ' (total ', num2str(c_num), ' clusters )']);
+    hfig = figure('Position', [1500, 250, 835, 980], 'Name', ['Cluster ', num2str(c_list), ' (total ', num2str(c_num), ' clusters)']);
     hfig.Color = 'none';
     hfig.PaperPositionMode = 'auto';
     hfig.InvertHardcopy = 'off';
