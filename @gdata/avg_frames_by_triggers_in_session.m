@@ -4,9 +4,8 @@ if nargin < 2 || ~isnumber(session_id)
     session_id = [];
 end
 
-disp('Averaging frames ... ');
-disp(' ');
-
+disp('Averaging frames... ');
+disp('Get the list of session triggers...');
 triggers = g.pd_events_within(session_id);
 
 disp(' ');

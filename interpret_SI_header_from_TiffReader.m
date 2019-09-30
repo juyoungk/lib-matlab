@@ -29,9 +29,10 @@ h.logFramePeriod = h.scanFramePeriod * h.logAverageFactor;
 h.logFrameRate   = h.scanFrameRate / h.logAverageFactor;
 
 % check scanFramePeriod precision.
-str_line = get_line(t, 'scanFramePeriod'); disp(str_line);
-fprintf('scanFramePeriod : %.7f (imported)\n', h.scanFramePeriod);
-fprintf(' logFramePeriod : %.7f (imported)\n',  h.logFramePeriod);
+str_line = get_line(t, 'scanFramePeriod'); 
+disp([str_line,' (saved in Scanimage header file)']);
+fprintf('scanFramePeriod = %.7f (imported number)\n', h.scanFramePeriod);
+fprintf(' logFramePeriod = %.7f (imported number)\n',  h.logFramePeriod);
 
 % stack parameters
 h = get_float_number_to_new_field(h, t, 'numSlices', 1); % not actual slice numbers in stored file
@@ -70,6 +71,7 @@ if nargin > 1
         h.logNumSlices = floor(h.n_frames_ch / h.logFramesPerSlice);                
     end
 end
+disp(' ');
 
 end
 

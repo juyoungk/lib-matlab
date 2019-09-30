@@ -553,19 +553,23 @@ classdef roiData < matlab.mixin.Copyable
                     % Pick one of the middle snap for reference roi images.
                     i_ref_snap = max(1, round(length(r.snaps_middle_times)/2.));
                 end
-                
-                if isempty(r.roi_cc_time) || isnan(r.roi_cc_time)
-                    if isfield(cc, 'i_image')
-                        % assume i-th snap corresponds to i-th session trigger.
-                        str = sprintf('Is given cc best agliend with the snap image triggered at session trigger %d (%.1f sec)? [Y]', i_ref_snap, r.snaps_trigger_times(i_ref_snap));
-                        answer = input(str, 's');
-                        if isempty(answer) || contains(str, 'Y')  || contains(str, 'y')
-                            r.roi_cc_time = r.snaps_middle_times(i_ref_snap);
-                        end
-                    end     
-                end                
                 %
                 r.snap_ref = r.snaps(:,:,i_ref_snap); % arbitrary choice 
+                
+                % Estimationn of roi cc time from the index of the snap
+                % image where roi was determined. 
+% Currently, not being used.                
+%                 if isempty(r.roi_cc_time) || isnan(r.roi_cc_time)
+%                     if isfield(cc, 'i_image')
+%                         % assume i-th snap corresponds to i-th session trigger.
+%                         str = sprintf('Is given cc best agliend with the snap image triggered at session trigger %d (%.1f sec)? [Y]', i_ref_snap, r.snaps_trigger_times(i_ref_snap));
+%                         answer = input(str, 's');
+%                         if isempty(answer) || contains(str, 'Y')  || contains(str, 'y')
+%                             r.roi_cc_time = r.snaps_middle_times(i_ref_snap);
+%                         end
+%                     end     
+%                 end                
+                
                 
                 % Representative ROI patch
                 padding = 10;

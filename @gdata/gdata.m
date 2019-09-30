@@ -114,7 +114,10 @@ classdef gdata < handle
                 
                 if nargin > 1
                     n = min(nframes, g.nframes);
-                    fprintf('Total frame numbers; %d. imdrift(): %d frames were compared. (Green-Magenta false color)\n', g.nframes, n);
+                    fprintf('Total frame numbers; %d.\n', g.nframes);
+                    fprintf('Is the sample shifted during imaging?\n');
+                    fprintf('imdrift() compares the first and the last %d frames. (Green-Magenta false color)\n', n);
+                    disp(' ');
  
                     AI_mean_early = mean(g.AI{ch}(:,:,(1:n)), 3);    
                     AI_mean_late  = mean(g.AI{ch}(:,:,(end-n+1:end)), 3);
@@ -206,7 +209,7 @@ classdef gdata < handle
                     commandwindow
                     ch = input([g.ex_name, ': PMT channel # for main recording (Available: ', num2str(available_channels),') ? ']);
                 end
-                disp(['ROI analysis CH: ',num2str(ch),' is selected.']);
+                disp(['ROI analysis: CH ',num2str(ch),' is selected.']);
                 g.roi_channel = ch;
             end
                 
@@ -396,13 +399,13 @@ classdef gdata < handle
                         
                         % pd events were already detected if h5 file
                         % exists. 
-                    else 
+                    else
+                        fprintf('Scanimage CH %d is regarded as a stimulus trigger channel.\n', g.AI_trigger_ch);
                         % event detect (+ plot)
                         g.pd_trace = g.AI_trace{g.AI_trigger_ch};
                         g.pd_times = g.t_times;
                         g.pd_events_detect;
-                        title('Scanimage direct recording of photodiode signal');
-                        fprintf('CH %d was used as stimulus trigger signal, and trigger events were detected.\n', g.AI_trigger_ch);
+                        title(['Direct recording of photodiode signal (Scanimage CH ',num2str(g.AI_trigger_ch),')']);
                         
                         % Was there any cross-talk between AI channels due
                         % to the direct PD recording? Usually, not really.
