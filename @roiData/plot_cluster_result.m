@@ -32,7 +32,6 @@ for c = 1:num_cluster
 end    
 %ff; % graph enhance.
 
-
 print([r.avg_name, '_kmeans_clustered_',num2str(num_cluster)],'-dpng','-r300')
 
 

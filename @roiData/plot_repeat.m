@@ -26,13 +26,17 @@ function ids = plot_repeat(r, I, varargin)
             n_col=6;
             n_row=3;
             %hfig = figure('Position', [10 55 900 450]);
-            n_col=4;
+            
+            n_plots_per_fig = 25;
+            n_col=5;
             n_row=5;
-            %hfig = figure('Position', [10 55 550 750]);
+            hfig = figure('Position', [10 55 750 750]);
+            
             % Juyoung Demo
-            n_col=8;
-            n_row=8;
-            hfig = figure('Position', [10 55 950 950]);
+%             n_plots_per_fig = 64;
+%             n_col=8;
+%             n_row=8;
+%             hfig = figure('Position', [10 55 950 950]);
         case 'tiled'
             n_col=2;
             n_row=9;
@@ -106,10 +110,6 @@ function ids = plot_repeat(r, I, varargin)
 %     c_list = unique(r.c(r.c~=0)); 
 %     c_list_num = numel(c_list);
 %     color = jet(c_list_num); 
-    
-    % roi rgb image
-    labeled = labelmatrix(r.roi_cc);
-    RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % All repaets for all ROIs
     [y_aligned, x] = r.align_trace_to_avg_triggers('smoothed_norm');

@@ -1,8 +1,12 @@
-function plot_fft(x, sampling_freq)
+function [freq, power] = plot_fft(x, sampling_freq)
 % fft power spectrum of raw trace
+% You might want to substract mean first.
     
     if nargin < 2
         sampling_freq = 1;
+        str_xlabel = 'Hz (norm.)';
+    else
+        str_xlabel = 'Hz';
     end
 
     %x = x - mean(x);
@@ -12,22 +16,25 @@ function plot_fft(x, sampling_freq)
 
     n = length(x);
     power = abs(yshift).^2/n;
-    
-    %power = log10(power);
 
     fs = sampling_freq; % norm frequency
     
-    fshift = (-n/2:n/2-1)*(fs/n);
+    freq = (-n/2:n/2-1)*(fs/n);
 
-    plot(fshift, power, '-o');
-
+    %plot(fshift, power, '-o'); ylabel('FFT Power');
+    semilogy(freq, power, '-o'); ylabel('FFT Power (log)');
+    
     xlim([0 fs/2.]);
-    xlabel('Hz (norm.)');
-    ylabel('FFT Power');
+    xlabel(str_xlabel);
+    
     ax = gca;
     Fontsize = 18;
     ax.XAxis.FontSize = Fontsize;
     ax.YAxis.FontSize = Fontsize;
+    
+    ax.YLim(1) = min(power(freq>0)) * 0.5;
+    % min except freq zero power 
+    % when mean subtraced and log plot, it would be very low in log unit.
     
     ff;
     

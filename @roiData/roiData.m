@@ -99,6 +99,7 @@ classdef roiData < matlab.mixin.Copyable
         % avg traces (always smoothed at least)
         avg_trace       % avg over trials. SMOOTHED. (times x roi#): good for 2-D plot
         avg_trace_smooth_norm
+        avg_trace_smooth_detrend_norm
         avg_trace_norm  % Normed and centered. SMOOTHED trace. No more use?
         avg_trace_fil   % avg over (filtered) trials.
         %avg_trace_filter_norm
@@ -775,7 +776,7 @@ classdef roiData < matlab.mixin.Copyable
             % Usually, called by avaerage anlaysis.
             % 2019 0313 wrote.
             % 2019 0315 prepare_duration added.
-            prepare_duration = 5; %secs. skip during this period.
+            prepare_duration = 1; %secs. skip during this period.
             duration = 5; %sec
             
             r.roi_baseline = zeros(1, r.numRoi);
@@ -800,6 +801,9 @@ classdef roiData < matlab.mixin.Copyable
                 r.update_smoothed_trace;
             end
         end
+%         
+%         function baseline(r, ti, tf)
+%         end
         
         function set.avg_every(r, n_every)
             % Every among stim_trigger_times which is usually given by PD triggers. 

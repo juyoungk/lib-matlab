@@ -24,8 +24,8 @@ function plot(r, I)
     S = sprintf('ROI %d  *', 1:imax); C = regexp(S, '*', 'split'); % C is cell array.
     
     % roi rgb image
-    labeled = labelmatrix(cc);
-    RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
+    %labeled = labelmatrix(cc);
+    %RGB_label = label2rgb(labeled, @parula, 'k', 'shuffle');
     
     % subplot info
     n_col = 3;
@@ -34,7 +34,7 @@ function plot(r, I)
     function redraw()
         k = I(i_roi); % roi index
         fprintf('ROI id: %d\n', k);
-        mask = false(cc.ImageSize);
+        %mask = false(cc.ImageSize);
         % ex info
         ex_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
         ex_info = [];
@@ -53,7 +53,9 @@ function plot(r, I)
 %             mask(cc.PixelIdxList{k}) = true;
 %             h = imshow(RGB_label);
 %             set(h, 'AlphaData', 0.9*mask+0.1);
-            r.plot_roi_patch(k, 18);
+            if ~isempty(cc)
+                r.plot_roi_patch(k, 18);
+            end
             
             ax = gca;
             str1 = sprintf('%d/%d ROI', k, r.numRoi);

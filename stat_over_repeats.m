@@ -24,7 +24,10 @@ function [avg_trace, s] = stat_over_repeats(trace)
     s.avg_mean = mean(squeeze(avg_trace), 1);
     s.avg_amp = max(squeeze(avg_trace), [], 1) - min(squeeze(avg_trace), [], 1);
     s.avg_var = mean(var_noise, 1);
+    % to the mean average response
     s.var = var_noise;
+    s.std = std(noise, 0, 3);
+    s.std_mean = mean(s.std, 1);
     
     % sort repeated traces by max-min (amplitude) differnece
     % max-min of each repeat of each ROI
@@ -70,10 +73,10 @@ function [avg_trace, s] = stat_over_repeats(trace)
 %         s_factor = max(abs(trace), [], 1);
 %         s_factor = repmat(s_factor, n_samples, 1, 1);
 %         trace_col_norm = trace./s_factor;
+%         s.trace_normc = trace_col_norm;
 
     %s.trace_std_avg = mean(trace_std, 1);
-    s.trace_normc_std     = std(trace_col_norm, 1, 3);   % 2-D for each time point of a single roi. 
-    s.trace_normc_std_avg = mean(s.trace_normc_std, 1);  % avg std of each (roi) trace over multiple repeats.
-    %s.trace_normc = trace_col_norm;
+    s.std_normc_trace = std(trace_col_norm, 1, 3); % 2-D for each time point of a single roi. 
+    s.std_normc_trace_avg = mean(s.std_normc_trace, 1); % avg std of each (roi) trace over multiple repeats.
     
 end

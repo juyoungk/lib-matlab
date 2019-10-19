@@ -28,6 +28,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
     Label    = p.Results.Label;
     Lines    = p.Results.Lines;
     Smooth_size = p.Results.Smooth;
+    Name = p.Results.Name;
     
     argPlot = {};
     
@@ -58,16 +59,28 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
             end
             
             % trace type
-            if contains(traceType, 'smoothed')
+            if strcmp(traceType, 'smoothed')
                 y = r.avg_trace(:, id_roi);
-            elseif contains(traceType, 'filtered')
+                e = r.stat.smoothed.std(:, id_roi);
+                p_corr = r.p_corr.smoothed;
+            elseif strcmp(traceType, 'filtered')
                 y = r.avg_trace_fil(:, id_roi);
-            elseif contains(traceType, 'normalized') % default plotType
+                e = r.stat.filtered.std(:, id_roi);
+                p_corr = r.p_corr.filtered;
+            elseif strcmp(traceType, 'normalized') % default plotType
                 %y = r.avg_trace_norm(:, id_roi);    
                 y = r.avg_trace_smooth_norm(:, id_roi);
+                e = r.stat.smoothed_norm.std(:, id_roi);
+                p_corr = r.p_corr.smoothed_norm;
+            elseif strcmp(traceType, 'smoothed_detrend_norm')
+                y = r.avg_trace_smooth_detrend_norm(:, id_roi);
+                e = r.stat.smoothed_detrend_norm.std(:, id_roi);
+                p_corr = r.p_corr.smoothed_detrend_norm;
             else
                 disp('trace Type should be one of ''normalized'', ''smoothed'' or ''filtered''. ''smoothed'' trace was used');
                 y = r.avg_trace(:, id_roi);
+                e = r.stat.smoothed(:, id_roi);
+                p_corr = r.p_corr.smoothed;
             end
             
             if NormByCol  
@@ -116,19 +129,34 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     y_mean = mean(y, 2);
                     argPlot = {'Color', 0.6*[1 1 1]};
                 end
+                
+                % error plot
+                if p.Results.Std
+                    hold off
+                    lo = y - e;
+                    hi = y + e;
+                    lo = lo(:);
+                    hi = hi(:);
+                    times = times(:);
+                    hp = patch([times; times(end:-1:1); times(1)], [lo; hi(end:-1:1); lo(1)], 'r');
+                    set(hp, 'facecolor', [1 0.8 0.8], 'edgecolor', 'none');
+                    hold on
+                end
 
                 % Plot
                 if isempty(h_axes)
-                    s.h = plot(times, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                    s.h = plot(times, y, 'LineWidth', w_Line, argPlot{:}); 
+                    hold on;
                 else
-                    s.h = plot(h_axes, times, y, 'LineWidth', w_Line, argPlot{:}); hold on;
+                    s.h = plot(h_axes, times, y, 'LineWidth', w_Line, argPlot{:}); 
+                    hold on;
                 end 
                 
                 % Add mean trace for 'overlaid' case.
                 if contains(PlotType,'overlaid')     
                     plot(times, y_mean, 'LineWidth', 2.0, 'Color', 'k')
                 end
-                    
+                
                 % y-label
                 if contains(traceType, 'normalized') && ~NormByCol
                     ylabel('dF/F');
@@ -136,28 +164,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     ylabel('a.u.');
                 end
                 
-                ax = gca;  Fontsize = 10;
-                
-                
-                if Label == true % many kinds of labels.    
-                    % ROI id
-                    if numel(id_roi) == 1 %&& strcmp(PlotType,'tiled')
-                        text(ax.XLim(1), ax.YLim(end), C{id_roi}, 'FontSize', 10, 'Color', 'k', ...
-                                    'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');                   
-                    end
-                    % cluster id
-                    c_id = unique(r.c(id_roi));
-                    if numel(c_id) == 1 && c_id~=0
-                        text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
-                                    'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
-                    end
-                    % Correlation between traces                    
-                    str = sprintf('r = %.2f ', r.p_corr.smoothed_norm(id_roi));
-                    text(ax.XLim(end), ax.YLim(1), str, 'FontSize', 10, 'Color', 'k', ...
-                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-                end
-                
-                
+                ax = gca;
                 if Lines == true
                     
                     y_line = ax.YLim;
@@ -172,11 +179,11 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                             continue;
                         end
                         % Lines for avg trigger times
-                        plot([x x], y_line, 'LineWidth', 1, 'Color', 0.4*[1 1 1]); hold on
+                        plot([x x], y_line, 'LineWidth', 1.1, 'Color', 0.5*[1 1 1]);
                         
                         if contains(r.ex_name, 'flash')
                             x = x + r.avg_duration/2.;
-                            plot([x x], y_line, '-.', 'LineWidth', 1, 'Color', 0.8*[1 1 1]); hold on
+                            plot([x x], y_line, '-.', 'LineWidth', 1, 'Color', 0.8*[1 1 1]);
                         end
                     end
 
@@ -186,33 +193,35 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                         if x < r.t_range(1) || x > r.t_range(2)
                             continue;
                         end
+                        % Draw line except for the first stim.
                         if k ~= 1
-                            plot([x x], y_line, '-', 'LineWidth', 1, 'Color', 0.4*[1 1 1]);
+                            plot([x x], y_line, ':', 'LineWidth', 1.1, 'Color', 0.5*[1 1 1]);
                         end
 
-                        kk = mod(k, r.avg_every); % kk-th stimulus within one repeat.
-                        if kk == 0; kk = r.avg_every; end
+%                         k = mod(k, r.avg_every); % kk-th stimulus within one repeat.
+%                         if k == 0; k = r.avg_every; end
 
                         % tag
-                        if ~isempty(r.avg_stim_plot(kk).tag) && Label
-                            text(x, ax.YLim(1), r.avg_stim_plot(kk).tag, 'FontSize', 15, 'Color', 'k', ...
-                                'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
+                        if ~isempty(r.avg_stim_plot(k).tag) && Label
+                            text(x, ax.YLim(1), r.avg_stim_plot(k).tag, 'FontSize', 15, 'Color', 'k', ...
+                                'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
                         end
 
                         % middle lines
-                        if r.avg_stim_plot(kk).middleline == true
-                            if kk == r.avg_every
+                        if r.avg_stim_plot(k).middleline == true
+                            if k == r.avg_every
                                 next_stim = r.avg_duration;
                             else
-                                next_stim = r.avg_stim_times(kk+1);
+                                next_stim = r.avg_stim_times(k+1);
                             end
-                            x = x + 0.5*(next_stim-r.avg_stim_times(kk));
+                            x = x + 0.5*(next_stim-r.avg_stim_times(k));
                             plot([x x], y_line, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
                         end
 
                     end
                 end
                 
+                Fontsize = 15;
                 %ax.XLim = [x(1), max(x(end), r.avg_trigger_interval)]; % at least up to avg_trigger_interval
                 ax.XLim = [times(1), times(end)];
                 ax.XAxis.FontSize = Fontsize;
@@ -224,9 +233,33 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 if Lines == true
                     s.YLim = y_line; % save current YLim
                 end
+                
+                
+                if Label == true % many kinds of labels.    
+                    % ROI id
+                    if numel(id_roi) == 1 %&& strcmp(PlotType,'tiled')
+                        if isempty(Name)
+                            Name = C{id_roi};
+                        end
+                        text(ax.XLim(1), ax.YLim(end), Name, 'FontSize', 15, 'Color', 'k', ...
+                                    'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');                   
+                    end
+                    % cluster id
+                    c_id = unique(r.c(id_roi));
+                    if numel(c_id) == 1 && c_id~=0
+                        text(ax.XLim(end), ax.YLim(end), ['C',num2str(c_id)], 'FontSize', 9, 'Color', 'k', ...
+                                    'VerticalAlignment', 'top', 'HorizontalAlignment', 'right');                   
+                    end
+                end
+                if p.Results.Corr
+                    % Correlation between traces (always smoothed_normed)                   
+                    str = sprintf('%.2f', p_corr(id_roi));
+                    text(ax.XLim(end), ax.YLim(1), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
+                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+                end
 
-                hold off;
             end
+            hold off;
 
         end
 
@@ -300,7 +333,7 @@ function p =  ParseInput(varargin)
     p  = inputParser;   % Create an instance of the inputParser class.
     
     p.addParameter('traceType', 'normalized', @(x) strcmp(x,'normalized') || ...
-        strcmp(x,'filtered') || strcmp(x,'smoothed') || strcmp(x,'projected'));
+        strcmp(x,'filtered') || strcmp(x,'smoothed') || strcmp(x,'projected') || strcmp(x, 'smoothed_detrend_norm'));
     
     p.addParameter('PlotType', 'tiled', @(x) strcmp(x,'tiled') || ...
         strcmp(x,'all') || strcmp(x,'mean') || strcmp(x,'overlaid'));
@@ -309,10 +342,13 @@ function p =  ParseInput(varargin)
     p.addParameter('DrawPlot', true, @(x) islogical(x));
     p.addParameter('Label', true, @(x) islogical(x));
     p.addParameter('Lines', true, @(x) islogical(x));
+    p.addParameter('Corr', true, @(x) islogical(x));
+    p.addParameter('Std', false, @(x) islogical(x));
     p.addParameter('LineWidth', 1.5, @(x) x>0);
     p.addParameter('Color', [], @(x) isvector(x) || ischar(x) || isempty(x)); % [0 0.4470 0.7410]
     p.addParameter('axes', []);
     p.addParameter('Smooth', 1, @(x) x>0);
+    p.addParameter('Name', [], @(x) ischar(x));
  
 %     addParamValue(p,'verbose', true, @(x) islogical(x));
 %     addParamValue(p,'png', false, @(x) islogical(x));

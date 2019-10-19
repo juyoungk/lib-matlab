@@ -70,15 +70,13 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
     [roi_aligned_filtered_norm,         ~] = r.align_trace_to_avg_triggers('filtered_norm');
     [roi_aligned_smoothed_detrend_norm, ~] = r.align_trace_to_avg_triggers('smoothed_detrend_norm');
     
-    % Number of repeats
-    [~,~,n_repeats] = size(roi_aligned_smoothed_norm);
-    
     % session baseline normalization (each session has its own baseline
     % levels)
-    for k=1:n_repeats
-        roi_aligned_smoothed(:,:,k) = roi_aligned_smoothed(:,:,k);
-    end
+    roi_aligned_smoothed = 
     
+    
+    % Number of repeats
+    [~,~,n_repeats] = size(roi_aligned_smoothed_norm);
     
     % Exclude 1st response? 
     if FIRST_EXCLUDE 

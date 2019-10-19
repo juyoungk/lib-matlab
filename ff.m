@@ -1,9 +1,9 @@
 function ff(line_Linewidth)
 % Figure font control
 
-color = [1 1 1];
+%color = [1 1 1];
 color = [0 0 0]; % black
-disp('Current color is black');
+%disp('Current axis/label color is black');
 
 Fontsize = 24;
 axis_Linewidth = 1.2;

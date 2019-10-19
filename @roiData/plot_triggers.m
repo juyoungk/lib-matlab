@@ -15,7 +15,7 @@ if ~contains(r.ex_name, 'whitenoise') && length(r.sess_trigger_times) <= 100
     if length(ev) <= 50
         for i=1:length(ev)
             
-            plot([ev(i) ev(i)], ax.YLim, '-', 'LineWidth', 1.1, 'Color',0.5*[1 1 1]);
+            plot([ev(i) ev(i)], ax.YLim, ':', 'LineWidth', 1.1, 'Color',0.5*[1 1 1]);
         
             % middle line
             if contains(r.ex_name, 'flash') && numel(ev) > 1
