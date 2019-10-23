@@ -76,6 +76,14 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 y = r.avg_trace_smooth_detrend_norm(:, id_roi);
                 e = r.stat.smoothed_detrend_norm.std(:, id_roi);
                 p_corr = r.p_corr.smoothed_detrend_norm;
+            elseif strcmp(traceType, 'smoothed_detrend_norm_repeat')
+                y = r.avg_trace_smooth_detrend_norm_repeat(:, id_roi);
+                e = r.stat.smoothed_detrend_norm_repeat.std(:, id_roi);
+                p_corr = r.p_corr.smoothed_detrend_norm_repeat;
+            elseif strcmp(traceType, 'smoothed_norm_repeat')
+                y = r.avg_trace_smooth_norm_repeat(:, id_roi);
+                e = r.stat.smoothed_norm_repeat.std(:, id_roi);
+                p_corr = r.p_corr.smoothed_norm_repeat;
             else
                 disp('trace Type should be one of ''normalized'', ''smoothed'' or ''filtered''. ''smoothed'' trace was used');
                 y = r.avg_trace(:, id_roi);
@@ -165,6 +173,21 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 end
                 
                 ax = gca;
+                y_line = ax.YLim;
+                Fontsize = 15;
+                ax.XAxis.FontSize = Fontsize; % This can change the range of plots
+                ax.YAxis.FontSize = Fontsize;
+                %ax.XLim = [x(1), max(x(end), r.avg_trigger_interval)]; % at least up to avg_trigger_interval
+                ax.XLim = [times(1)-r.ifi/4., times(end)+r.ifi/4.];
+                if Lines == true
+                    ax.YLim = y_line;
+                    s.YLim = y_line; % save current YLim
+                end
+                % XTick positions: independent of phase value
+                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_duration];
+        %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
+                xtickformat('%.0f');
+                
                 if Lines == true
                     
                     y_line = ax.YLim;
@@ -174,66 +197,61 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     % avg trigger events
                     tt = ((1:ceil(r.n_cycle))-1)*duration;
                     for n = 1:length(tt)
-                        x = tt(n);
-                        if x < r.t_range(1) && x > r.t_range(2)
+                        x0 = tt(n);
+                        if x0 < r.t_range(1) && x0 > r.t_range(2)
                             continue;
                         end
-                        % Lines for avg trigger times
-                        plot([x x], y_line, 'LineWidth', 1.1, 'Color', 0.5*[1 1 1]);
+                        % Lines for avg trigger times in average plot
+                        % (probably, one or two lines.)
+                        plot([x0 x0], y_line, ':', 'LineWidth', 1.1, 'Color', 0.5*[1 1 1]);
                         
                         if contains(r.ex_name, 'flash')
-                            x = x + r.avg_duration/2.;
-                            plot([x x], y_line, '-.', 'LineWidth', 1, 'Color', 0.8*[1 1 1]);
+                            x0 = x0 + r.avg_duration/2.;
+                            plot([x0 x0], y_line, '-.', 'LineWidth', 1, 'Color', 0.8*[1 1 1]);
                         end
-                    end
-
-                    % within one repeat, stim trigger events
-                    for k = 1:length(r.avg_stim_times) % measured by PD.
-                        x = r.avg_stim_times(k);
-                        if x < r.t_range(1) || x > r.t_range(2)
-                            continue;
-                        end
-                        % Draw line except for the first stim.
-                        if k ~= 1
-                            plot([x x], y_line, ':', 'LineWidth', 1.1, 'Color', 0.5*[1 1 1]);
-                        end
-
-%                         k = mod(k, r.avg_every); % kk-th stimulus within one repeat.
-%                         if k == 0; k = r.avg_every; end
-
-                        % tag
-                        if ~isempty(r.avg_stim_plot(k).tag) && Label
-                            text(x, ax.YLim(1), r.avg_stim_plot(k).tag, 'FontSize', 15, 'Color', 'k', ...
-                                'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
-                        end
-
-                        % middle lines
-                        if r.avg_stim_plot(k).middleline == true
-                            if k == r.avg_every
-                                next_stim = r.avg_duration;
-                            else
-                                next_stim = r.avg_stim_times(k+1);
+                    
+                        % within one repeat, stim trigger events
+                        num_stims = length(r.avg_stim_times);
+                        for k = 1:num_stims % measured by PD.
+                            x = r.avg_stim_times(k) + x0;
+                            if x < r.t_range(1) || x > r.t_range(2)
+                                continue;
                             end
-                            x = x + 0.5*(next_stim-r.avg_stim_times(k));
-                            plot([x x], y_line, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
-                        end
+                            
+                            if k < num_stims
+                                next_stim = r.avg_stim_times(k+1) + x0;
+                            else
+                                next_stim = r.avg_duration + x0;
+                            end
+                            middleline = (x+next_stim)/2.;
+                            
+                            if middleline > r.a_times(end)
+                                continue;
+                            end
+    
+                            % Draw line except for the first stim.
+                            if k ~= 1
+                                plot([x x], y_line, ':', 'LineWidth', 1.1, 'Color', 0.5*[1 1 1]);
+                            end
 
+    %                         k = mod(k, r.avg_every); % kk-th stimulus within one repeat.
+    %                         if k == 0; k = r.avg_every; end
+                            
+                            % tag
+                            if ~isempty(r.avg_stim_plot(k).tag) && Label
+                                text(middleline, ax.YLim(1), r.avg_stim_plot(k).tag, 'FontSize', 15, 'Color', 'k', ...
+                                    'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'center');
+                            end
+
+                            % middle lines
+                            if r.avg_stim_plot(k).middleline == true
+                                x = x + 0.5*(next_stim-r.avg_stim_times(k));
+                                plot([x x], y_line, '-.', 'LineWidth', 1.0, 'Color', 0.4*[1 1 1]);
+                            end
+
+                        end
                     end
                 end
-                
-                Fontsize = 15;
-                %ax.XLim = [x(1), max(x(end), r.avg_trigger_interval)]; % at least up to avg_trigger_interval
-                ax.XLim = [times(1), times(end)];
-                ax.XAxis.FontSize = Fontsize;
-                ax.YAxis.FontSize = Fontsize;
-                % XTick positions: independent of phase value
-                ax.XTick = [r.avg_stim_times, r.avg_stim_times+r.avg_duration];
-        %         ax.XTickLabel = linspace(- r.s_phase * duration, (r.n_cycle-r.s_phase)*duration, length(ax.XTick));  
-                xtickformat('%.0f');
-                if Lines == true
-                    s.YLim = y_line; % save current YLim
-                end
-                
                 
                 if Label == true % many kinds of labels.    
                     % ROI id
@@ -333,7 +351,8 @@ function p =  ParseInput(varargin)
     p  = inputParser;   % Create an instance of the inputParser class.
     
     p.addParameter('traceType', 'normalized', @(x) strcmp(x,'normalized') || ...
-        strcmp(x,'filtered') || strcmp(x,'smoothed') || strcmp(x,'projected') || strcmp(x, 'smoothed_detrend_norm'));
+        strcmp(x,'filtered') || strcmp(x,'smoothed') || strcmp(x,'projected') || ...
+        strcmp(x, 'smoothed_detrend_norm') || strcmp(x, 'smoothed_norm_repeat') || strcmp(x, 'smoothed_detrend_norm_repeat'));
     
     p.addParameter('PlotType', 'tiled', @(x) strcmp(x,'tiled') || ...
         strcmp(x,'all') || strcmp(x,'mean') || strcmp(x,'overlaid'));
@@ -344,7 +363,7 @@ function p =  ParseInput(varargin)
     p.addParameter('Lines', true, @(x) islogical(x));
     p.addParameter('Corr', true, @(x) islogical(x));
     p.addParameter('Std', false, @(x) islogical(x));
-    p.addParameter('LineWidth', 1.5, @(x) x>0);
+    p.addParameter('LineWidth', 1.6, @(x) x>0);
     p.addParameter('Color', [], @(x) isvector(x) || ischar(x) || isempty(x)); % [0 0.4470 0.7410]
     p.addParameter('axes', []);
     p.addParameter('Smooth', 1, @(x) x>0);

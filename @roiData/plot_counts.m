@@ -32,6 +32,12 @@ function plot_counts(r, I)
         ex_info = sprintf('smooth size %d (~%.0f ms)', r.smoothing_size, r.ifi*r.smoothing_size*1000);
         ex_info = [];
         
+        % plot name   
+        str_name = sprintf(' delay %.1f ns', (k-1)*0.5);
+        if k == 5
+            str_name = ' Null exp';
+        end
+        
         % 1. whole trace
         subplot(n_row, n_col, [1, n_col-1]);
             plot_trace_raw(r, k);
@@ -52,22 +58,14 @@ function plot_counts(r, I)
             ax.YAxis.TickLabels = labels;
             
             
-        subplot(n_row, n_col, [n_col, n_col]);
-            cla;
-            str_name = sprintf(' delay %.1f ns', (k-1)*0.5);
-            if k == 5
-                str_name = ' Null exp';
-            end
-            plot_avg(r, k, 'traceType', 'smoothed', 'Name', str_name, 'Std', true, 'Corr', false);
-                title('Avg response (smoothed)', 'FontSize', 16);
-                ax = gca;                 
-                % Correlation between traces                    
-                str = sprintf('%.2f', r.p_corr.smoothed(k));
-                text(ax.XLim(end), ax.YLim(1), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
-                            'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
-                ylabel('Photon Counts');
-                xlabel('sec')
-                % 
+        subplot(n_row, n_col, n_col);
+            cla
+            axis auto
+            plot_avg(r, k, 'traceType', 'smoothed', 'Name', str_name, 'Std', true, 'Corr', false);  
+            %plot_avg(r, k, 'traceType', 'smoothed_norm_repeat', 'Name', str_name, 'Std', true, 'Corr', false);
+                
+                title('Avg response (smoothed)', 'FontSize', 16);                              
+                ax = gca;
                 ax.YAxis.Exponent = 0;
                 if maxC > 1e6
                     labels = sprintf('%.2f M*', ax.YAxis.TickValues*1e-6);
@@ -79,24 +77,31 @@ function plot_counts(r, I)
                 labels = regexp(labels, '*', 'split');
                 labels = labels(1:end-1);
                 ax.YAxis.TickLabels = labels;
+                % Correlation between traces                    
+                str = sprintf('%.2f', r.p_corr.smoothed(k));
+                text(ax.XLim(end), ax.YLim(2), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
+                            'VerticalAlignment', 'top', 'HorizontalAlignment','right');
+                ylabel('Photon Counts');
+                xlabel('sec')
 
             
         subplot(n_row, n_col, [n_col+1, 2*n_col-1]);
             plot_trace_norm(r, k);
-            ylabel('{\it \Delta}C/C_{base} [%]');
+            ylabel('{\it \Delta}C/C_{trend} [%]');
             xlabel('sec')
             
         subplot(n_row, n_col, 2*n_col);
             cla;
+            axis auto
             plot_avg(r, k, 'traceType', 'smoothed_detrend_norm', 'Name', str_name, 'Std', true, 'Corr', false);
             title('Avg response (normalized)', 'FontSize', 16);
-            ylabel('{\it \Delta}C/C_{base} [%]');
+            ylabel('{\it \Delta}C/C_{trend} [%]');
             xlabel('sec')
             ax =gca;
             % Correlation between traces                    
             str = sprintf('%.2f', r.p_corr.smoothed_detrend_norm(k));
-            text(ax.XLim(end), ax.YLim(1), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
-                        'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+            text(ax.XLim(end), ax.YLim(2), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
+                        'VerticalAlignment', 'top', 'HorizontalAlignment','right');
     end
 
     redraw();

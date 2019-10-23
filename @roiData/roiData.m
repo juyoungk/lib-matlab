@@ -98,8 +98,10 @@ classdef roiData < matlab.mixin.Copyable
         
         % avg traces (always smoothed at least)
         avg_trace       % avg over trials. SMOOTHED. (times x roi#): good for 2-D plot
-        avg_trace_smooth_norm
+        avg_trace_smooth_norm        % sinble baseline normalization
+        avg_trace_smooth_norm_repeat % baseline is estimated for each repeat.
         avg_trace_smooth_detrend_norm
+        avg_trace_smooth_detrend_norm_repeat
         avg_trace_norm  % Normed and centered. SMOOTHED trace. No more use?
         avg_trace_fil   % avg over (filtered) trials.
         %avg_trace_filter_norm
