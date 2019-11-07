@@ -91,6 +91,7 @@ function average_analysis(r, times, duration, FIRST_EXCLUDE)
     %roi_aligned_smoothed_repeat_norm = norm_by_repeat_baseline(roi_aligned_smoothed, ii, ff);
 
     function vol_norm = norm_by_repeat_baseline(vol, ii, ff)
+    
         [~, ~, n_repeats] = size(vol);
         
         vol_norm = vol;

@@ -6,9 +6,9 @@ color = [0 0 0]; % black
 %disp('Current axis/label color is black');
 
 Fontsize = 24;
-axis_Linewidth = 1.2;
+axis_Linewidth = 1.5;
 if nargin < 1
-    line_Linewidth = 1.2;
+    line_Linewidth = 1.5;
 end
 
 hfig = get(groot,'CurrentFigure');

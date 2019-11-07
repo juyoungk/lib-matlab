@@ -803,9 +803,6 @@ classdef roiData < matlab.mixin.Copyable
                 r.update_smoothed_trace;
             end
         end
-%         
-%         function baseline(r, ti, tf)
-%         end
         
         function set.avg_every(r, n_every)
             % Every among stim_trigger_times which is usually given by PD triggers. 

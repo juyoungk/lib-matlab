@@ -18,6 +18,9 @@ function ids = plot_repeat(r, I, varargin)
     
     p=ParseInput(varargin{:});
     PlotType = p.Results.PlotType;
+    TraceType = p.Results.TraceType;
+    Normalization = p.Results.Norm;
+    MeanPlot = p.Results.MeanPlot;
     
     disp ('');
     n_plots_per_fig = 64;
@@ -27,10 +30,10 @@ function ids = plot_repeat(r, I, varargin)
             n_row=3;
             %hfig = figure('Position', [10 55 900 450]);
             
-            n_plots_per_fig = 25;
+            n_plots_per_fig = 15;
             n_col=5;
-            n_row=5;
-            hfig = figure('Position', [10 55 750 750]);
+            n_row=3;
+            hfig = figure('Position', [10 55 235*n_col 200*n_row]);
             
             % Juyoung Demo
 %             n_plots_per_fig = 64;
@@ -82,7 +85,7 @@ function ids = plot_repeat(r, I, varargin)
     i_fig = 1;
     
      % axes dim for single ROI (cell)
-        m = 0.1; % margin
+        m = 0.0; % margin
         h_ax = (1-m)/n_row;
         w_ax = (1-m)/n_col;
         h_ax_mean   = 1/n_row * (1/6);
@@ -91,7 +94,7 @@ function ids = plot_repeat(r, I, varargin)
             %n_row = n_col;
             %n_row = 2;
             h_ax = (1-m)/n_row;
-            h_ax_mean   = 1/n_row * 0.9;
+            h_ax_mean   = 1/n_row * 0.99;
             h_ax_repeat = 0;
         end
         
@@ -112,8 +115,8 @@ function ids = plot_repeat(r, I, varargin)
 %     color = jet(c_list_num); 
     
     % All repaets for all ROIs
-    [y_aligned, x] = r.align_trace_to_avg_triggers('smoothed_norm');
-    disp('Trace type: smoothed_norm.');
+    [y_aligned, x] = r.align_trace_to_avg_triggers(TraceType);
+    disp(['Trace type: ',TraceType]);
     
     % Exclude 1st response.
     %y_aligned = y_aligned(:,:,2:end);
@@ -122,8 +125,9 @@ function ids = plot_repeat(r, I, varargin)
     function redraw()   
         % delete all objects
         delete(hfig.Children);
-               
-        for i = 1:n_plots_per_fig % loop over cell
+        
+        % loop over cell (ROI) id: i
+        for i = 1:n_plots_per_fig 
             % i : index for axes position in the figure. --> i_cell --> ROI id (k), axis position (p, q) 
             
             i_cell = (i_fig - 1) * n_plots_per_fig + i;
@@ -139,39 +143,55 @@ function ids = plot_repeat(r, I, varargin)
             x_ax = m/2. + p * w_ax;
             y_ax = 1 - m/2. - q * h_ax;
 
-            % Individual traces
+            % Individual traces for single cell or ROI id.
             y = y_aligned(:,k,:);
-            y = squeeze(y);            
-            % norm by col: mean substraction and normalization
-            %(only for plotting)
-            y = y - mean(y, 1);
-            y = normc(y); % should norm the avg trace too. 
+            y = squeeze(y);
             
-
+            % Normalization
+            % norm by col: mean substraction and normalization
+            % (only for plotting)
+            if strcmp(Normalization, 'column')
+                y = y - mean(y, 1);
+                y = normc(y); % should norm the avg trace too. 
+            elseif strcmp(Normalization, 'repeat_baseline')
+                % y = times x repeats (single cell)
+                % baseline
+                duration_baseline = 5; % sec
+                ti = max(r.avg_stim_times(2) - duration_baseline, 0); % ti should be larger than time 0
+                i_baseline = find(r.a_times > ti, 1);
+                f_baseline = i_baseline + round(duration_baseline/r.ifi);
+                % normalization by baseline between i and f
+                y = normc_baseline(y, i_baseline, f_baseline);
+            end
+            y_mean = mean(y, 1);
+                
             % 2. Draw Mean (& std) trace
-            ax = axes('Position', [x_ax,  y_ax+h_ax-h_ax_mean  0.9*w_ax  0.9*h_ax_mean], 'Visible', 'off');
+            ax = axes('Parent', hfig, 'OuterPosition', [x_ax,  y_ax+h_ax-h_ax_mean  w_ax  h_ax_mean], 'Visible', 'off');
                 
             if contains(PlotType, 'overlaid')
                 
                 % Draw mean and freeze axis?, then update..
                 
                 % Plot individual traces
-                plot(x, y, 'Color', 0.6*[1 1 1], 'LineWidth', 0.8); 
+                plot(x, y, 'Color', 0.60*[1 1 1], 'LineWidth', 0.8);
                 axis off
                 hold on
                 xlim( [r.a_times(1), r.a_times(end)] );
-                %xlim([ max(r.t_range(1), r.a_times(1)), min(r.t_range(end),r.a_times(end)) ]);
-                if i == 1
-                    yrange = ax.YLim; % apply same range for all ROIs since all has been centered & normalized. 
-                end
+%                 if i == 1
+%                     yrange = ax.YLim; % apply same range for all ROIs since all has been centered & normalized. 
+%                 end
+                
+                r.plot_avg_style;
                 
                 % Plot avg trace
-                color_line = 'k'; %color_line = [0 0.45 0.74];
-                [~, s] = r.plot_avg(k, 'traceType', 'normalized',...
-                                        'PlotType', PlotType,...
-                                        'LineWidth', 2., 'Color', color_line,... 
-                                        'Label', true, 'Lines', true, 'NormByCol', true);
-                ylim(yrange);
+                if MeanPlot
+                    color_line = 'k'; %color_line = [0 0.45 0.74];
+                    [~, s] = r.plot_avg(k, 'traceType', 'normalized',...
+                                            'PlotType', PlotType,... % 'overliad' means drawing all traces + mean.
+                                            'LineWidth', 2., 'Color', color_line,... 
+                                            'Label', true, 'Lines', true, 'NormByCol', true);
+                end
+                %ylim(yrange);
                 hold off;
                 ylabel ''; % or 'dF/F'
 
@@ -186,7 +206,7 @@ function ids = plot_repeat(r, I, varargin)
                 
                 % individual traces
                 for ii = 1:n_repeats
-                    ax = axes('Position', [x_ax,  y_ax + (n_repeats-ii)*h_ax_one_trace,  0.8*w_ax,  h_ax_one_trace], 'Visible', 'off');
+                    ax = axes('Parent', hfig, 'OuterPosition', [x_ax,  y_ax + (n_repeats-ii)*h_ax_one_trace, w_ax,  h_ax_one_trace], 'Visible', 'off');
                     y_single = y(:,ii);
                     
                     plot(x, y_single, 'LineWidth', 1.2); hold on
@@ -253,7 +273,11 @@ function p =  ParseInput(varargin)
     
     p.addParameter('PlotType', 'overlaid', @(x) strcmp(x,'tiled') || ...
         strcmp(x,'overlaid'));
-    
+    p.addParameter('TraceType', 'smoothed_norm', @(x) strcmp(x,'raw') || ...
+        strcmp(x,'smoothed') || strcmp(x,'smoothed_norm') || strcmp(x,'smoothed_detrend_norm') || ...
+        strcmp(x, 'filtered') || strcmp(x, 'filtered_norm'));
+    p.addParameter('Norm', 'column', @(x) strcmp(x, 'column') || strcmp(x, 'repeat_baseline'));
+    p.addParameter('MeanPlot', true, @(x) islogical(x));
     p.addParameter('Label', true, @(x) islogical(x));
       
     % Call the parse method of the object to read and validate each argument in the schema:

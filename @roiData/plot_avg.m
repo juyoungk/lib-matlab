@@ -96,7 +96,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 y = normc(y);      % scaling.
             end
             
-            if contains(PlotType,'mean')
+            if contains(PlotType,'mean') % mean output and plot only
                 y = mean(y, 2);
             end
             
@@ -133,7 +133,7 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                     end
                 end
                 
-                if contains(PlotType,'overlaid') % output is the mean trace
+                if contains(PlotType,'overlaid') % y itself still contains all individual traces.
                     y_mean = mean(y, 2);
                     argPlot = {'Color', 0.6*[1 1 1]};
                 end
@@ -272,8 +272,8 @@ function [trace, s] = plot_avg(r, id_roi, varargin)
                 if p.Results.Corr
                     % Correlation between traces (always smoothed_normed)                   
                     str = sprintf('%.2f', p_corr(id_roi));
-                    text(ax.XLim(end), ax.YLim(1), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
-                                'VerticalAlignment', 'bottom', 'HorizontalAlignment','right');
+                    text(ax.XLim(end), ax.YLim(2), ['{\it r} = ',str], 'FontSize', 15, 'Color', 'k', ...
+                                'VerticalAlignment', 'top', 'HorizontalAlignment','right');
                 end
 
             end
