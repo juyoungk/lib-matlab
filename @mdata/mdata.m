@@ -16,7 +16,8 @@ classdef mdata < matlab.mixin.Copyable
         
         % DTOF
         dtof_param
-        dtof        
+        dtof
+        tau
     end
     
     methods
