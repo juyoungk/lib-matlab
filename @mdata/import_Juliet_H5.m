@@ -3,7 +3,7 @@ function import_Juliet_H5(m, filename)
 CountRate = h5read(filename, '/CountRate');
 h = h5read(filename, '/CountRate_headers');
 
-m.count = CountRate.count;
+m.count = double(CountRate.count);
 m.period = double(CountRate.period(1)) * 1e-9;
 m.t = convertTimestamp(h.timestamp) + m.period/2.;
 m.exp_id = h.experiment_id(1);
@@ -11,9 +11,9 @@ m.exp_id = h.experiment_id(1);
 %%
 cri = h5read(filename, '/Cri');
 h = h5read(filename, '/Cri_headers');
-m.cri = cri.count;
-m.cri_onset_ps = cri.utime_from_ps(1);
-m.cri_until_ps = cri.utime_until_ps(1);
+m.cri = double(cri.count);
+m.cri_onset_ps = double(cri.utime_from_ps(1));
+m.cri_until_ps = double(cri.utime_until_ps(1));
 m.cri_param.t = convertTimestamp(h.timestamp) + m.period/2.;
 m.cri_param.exp_id = h.experiment_id;
 
