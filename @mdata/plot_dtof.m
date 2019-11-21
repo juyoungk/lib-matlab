@@ -1,16 +1,47 @@
-function plot_dtof(m)
+function plot_dtof(m, ch)
 
-p = m.dtof_param;
+if nargin < 2
+    ch = m.header.channels;
+end
 
-%numbins = size(m.dtof, 1);
-%tau = (p.dtof_min:p.resolution:p.dtof_max) * 1e-3; % ns 
+if numel(ch) > 1
+    figure;
+    
+    numplots = numel(ch);
+    
+    for c = 1:numplots
+        subplot(1, numplots, c); 
+        m.plot_dtof(c);
+    end
+else
+    % single channel plot
+    
+    dtof = m.dtof(:,:,ch);
+    
+    % substract baseline (ASE)
+        % peak location
+        
+    
+    
+    semilogy(m.tau, dtof);
+    xlabel('ns');
+    ylabel('counts');
+    grid on
 
-semilogy(m.tau, m.dtof);
-xlabel('ns');
-ylabel('counts');
-grid on
+    ff(0.8);
+    
+    %
+    %yyaxis right
+    
+    
+end
 
-ff(0.8);
+
+
+
+
+
+
 
 
 

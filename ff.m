@@ -19,10 +19,14 @@ for i = 1:numel(hd)
     ax = hd(i);
     %
     ax.XAxis.FontSize = Fontsize;
-    ax.YAxis.FontSize = Fontsize;
     ax.XAxis.Color = color;
-    ax.YAxis.Color = color;
+    ax.XAxis.LineWidth = axis_Linewidth;
     
+    for j=1:numel(ax.YAxis)
+        ax.YAxis(j).FontSize = Fontsize;
+        ax.YAxis(j).Color = color;
+        ax.YAxis(j).LineWidth = axis_Linewidth;
+    end
     ax.XLabel.Color = color;
     ax.YLabel.Color = color;
     
@@ -41,8 +45,8 @@ for i = 1:numel(hd)
     % disp(['(text of Title?) ', text{1}]);
     title(ax, text, 'Color', color, 'FontSize', Fontsize);
 
-    ax.XAxis.LineWidth = axis_Linewidth;
-    ax.YAxis.LineWidth = axis_Linewidth;
+    
+    
 end
 
 % Line

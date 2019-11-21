@@ -27,6 +27,7 @@ m.dtof_param.dtof_max = dtof.range_max(1); % same over one experiment
 m.dtof_param.resolution = dtof.resolution(1); % ps
 m.dtof_param.t = convertTimestamp(h.timestamp) + m.period/2.;
 m.dtof_param.exp_id = h.experiment_id(1);
+m.dtof_mean = mean(m.dtof, 2);
 
 p = m.dtof_param;
 m.tau = double(p.dtof_min:p.resolution:p.dtof_max) * 1e-3; % ns 

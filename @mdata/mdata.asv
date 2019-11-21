@@ -17,9 +17,7 @@ classdef mdata < matlab.mixin.Copyable
         % DTOF
         dtof_param
         dtof_mean
-        dtof_raw % histogram x timestamp (or exp conditions) x channels
-        dtof
-        
+        dtof % timestamps x chan
         tau
     end
     
@@ -27,7 +25,8 @@ classdef mdata < matlab.mixin.Copyable
         function m = mdata(filename)
             
             if nargin > 0
-                    
+                                
+                if 
                 m.import_Juliet_H5(filename);
                 
             end
