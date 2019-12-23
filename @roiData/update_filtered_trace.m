@@ -6,7 +6,7 @@ function update_filtered_trace(r)
     fil_low   = designfilt('lowpassiir', 'PassbandFrequency',  r.w_filter_low_pass,  'StopbandFrequency', r.w_filter_low_stop, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     %fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .0002, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60); % 2018 1022. Narutal movies are more dynamic
     fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .002, 'StopbandFrequency', .008, 'PassbandRipple', 1, 'StopbandAttenuation', 60);  % Short repeat(e.g. flash 0223 data) 2018 1023
-    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .03, 'StopbandFrequency', .06, 'PassbandRipple', 1, 'StopbandAttenuation', 60);  % 1016 data 23s repeat
+    fil_trend = designfilt('lowpassiir', 'PassbandFrequency', .03, 'StopbandFrequency', .06, 'PassbandRipple', 1, 'StopbandAttenuation', 60);  % 2019 1016 data 23s repeat
     %fil_high  = designfilt('highpassiir', 'PassbandFrequency', .008, 'StopbandFrequency', .004, 'PassbandRipple', 1, 'StopbandAttenuation', 60);
     
     % update ignore_sec

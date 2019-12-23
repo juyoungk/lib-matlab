@@ -20,9 +20,7 @@ else
     
     % substract baseline (ASE)
         % peak location
-        
-    
-    
+   
     semilogy(m.tau, dtof);
     xlabel('ns');
     ylabel('counts');

@@ -24,7 +24,7 @@ for i = 1:numel(hd)
     
     for j=1:numel(ax.YAxis)
         ax.YAxis(j).FontSize = Fontsize;
-        ax.YAxis(j).Color = color;
+        %ax.YAxis(j).Color = color;
         ax.YAxis(j).LineWidth = axis_Linewidth;
     end
     ax.XLabel.Color = color;
@@ -43,7 +43,7 @@ for i = 1:numel(hd)
     text = ax.Title.String;
     % text can be cell array. text{1} might be needed.
     % disp(['(text of Title?) ', text{1}]);
-    title(ax, text, 'Color', color, 'FontSize', Fontsize);
+    title(ax, text, 'Color', color, 'FontSize', Fontsize-4);
 
     
     
