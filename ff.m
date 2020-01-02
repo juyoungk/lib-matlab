@@ -1,5 +1,5 @@
 function ff(line_Linewidth)
-% Figure font control
+% Figure Font update
 
 %color = [1 1 1];
 color = [0 0 0]; % black
